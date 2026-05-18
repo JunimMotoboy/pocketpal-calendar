@@ -38,7 +38,8 @@ export function AppHeader() {
           <Link
             key={it.to}
             to={it.to}
-            onClick={onClick}
+            onClick={() => onClick?.()}
+            preload="intent"
             className={cn(
               "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
               active
