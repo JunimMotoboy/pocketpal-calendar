@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
-import { format } from "date-fns";
-import { CalendarIcon, Plus } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { format, parseISO } from "date-fns";
+import { CalendarIcon, Plus, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,15 +14,30 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export function AddExpenseDialog({
+export type ExpenseItem = {
+  id: string;
+  description: string;
+  amount: number;
+  category: Category;
+  payment_method: string | null;
+  spent_on: string;
+  notes: string | null;
+};
+
+export function ExpenseDialog({
   userId,
   defaultDate,
-  onAdded,
+  expense,
+  onSaved,
+  trigger,
 }: {
   userId: string;
   defaultDate?: Date;
-  onAdded: () => void;
+  expense?: ExpenseItem;
+  onSaved: () => void;
+  trigger?: React.ReactNode;
 }) {
+  const isEdit = !!expense;
   const [open, setOpen] = useState(false);
   const initial = useMemo(() => defaultDate ?? new Date(), [defaultDate]);
   const [description, setDescription] = useState("");
@@ -33,14 +48,24 @@ export function AddExpenseDialog({
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const reset = () => {
-    setDescription("");
-    setAmount("");
-    setCategory("comida");
-    setPaymentMethod("pix");
-    setDate(defaultDate ?? new Date());
-    setNotes("");
-  };
+  useEffect(() => {
+    if (open && isEdit && expense) {
+      setDescription(expense.description);
+      setAmount(String(expense.amount).replace(".", ","));
+      setCategory(expense.category);
+      setPaymentMethod((expense.payment_method as PaymentMethod) || "pix");
+      setDate(parseISO(expense.spent_on));
+      setNotes(expense.notes || "");
+    }
+    if (open && !isEdit) {
+      setDescription("");
+      setAmount("");
+      setCategory("comida");
+      setPaymentMethod("pix");
+      setDate(defaultDate ?? new Date());
+      setNotes("");
+    }
+  }, [open, isEdit, expense, defaultDate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,36 +75,59 @@ export function AddExpenseDialog({
       return;
     }
     setBusy(true);
-    const { error } = await supabase.from("expenses").insert({
-      user_id: userId,
-      description: description.trim(),
-      amount: value,
-      category,
-      payment_method: paymentMethod,
-      spent_on: format(date, "yyyy-MM-dd"),
-      notes: notes.trim() || null,
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    if (isEdit && expense) {
+      const { error } = await supabase
+        .from("expenses")
+        .update({
+          description: description.trim(),
+          amount: value,
+          category,
+          payment_method: paymentMethod,
+          spent_on: format(date, "yyyy-MM-dd"),
+          notes: notes.trim() || null,
+        })
+        .eq("id", expense.id);
+      setBusy(false);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Gasto atualizado!");
+    } else {
+      const { error } = await supabase.from("expenses").insert({
+        user_id: userId,
+        description: description.trim(),
+        amount: value,
+        category,
+        payment_method: paymentMethod,
+        spent_on: format(date, "yyyy-MM-dd"),
+        notes: notes.trim() || null,
+      });
+      setBusy(false);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Gasto registrado!");
     }
-    toast.success("Gasto registrado!");
-    reset();
     setOpen(false);
-    onAdded();
+    onSaved();
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="lg" className="shadow-[var(--shadow-soft)]">
-          <Plus className="mr-1 h-4 w-4" /> Novo gasto
-        </Button>
-      </DialogTrigger>
+      {trigger ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : (
+        <DialogTrigger asChild>
+          <Button size="lg" className="shadow-[var(--shadow-soft)]">
+            <Plus className="mr-1 h-4 w-4" /> Novo gasto
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Registrar novo gasto</DialogTitle>
+          <DialogTitle>{isEdit ? "Editar gasto" : "Registrar novo gasto"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -135,7 +183,7 @@ export function AddExpenseDialog({
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {format(date, "dd/MM/yyyy")}
+                    {date ? format(date, "dd/MM/yyyy") : "Selecione"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -149,10 +197,18 @@ export function AddExpenseDialog({
             </div>
           </div>
           <Button type="submit" className="w-full" disabled={busy}>
-            {busy ? "Salvando..." : "Salvar gasto"}
+            {busy ? "Salvando..." : isEdit ? "Atualizar gasto" : "Salvar gasto"}
           </Button>
         </form>
       </DialogContent>
     </Dialog>
   );
+}
+
+export function AddExpenseDialog(props: {
+  userId: string;
+  defaultDate?: Date;
+  onAdded: () => void;
+}) {
+  return <ExpenseDialog {...props} onSaved={props.onAdded} />;
 }
