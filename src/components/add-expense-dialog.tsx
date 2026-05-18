@@ -96,6 +96,7 @@ export function ExpenseDialog({
     }
     setBusy(true);
     const linkedCard = paymentMethod === "credito" && cardId !== "none" ? cardId : null;
+    const inst = paymentMethod === "credito" ? Math.max(1, parseInt(installments, 10) || 1) : 1;
     if (isEdit && expense) {
       const { error } = await supabase
         .from("expenses")
@@ -105,6 +106,7 @@ export function ExpenseDialog({
           category,
           payment_method: paymentMethod,
           card_id: linkedCard,
+          installments: inst,
           spent_on: format(date, "yyyy-MM-dd"),
           notes: notes.trim() || null,
         })
@@ -123,6 +125,7 @@ export function ExpenseDialog({
         category,
         payment_method: paymentMethod,
         card_id: linkedCard,
+        installments: inst,
         spent_on: format(date, "yyyy-MM-dd"),
         notes: notes.trim() || null,
       });
