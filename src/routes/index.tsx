@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { format, startOfMonth, endOfMonth, isSameDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CATEGORIES, CAT_MAP, formatBRL, type Category } from "@/lib/categories";
-import { AddExpenseDialog } from "@/components/add-expense-dialog";
+import { AddExpenseDialog, ExpenseDialog } from "@/components/add-expense-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
