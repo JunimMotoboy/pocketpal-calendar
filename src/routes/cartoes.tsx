@@ -74,10 +74,13 @@ function CardsPage() {
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [user]);
 
   const totalLimit = useMemo(() => items.reduce((s, i) => s + Number(i.limit_amount), 0), [items]);
-  const totalSpent = useMemo(() => Object.values(spent).reduce((s, v) => s + v, 0), [spent]);
+  const totalSpent = useMemo(
+    () => items.reduce((s, i) => s + (spent[i.id] ?? 0) + Number(i.initial_used ?? 0), 0),
+    [items, spent],
+  );
 
   const resetForm = () => {
-    setName(""); setLimitAmount(""); setDueDay("10"); setClosingDay(""); setNotes(""); setEditing(null);
+    setName(""); setLimitAmount(""); setDueDay("10"); setClosingDay(""); setInitialUsed(""); setNotes(""); setEditing(null);
   };
 
   const openEdit = (c: CardItem) => {
@@ -86,6 +89,7 @@ function CardsPage() {
     setLimitAmount(String(c.limit_amount).replace(".", ","));
     setDueDay(String(c.due_day));
     setClosingDay(c.closing_day ? String(c.closing_day) : "");
+    setInitialUsed(c.initial_used ? String(c.initial_used).replace(".", ",") : "");
     setNotes(c.notes || "");
     setOpen(true);
   };
