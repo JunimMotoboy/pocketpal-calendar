@@ -156,12 +156,12 @@ function InvestmentsPage() {
           <p className="mt-1 text-4xl font-bold tracking-tight">{formatBRL(total)}</p>
           <p className="mt-1 text-sm opacity-80">{items.length} aplicaç{items.length === 1 ? "ão" : "ões"}</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); setOpen(v); }}>
           <DialogTrigger asChild>
-            <Button size="lg" variant="secondary"><Plus className="mr-1 h-4 w-4" /> Novo investimento</Button>
+            <Button size="lg" variant="secondary" onClick={() => resetForm()}><Plus className="mr-1 h-4 w-4" /> Novo investimento</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg">
-            <DialogHeader><DialogTitle>Registrar investimento</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editing ? "Editar investimento" : "Registrar investimento"}</DialogTitle></DialogHeader>
             <form onSubmit={submit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-2">
