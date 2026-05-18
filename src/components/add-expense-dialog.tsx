@@ -22,7 +22,11 @@ export type ExpenseItem = {
   payment_method: string | null;
   spent_on: string;
   notes: string | null;
+  card_id?: string | null;
 };
+
+type CardOption = { id: string; name: string; limit_amount: number };
+
 
 export function ExpenseDialog({
   userId,
@@ -44,9 +48,18 @@ export function ExpenseDialog({
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<Category>("comida");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
+  const [cardId, setCardId] = useState<string | "none">("none");
+  const [cards, setCards] = useState<CardOption[]>([]);
   const [date, setDate] = useState<Date>(initial);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    supabase.from("cards").select("id, name, limit_amount").order("created_at", { ascending: false })
+      .then(({ data }) => setCards((data ?? []) as CardOption[]));
+  }, [open]);
+
 
   useEffect(() => {
     if (open && isEdit && expense) {
@@ -54,6 +67,7 @@ export function ExpenseDialog({
       setAmount(String(expense.amount).replace(".", ","));
       setCategory(expense.category);
       setPaymentMethod((expense.payment_method as PaymentMethod) || "pix");
+      setCardId(expense.card_id ?? "none");
       setDate(parseISO(expense.spent_on));
       setNotes(expense.notes || "");
     }
@@ -62,10 +76,12 @@ export function ExpenseDialog({
       setAmount("");
       setCategory("comida");
       setPaymentMethod("pix");
+      setCardId("none");
       setDate(defaultDate ?? new Date());
       setNotes("");
     }
   }, [open, isEdit, expense, defaultDate]);
+
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +91,7 @@ export function ExpenseDialog({
       return;
     }
     setBusy(true);
+    const linkedCard = paymentMethod === "credito" && cardId !== "none" ? cardId : null;
     if (isEdit && expense) {
       const { error } = await supabase
         .from("expenses")
@@ -83,6 +100,7 @@ export function ExpenseDialog({
           amount: value,
           category,
           payment_method: paymentMethod,
+          card_id: linkedCard,
           spent_on: format(date, "yyyy-MM-dd"),
           notes: notes.trim() || null,
         })
@@ -100,6 +118,7 @@ export function ExpenseDialog({
         amount: value,
         category,
         payment_method: paymentMethod,
+        card_id: linkedCard,
         spent_on: format(date, "yyyy-MM-dd"),
         notes: notes.trim() || null,
       });
@@ -110,6 +129,7 @@ export function ExpenseDialog({
       }
       toast.success("Gasto registrado!");
     }
+
     setOpen(false);
     onSaved();
   };
@@ -177,6 +197,23 @@ export function ExpenseDialog({
                 </SelectContent>
               </Select>
             </div>
+            {paymentMethod === "credito" && (
+              <div className="col-span-2 space-y-2">
+                <Label>Cartão</Label>
+                <Select value={cardId} onValueChange={(v) => setCardId(v as string)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione um cartão" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem cartão vinculado</SelectItem>
+                    {cards.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {cards.length === 0 && (
+                  <p className="text-xs text-muted-foreground">Nenhum cartão cadastrado. Vá em <strong>Cartões</strong> para adicionar.</p>
+                )}
+              </div>
+            )}
             <div className="col-span-2 space-y-2">
               <Label>Data</Label>
               <Popover>

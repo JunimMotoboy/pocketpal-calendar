@@ -14,9 +14,43 @@ export type Database = {
   }
   public: {
     Tables: {
+      cards: {
+        Row: {
+          closing_day: number | null
+          created_at: string
+          due_day: number
+          id: string
+          limit_amount: number
+          name: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          closing_day?: number | null
+          created_at?: string
+          due_day: number
+          id?: string
+          limit_amount?: number
+          name: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          closing_day?: number | null
+          created_at?: string
+          due_day?: number
+          id?: string
+          limit_amount?: number
+          name?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           amount: number
+          card_id: string | null
           category: Database["public"]["Enums"]["expense_category"]
           created_at: string
           description: string
@@ -28,6 +62,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          card_id?: string | null
           category?: Database["public"]["Enums"]["expense_category"]
           created_at?: string
           description: string
@@ -39,6 +74,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          card_id?: string | null
           category?: Database["public"]["Enums"]["expense_category"]
           created_at?: string
           description?: string
@@ -48,7 +84,15 @@ export type Database = {
           spent_on?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expenses_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       incomes: {
         Row: {

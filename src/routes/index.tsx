@@ -32,6 +32,7 @@ type Expense = {
   payment_method: string | null;
   spent_on: string;
   notes: string | null;
+  card_id: string | null;
 };
 
 function Dashboard() {
@@ -53,7 +54,7 @@ function Dashboard() {
     const to = format(endOfMonth(month), "yyyy-MM-dd");
     const { data, error } = await supabase
       .from("expenses")
-      .select("id, description, amount, category, payment_method, spent_on, notes")
+      .select("id, description, amount, category, payment_method, spent_on, notes, card_id")
       .gte("spent_on", from)
       .lte("spent_on", to)
       .order("spent_on", { ascending: false });
