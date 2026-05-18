@@ -169,6 +169,11 @@ function CardsPage() {
                   <Input type="number" min={1} max={31} value={closingDay} onChange={(e) => setClosingDay(e.target.value)} />
                 </div>
                 <div className="col-span-2 space-y-2">
+                  <Label>Limite já utilizado (R$)</Label>
+                  <Input inputMode="decimal" value={initialUsed} onChange={(e) => setInitialUsed(e.target.value)} placeholder="0,00" />
+                  <p className="text-xs text-muted-foreground">Valor já gasto antes de começar a registrar aqui.</p>
+                </div>
+                <div className="col-span-2 space-y-2">
                   <Label>Observações</Label>
                   <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Bandeira, banco, etc." />
                 </div>
