@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Plus, Trash2, TrendingDown } from "lucide-react";
+import { CalendarIcon, Plus, Trash2, Pencil, TrendingDown } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ function InvestmentsPage() {
   const nav = useNavigate();
   const [items, setItems] = useState<Investment[]>([]);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Investment | null>(null);
 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
@@ -72,6 +73,27 @@ function InvestmentsPage() {
     return m;
   }, [items]);
 
+  const resetForm = () => {
+    setName("");
+    setAmount("");
+    setType("renda_fixa");
+    setExpected("");
+    setDate(new Date());
+    setNotes("");
+    setEditing(null);
+  };
+
+  const openEdit = (item: Investment) => {
+    setEditing(item);
+    setName(item.name);
+    setAmount(String(item.amount).replace(".", ","));
+    setType(item.type);
+    setExpected(item.expected_return ? String(item.expected_return).replace(".", ",") : "");
+    setDate(parseISO(item.invested_on));
+    setNotes(item.notes || "");
+    setOpen(true);
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const value = parseFloat(amount.replace(",", "."));
@@ -81,19 +103,36 @@ function InvestmentsPage() {
     }
     setBusy(true);
     const expectedVal = expected ? parseFloat(expected.replace(",", ".")) : null;
-    const { error } = await supabase.from("investments").insert({
-      user_id: user!.id,
-      name: name.trim(),
-      amount: value,
-      type,
-      expected_return: expectedVal,
-      invested_on: format(date, "yyyy-MM-dd"),
-      notes: notes.trim() || null,
-    });
-    setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Investimento registrado!");
-    setName(""); setAmount(""); setType("renda_fixa"); setExpected(""); setDate(new Date()); setNotes("");
+    if (editing) {
+      const { error } = await supabase
+        .from("investments")
+        .update({
+          name: name.trim(),
+          amount: value,
+          type,
+          expected_return: expectedVal,
+          invested_on: format(date, "yyyy-MM-dd"),
+          notes: notes.trim() || null,
+        })
+        .eq("id", editing.id);
+      setBusy(false);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Investimento atualizado!");
+    } else {
+      const { error } = await supabase.from("investments").insert({
+        user_id: user!.id,
+        name: name.trim(),
+        amount: value,
+        type,
+        expected_return: expectedVal,
+        invested_on: format(date, "yyyy-MM-dd"),
+        notes: notes.trim() || null,
+      });
+      setBusy(false);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Investimento registrado!");
+    }
+    resetForm();
     setOpen(false);
     load();
   };
@@ -117,12 +156,12 @@ function InvestmentsPage() {
           <p className="mt-1 text-4xl font-bold tracking-tight">{formatBRL(total)}</p>
           <p className="mt-1 text-sm opacity-80">{items.length} aplicaç{items.length === 1 ? "ão" : "ões"}</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); setOpen(v); }}>
           <DialogTrigger asChild>
-            <Button size="lg" variant="secondary"><Plus className="mr-1 h-4 w-4" /> Novo investimento</Button>
+            <Button size="lg" variant="secondary" onClick={() => resetForm()}><Plus className="mr-1 h-4 w-4" /> Novo investimento</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg">
-            <DialogHeader><DialogTitle>Registrar investimento</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editing ? "Editar investimento" : "Registrar investimento"}</DialogTitle></DialogHeader>
             <form onSubmit={submit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-2">
@@ -171,7 +210,7 @@ function InvestmentsPage() {
                   <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : "Salvar investimento"}</Button>
+              <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : editing ? "Atualizar investimento" : "Salvar investimento"}</Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -225,7 +264,8 @@ function InvestmentsPage() {
                         </p>
                       </div>
                       <p className="font-semibold tabular-nums">{formatBRL(Number(i.amount))}</p>
-                      <Button variant="ghost" size="icon" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(i)} aria-label="Editar"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => remove(i.id)} aria-label="Remover"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                     </li>
                   );
                 })}
