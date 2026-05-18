@@ -94,6 +94,48 @@ export type Database = {
           },
         ]
       }
+      fixed_expenses: {
+        Row: {
+          active: boolean
+          amount: number
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at: string
+          due_day: number
+          id: string
+          last_notified_for: string | null
+          name: string
+          notes: string | null
+          notify_email: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          amount: number
+          category?: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          due_day: number
+          id?: string
+          last_notified_for?: string | null
+          name: string
+          notes?: string | null
+          notify_email: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          category?: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          due_day?: number
+          id?: string
+          last_notified_for?: string | null
+          name?: string
+          notes?: string | null
+          notify_email?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       incomes: {
         Row: {
           amount: number
