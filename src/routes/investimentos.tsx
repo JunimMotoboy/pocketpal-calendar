@@ -43,6 +43,7 @@ function InvestmentsPage() {
   const nav = useNavigate();
   const [items, setItems] = useState<Investment[]>([]);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Investment | null>(null);
 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
@@ -72,6 +73,27 @@ function InvestmentsPage() {
     return m;
   }, [items]);
 
+  const resetForm = () => {
+    setName("");
+    setAmount("");
+    setType("renda_fixa");
+    setExpected("");
+    setDate(new Date());
+    setNotes("");
+    setEditing(null);
+  };
+
+  const openEdit = (item: Investment) => {
+    setEditing(item);
+    setName(item.name);
+    setAmount(String(item.amount).replace(".", ","));
+    setType(item.type);
+    setExpected(item.expected_return ? String(item.expected_return).replace(".", ",") : "");
+    setDate(parseISO(item.invested_on));
+    setNotes(item.notes || "");
+    setOpen(true);
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const value = parseFloat(amount.replace(",", "."));
@@ -81,19 +103,36 @@ function InvestmentsPage() {
     }
     setBusy(true);
     const expectedVal = expected ? parseFloat(expected.replace(",", ".")) : null;
-    const { error } = await supabase.from("investments").insert({
-      user_id: user!.id,
-      name: name.trim(),
-      amount: value,
-      type,
-      expected_return: expectedVal,
-      invested_on: format(date, "yyyy-MM-dd"),
-      notes: notes.trim() || null,
-    });
-    setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Investimento registrado!");
-    setName(""); setAmount(""); setType("renda_fixa"); setExpected(""); setDate(new Date()); setNotes("");
+    if (editing) {
+      const { error } = await supabase
+        .from("investments")
+        .update({
+          name: name.trim(),
+          amount: value,
+          type,
+          expected_return: expectedVal,
+          invested_on: format(date, "yyyy-MM-dd"),
+          notes: notes.trim() || null,
+        })
+        .eq("id", editing.id);
+      setBusy(false);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Investimento atualizado!");
+    } else {
+      const { error } = await supabase.from("investments").insert({
+        user_id: user!.id,
+        name: name.trim(),
+        amount: value,
+        type,
+        expected_return: expectedVal,
+        invested_on: format(date, "yyyy-MM-dd"),
+        notes: notes.trim() || null,
+      });
+      setBusy(false);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Investimento registrado!");
+    }
+    resetForm();
     setOpen(false);
     load();
   };
