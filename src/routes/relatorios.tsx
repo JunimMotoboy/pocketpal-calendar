@@ -171,15 +171,15 @@ function ReportsPage() {
       <section className="mb-6 grid gap-3 sm:grid-cols-3">
         <Card><CardContent className="p-4">
           <p className="text-xs text-muted-foreground">Entradas</p>
-          <p className="text-2xl font-bold text-success">{formatBRL(totalInc)}</p>
+          <p className="text-2xl font-bold text-emerald-600">{formatBRL(totalInc)}</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
           <p className="text-xs text-muted-foreground">Gastos</p>
-          <p className="text-2xl font-bold text-destructive">{formatBRL(totalExp)}</p>
+          <p className="text-2xl font-bold text-rose-600">{formatBRL(totalExp)}</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
           <p className="text-xs text-muted-foreground">Saldo</p>
-          <p className={`text-2xl font-bold ${saldo >= 0 ? "text-success" : "text-destructive"}`}>{formatBRL(saldo)}</p>
+          <p className={`text-2xl font-bold ${saldo >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{formatBRL(saldo)}</p>
         </CardContent></Card>
       </section>
 

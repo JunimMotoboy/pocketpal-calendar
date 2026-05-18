@@ -193,7 +193,7 @@ function IncomesPage() {
                         {i.notes ? ` · ${i.notes}` : ""}
                       </p>
                     </div>
-                    <p className="font-semibold tabular-nums text-success">+{formatBRL(Number(i.amount))}</p>
+                    <p className="font-semibold tabular-nums text-emerald-600">+{formatBRL(Number(i.amount))}</p>
                     <Button variant="ghost" size="icon" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                   </li>
                 );
