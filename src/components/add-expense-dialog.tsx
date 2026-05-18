@@ -70,6 +70,7 @@ export function ExpenseDialog({
       setCategory(expense.category);
       setPaymentMethod((expense.payment_method as PaymentMethod) || "pix");
       setCardId(expense.card_id ?? "none");
+      setInstallments(String(expense.installments ?? 1));
       setDate(parseISO(expense.spent_on));
       setNotes(expense.notes || "");
     }
@@ -79,6 +80,7 @@ export function ExpenseDialog({
       setCategory("comida");
       setPaymentMethod("pix");
       setCardId("none");
+      setInstallments("1");
       setDate(defaultDate ?? new Date());
       setNotes("");
     }
