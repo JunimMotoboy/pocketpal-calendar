@@ -29,6 +29,7 @@ type Expense = {
   description: string;
   amount: number;
   category: Category;
+  payment_method: string | null;
   spent_on: string;
   notes: string | null;
 };
