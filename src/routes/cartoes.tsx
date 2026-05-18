@@ -28,6 +28,7 @@ type CardItem = {
   due_day: number;
   closing_day: number | null;
   notes: string | null;
+  initial_used: number;
 };
 
 type ExpenseSum = { card_id: string; amount: number };
