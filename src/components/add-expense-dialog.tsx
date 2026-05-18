@@ -221,6 +221,20 @@ export function ExpenseDialog({
                 )}
               </div>
             )}
+            {paymentMethod === "credito" && (
+              <div className="col-span-2 space-y-2">
+                <Label>Parcelas</Label>
+                <Input type="number" min={1} max={48} value={installments} onChange={(e) => setInstallments(e.target.value)} />
+                {(() => {
+                  const v = parseFloat(amount.replace(",", "."));
+                  const n = Math.max(1, parseInt(installments, 10) || 1);
+                  if (!isNaN(v) && v > 0 && n > 1) {
+                    return <p className="text-xs text-muted-foreground">{n}x de R$ {(v / n).toFixed(2).replace(".", ",")}</p>;
+                  }
+                  return null;
+                })()}
+              </div>
+            )}
             <div className="col-span-2 space-y-2">
               <Label>Data</Label>
               <Popover>
