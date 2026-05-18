@@ -23,6 +23,7 @@ export type ExpenseItem = {
   spent_on: string;
   notes: string | null;
   card_id?: string | null;
+  installments?: number | null;
 };
 
 type CardOption = { id: string; name: string; limit_amount: number };
