@@ -53,7 +53,7 @@ function Dashboard() {
     const to = format(endOfMonth(month), "yyyy-MM-dd");
     const { data, error } = await supabase
       .from("expenses")
-      .select("id, description, amount, category, spent_on, notes")
+      .select("id, description, amount, category, payment_method, spent_on, notes")
       .gte("spent_on", from)
       .lte("spent_on", to)
       .order("spent_on", { ascending: false });
@@ -173,7 +173,7 @@ function Dashboard() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-medium">{e.description}</p>
                           <p className="text-xs text-muted-foreground">
-                            {cat.label}{e.notes ? ` · ${e.notes}` : ""}
+                            {cat.label}{e.payment_method ? ` · ${e.payment_method}` : ""}{e.notes ? ` · ${e.notes}` : ""}
                           </p>
                         </div>
                         <p className="font-semibold tabular-nums">{formatBRL(Number(e.amount))}</p>
