@@ -32,6 +32,7 @@ type Expense = {
   payment_method: string | null;
   spent_on: string;
   notes: string | null;
+  card_id: string | null;
 };
 
 function Dashboard() {
