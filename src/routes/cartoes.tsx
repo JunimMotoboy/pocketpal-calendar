@@ -45,6 +45,7 @@ function CardsPage() {
   const [limitAmount, setLimitAmount] = useState("");
   const [dueDay, setDueDay] = useState("10");
   const [closingDay, setClosingDay] = useState("");
+  const [initialUsed, setInitialUsed] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
 
