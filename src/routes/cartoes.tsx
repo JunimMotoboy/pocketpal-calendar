@@ -104,17 +104,19 @@ function CardsPage() {
       return;
     }
     if (cd !== null && (cd < 1 || cd > 31)) { toast.error("Dia de fechamento inválido."); return; }
+    const iu = initialUsed ? parseFloat(initialUsed.replace(",", ".")) : 0;
+    if (isNaN(iu) || iu < 0) { toast.error("Limite utilizado inválido."); return; }
     setBusy(true);
     if (editing) {
       const { error } = await supabase.from("cards").update({
-        name: name.trim(), limit_amount: lim, due_day: dd, closing_day: cd, notes: notes.trim() || null,
+        name: name.trim(), limit_amount: lim, due_day: dd, closing_day: cd, initial_used: iu, notes: notes.trim() || null,
       }).eq("id", editing.id);
       setBusy(false);
       if (error) { toast.error(error.message); return; }
       toast.success("Cartão atualizado!");
     } else {
       const { error } = await supabase.from("cards").insert({
-        user_id: user!.id, name: name.trim(), limit_amount: lim, due_day: dd, closing_day: cd, notes: notes.trim() || null,
+        user_id: user!.id, name: name.trim(), limit_amount: lim, due_day: dd, closing_day: cd, initial_used: iu, notes: notes.trim() || null,
       });
       setBusy(false);
       if (error) { toast.error(error.message); return; }
