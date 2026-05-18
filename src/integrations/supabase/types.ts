@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           due_day: number
           id: string
+          initial_used: number
           limit_amount: number
           name: string
           notes: string | null
@@ -30,6 +31,7 @@ export type Database = {
           created_at?: string
           due_day: number
           id?: string
+          initial_used?: number
           limit_amount?: number
           name: string
           notes?: string | null
@@ -40,6 +42,7 @@ export type Database = {
           created_at?: string
           due_day?: number
           id?: string
+          initial_used?: number
           limit_amount?: number
           name?: string
           notes?: string | null
@@ -142,6 +145,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          installments: number
           notes: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           spent_on: string
@@ -154,6 +158,7 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          installments?: number
           notes?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           spent_on?: string
@@ -166,6 +171,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          installments?: number
           notes?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           spent_on?: string
