@@ -226,6 +226,7 @@ function CardsPage() {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {remaining >= 0 ? `Disponível: ${formatBRL(remaining)}` : `Acima do limite em ${formatBRL(-remaining)}`}
+                    {Number(c.initial_used) > 0 && ` · inclui ${formatBRL(Number(c.initial_used))} de saldo anterior`}
                   </p>
                   {c.notes && <p className="text-xs text-muted-foreground">{c.notes}</p>}
                 </CardContent>
