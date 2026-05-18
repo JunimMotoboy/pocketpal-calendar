@@ -264,7 +264,8 @@ function InvestmentsPage() {
                         </p>
                       </div>
                       <p className="font-semibold tabular-nums">{formatBRL(Number(i.amount))}</p>
-                      <Button variant="ghost" size="icon" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(i)} aria-label="Editar"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => remove(i.id)} aria-label="Remover"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                     </li>
                   );
                 })}
