@@ -22,6 +22,7 @@ export type Database = {
           description: string
           id: string
           notes: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
           spent_on: string
           user_id: string
         }
@@ -32,6 +33,7 @@ export type Database = {
           description: string
           id?: string
           notes?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
           spent_on?: string
           user_id: string
         }
@@ -42,7 +44,77 @@ export type Database = {
           description?: string
           id?: string
           notes?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
           spent_on?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      incomes: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          notes: string | null
+          received_on: string
+          source: Database["public"]["Enums"]["income_source"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          notes?: string | null
+          received_on?: string
+          source?: Database["public"]["Enums"]["income_source"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          notes?: string | null
+          received_on?: string
+          source?: Database["public"]["Enums"]["income_source"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      investments: {
+        Row: {
+          amount: number
+          created_at: string
+          expected_return: number | null
+          id: string
+          invested_on: string
+          name: string
+          notes: string | null
+          type: Database["public"]["Enums"]["investment_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          expected_return?: number | null
+          id?: string
+          invested_on?: string
+          name: string
+          notes?: string | null
+          type?: Database["public"]["Enums"]["investment_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expected_return?: number | null
+          id?: string
+          invested_on?: string
+          name?: string
+          notes?: string | null
+          type?: Database["public"]["Enums"]["investment_type"]
           user_id?: string
         }
         Relationships: []
@@ -82,6 +154,31 @@ export type Database = {
         | "educacao"
         | "compras"
         | "moradia"
+        | "outros"
+      income_source:
+        | "salario"
+        | "freelance"
+        | "vendas"
+        | "presente"
+        | "reembolso"
+        | "rendimento"
+        | "outros"
+      investment_type:
+        | "renda_fixa"
+        | "renda_variavel"
+        | "cripto"
+        | "fundos"
+        | "tesouro"
+        | "poupanca"
+        | "imoveis"
+        | "outros"
+      payment_method:
+        | "dinheiro"
+        | "debito"
+        | "credito"
+        | "pix"
+        | "boleto"
+        | "transferencia"
         | "outros"
     }
     CompositeTypes: {
@@ -219,6 +316,34 @@ export const Constants = {
         "educacao",
         "compras",
         "moradia",
+        "outros",
+      ],
+      income_source: [
+        "salario",
+        "freelance",
+        "vendas",
+        "presente",
+        "reembolso",
+        "rendimento",
+        "outros",
+      ],
+      investment_type: [
+        "renda_fixa",
+        "renda_variavel",
+        "cripto",
+        "fundos",
+        "tesouro",
+        "poupanca",
+        "imoveis",
+        "outros",
+      ],
+      payment_method: [
+        "dinheiro",
+        "debito",
+        "credito",
+        "pix",
+        "boleto",
+        "transferencia",
         "outros",
       ],
     },

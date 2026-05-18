@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { CATEGORIES, type Category } from "@/lib/categories";
+import { CATEGORIES, PAYMENT_METHODS, type Category, type PaymentMethod } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -28,6 +28,7 @@ export function AddExpenseDialog({
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<Category>("comida");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [date, setDate] = useState<Date>(initial);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
@@ -36,6 +37,7 @@ export function AddExpenseDialog({
     setDescription("");
     setAmount("");
     setCategory("comida");
+    setPaymentMethod("pix");
     setDate(defaultDate ?? new Date());
     setNotes("");
   };
@@ -53,6 +55,7 @@ export function AddExpenseDialog({
       description: description.trim(),
       amount: value,
       category,
+      payment_method: paymentMethod,
       spent_on: format(date, "yyyy-MM-dd"),
       notes: notes.trim() || null,
     });
@@ -100,6 +103,25 @@ export function AddExpenseDialog({
                         <span className="flex items-center gap-2">
                           <Icon className="h-4 w-4" style={{ color: c.color }} />
                           {c.label}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2 space-y-2">
+              <Label>Forma de pagamento</Label>
+              <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((p) => {
+                    const Icon = p.icon;
+                    return (
+                      <SelectItem key={p.value} value={p.value}>
+                        <span className="flex items-center gap-2">
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                          {p.label}
                         </span>
                       </SelectItem>
                     );

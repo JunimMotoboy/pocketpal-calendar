@@ -9,10 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as InvestimentosRouteImport } from './routes/investimentos'
+import { Route as EntradasRouteImport } from './routes/entradas'
 import { Route as DicasRouteImport } from './routes/dicas'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
+const RelatoriosRoute = RelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvestimentosRoute = InvestimentosRouteImport.update({
+  id: '/investimentos',
+  path: '/investimentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EntradasRoute = EntradasRouteImport.update({
+  id: '/entradas',
+  path: '/entradas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DicasRoute = DicasRouteImport.update({
   id: '/dicas',
   path: '/dicas',
@@ -33,34 +51,80 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dicas': typeof DicasRoute
+  '/entradas': typeof EntradasRoute
+  '/investimentos': typeof InvestimentosRoute
+  '/relatorios': typeof RelatoriosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dicas': typeof DicasRoute
+  '/entradas': typeof EntradasRoute
+  '/investimentos': typeof InvestimentosRoute
+  '/relatorios': typeof RelatoriosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dicas': typeof DicasRoute
+  '/entradas': typeof EntradasRoute
+  '/investimentos': typeof InvestimentosRoute
+  '/relatorios': typeof RelatoriosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dicas'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dicas'
+    | '/entradas'
+    | '/investimentos'
+    | '/relatorios'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dicas'
-  id: '__root__' | '/' | '/auth' | '/dicas'
+  to: '/' | '/auth' | '/dicas' | '/entradas' | '/investimentos' | '/relatorios'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/dicas'
+    | '/entradas'
+    | '/investimentos'
+    | '/relatorios'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DicasRoute: typeof DicasRoute
+  EntradasRoute: typeof EntradasRoute
+  InvestimentosRoute: typeof InvestimentosRoute
+  RelatoriosRoute: typeof RelatoriosRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/relatorios': {
+      id: '/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/investimentos': {
+      id: '/investimentos'
+      path: '/investimentos'
+      fullPath: '/investimentos'
+      preLoaderRoute: typeof InvestimentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/entradas': {
+      id: '/entradas'
+      path: '/entradas'
+      fullPath: '/entradas'
+      preLoaderRoute: typeof EntradasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dicas': {
       id: '/dicas'
       path: '/dicas'
@@ -89,6 +153,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DicasRoute: DicasRoute,
+  EntradasRoute: EntradasRoute,
+  InvestimentosRoute: InvestimentosRoute,
+  RelatoriosRoute: RelatoriosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
