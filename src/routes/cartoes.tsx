@@ -28,6 +28,7 @@ type CardItem = {
   due_day: number;
   closing_day: number | null;
   notes: string | null;
+  initial_used: number;
 };
 
 type ExpenseSum = { card_id: string; amount: number };
@@ -44,6 +45,7 @@ function CardsPage() {
   const [limitAmount, setLimitAmount] = useState("");
   const [dueDay, setDueDay] = useState("10");
   const [closingDay, setClosingDay] = useState("");
+  const [initialUsed, setInitialUsed] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -53,7 +55,7 @@ function CardsPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("cards")
-      .select("id, name, limit_amount, due_day, closing_day, notes")
+      .select("id, name, limit_amount, due_day, closing_day, notes, initial_used")
       .order("created_at", { ascending: false });
     if (error) { toast.error(error.message); return; }
     setItems((data ?? []) as CardItem[]);
@@ -72,10 +74,13 @@ function CardsPage() {
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [user]);
 
   const totalLimit = useMemo(() => items.reduce((s, i) => s + Number(i.limit_amount), 0), [items]);
-  const totalSpent = useMemo(() => Object.values(spent).reduce((s, v) => s + v, 0), [spent]);
+  const totalSpent = useMemo(
+    () => items.reduce((s, i) => s + (spent[i.id] ?? 0) + Number(i.initial_used ?? 0), 0),
+    [items, spent],
+  );
 
   const resetForm = () => {
-    setName(""); setLimitAmount(""); setDueDay("10"); setClosingDay(""); setNotes(""); setEditing(null);
+    setName(""); setLimitAmount(""); setDueDay("10"); setClosingDay(""); setInitialUsed(""); setNotes(""); setEditing(null);
   };
 
   const openEdit = (c: CardItem) => {
@@ -84,6 +89,7 @@ function CardsPage() {
     setLimitAmount(String(c.limit_amount).replace(".", ","));
     setDueDay(String(c.due_day));
     setClosingDay(c.closing_day ? String(c.closing_day) : "");
+    setInitialUsed(c.initial_used ? String(c.initial_used).replace(".", ",") : "");
     setNotes(c.notes || "");
     setOpen(true);
   };
@@ -98,17 +104,19 @@ function CardsPage() {
       return;
     }
     if (cd !== null && (cd < 1 || cd > 31)) { toast.error("Dia de fechamento inválido."); return; }
+    const iu = initialUsed ? parseFloat(initialUsed.replace(",", ".")) : 0;
+    if (isNaN(iu) || iu < 0) { toast.error("Limite utilizado inválido."); return; }
     setBusy(true);
     if (editing) {
       const { error } = await supabase.from("cards").update({
-        name: name.trim(), limit_amount: lim, due_day: dd, closing_day: cd, notes: notes.trim() || null,
+        name: name.trim(), limit_amount: lim, due_day: dd, closing_day: cd, initial_used: iu, notes: notes.trim() || null,
       }).eq("id", editing.id);
       setBusy(false);
       if (error) { toast.error(error.message); return; }
       toast.success("Cartão atualizado!");
     } else {
       const { error } = await supabase.from("cards").insert({
-        user_id: user!.id, name: name.trim(), limit_amount: lim, due_day: dd, closing_day: cd, notes: notes.trim() || null,
+        user_id: user!.id, name: name.trim(), limit_amount: lim, due_day: dd, closing_day: cd, initial_used: iu, notes: notes.trim() || null,
       });
       setBusy(false);
       if (error) { toast.error(error.message); return; }
@@ -161,6 +169,11 @@ function CardsPage() {
                   <Input type="number" min={1} max={31} value={closingDay} onChange={(e) => setClosingDay(e.target.value)} />
                 </div>
                 <div className="col-span-2 space-y-2">
+                  <Label>Limite já utilizado (R$)</Label>
+                  <Input inputMode="decimal" value={initialUsed} onChange={(e) => setInitialUsed(e.target.value)} placeholder="0,00" />
+                  <p className="text-xs text-muted-foreground">Valor já gasto antes de começar a registrar aqui.</p>
+                </div>
+                <div className="col-span-2 space-y-2">
                   <Label>Observações</Label>
                   <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Bandeira, banco, etc." />
                 </div>
@@ -176,7 +189,7 @@ function CardsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {items.map((c) => {
-            const used = spent[c.id] ?? 0;
+            const used = (spent[c.id] ?? 0) + Number(c.initial_used ?? 0);
             const pct = c.limit_amount > 0 ? Math.min(100, (used / Number(c.limit_amount)) * 100) : 0;
             const remaining = Number(c.limit_amount) - used;
             const danger = pct >= 80;
@@ -213,6 +226,7 @@ function CardsPage() {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {remaining >= 0 ? `Disponível: ${formatBRL(remaining)}` : `Acima do limite em ${formatBRL(-remaining)}`}
+                    {Number(c.initial_used) > 0 && ` · inclui ${formatBRL(Number(c.initial_used))} de saldo anterior`}
                   </p>
                   {c.notes && <p className="text-xs text-muted-foreground">{c.notes}</p>}
                 </CardContent>

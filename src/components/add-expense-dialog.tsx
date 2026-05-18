@@ -23,6 +23,7 @@ export type ExpenseItem = {
   spent_on: string;
   notes: string | null;
   card_id?: string | null;
+  installments?: number | null;
 };
 
 type CardOption = { id: string; name: string; limit_amount: number };
@@ -50,6 +51,7 @@ export function ExpenseDialog({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [cardId, setCardId] = useState<string | "none">("none");
   const [cards, setCards] = useState<CardOption[]>([]);
+  const [installments, setInstallments] = useState<string>("1");
   const [date, setDate] = useState<Date>(initial);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
@@ -68,6 +70,7 @@ export function ExpenseDialog({
       setCategory(expense.category);
       setPaymentMethod((expense.payment_method as PaymentMethod) || "pix");
       setCardId(expense.card_id ?? "none");
+      setInstallments(String(expense.installments ?? 1));
       setDate(parseISO(expense.spent_on));
       setNotes(expense.notes || "");
     }
@@ -77,6 +80,7 @@ export function ExpenseDialog({
       setCategory("comida");
       setPaymentMethod("pix");
       setCardId("none");
+      setInstallments("1");
       setDate(defaultDate ?? new Date());
       setNotes("");
     }
@@ -92,6 +96,7 @@ export function ExpenseDialog({
     }
     setBusy(true);
     const linkedCard = paymentMethod === "credito" && cardId !== "none" ? cardId : null;
+    const inst = paymentMethod === "credito" ? Math.max(1, parseInt(installments, 10) || 1) : 1;
     if (isEdit && expense) {
       const { error } = await supabase
         .from("expenses")
@@ -101,6 +106,7 @@ export function ExpenseDialog({
           category,
           payment_method: paymentMethod,
           card_id: linkedCard,
+          installments: inst,
           spent_on: format(date, "yyyy-MM-dd"),
           notes: notes.trim() || null,
         })
@@ -119,6 +125,7 @@ export function ExpenseDialog({
         category,
         payment_method: paymentMethod,
         card_id: linkedCard,
+        installments: inst,
         spent_on: format(date, "yyyy-MM-dd"),
         notes: notes.trim() || null,
       });
@@ -212,6 +219,20 @@ export function ExpenseDialog({
                 {cards.length === 0 && (
                   <p className="text-xs text-muted-foreground">Nenhum cartão cadastrado. Vá em <strong>Cartões</strong> para adicionar.</p>
                 )}
+              </div>
+            )}
+            {paymentMethod === "credito" && (
+              <div className="col-span-2 space-y-2">
+                <Label>Parcelas</Label>
+                <Input type="number" min={1} max={48} value={installments} onChange={(e) => setInstallments(e.target.value)} />
+                {(() => {
+                  const v = parseFloat(amount.replace(",", "."));
+                  const n = Math.max(1, parseInt(installments, 10) || 1);
+                  if (!isNaN(v) && v > 0 && n > 1) {
+                    return <p className="text-xs text-muted-foreground">{n}x de R$ {(v / n).toFixed(2).replace(".", ",")}</p>;
+                  }
+                  return null;
+                })()}
               </div>
             )}
             <div className="col-span-2 space-y-2">
