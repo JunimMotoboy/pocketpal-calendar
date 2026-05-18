@@ -91,6 +91,7 @@ export function ExpenseDialog({
       return;
     }
     setBusy(true);
+    const linkedCard = paymentMethod === "credito" && cardId !== "none" ? cardId : null;
     if (isEdit && expense) {
       const { error } = await supabase
         .from("expenses")
@@ -99,6 +100,7 @@ export function ExpenseDialog({
           amount: value,
           category,
           payment_method: paymentMethod,
+          card_id: linkedCard,
           spent_on: format(date, "yyyy-MM-dd"),
           notes: notes.trim() || null,
         })
@@ -116,6 +118,7 @@ export function ExpenseDialog({
         amount: value,
         category,
         payment_method: paymentMethod,
+        card_id: linkedCard,
         spent_on: format(date, "yyyy-MM-dd"),
         notes: notes.trim() || null,
       });
@@ -126,6 +129,7 @@ export function ExpenseDialog({
       }
       toast.success("Gasto registrado!");
     }
+
     setOpen(false);
     onSaved();
   };
@@ -193,6 +197,23 @@ export function ExpenseDialog({
                 </SelectContent>
               </Select>
             </div>
+            {paymentMethod === "credito" && (
+              <div className="col-span-2 space-y-2">
+                <Label>Cartão</Label>
+                <Select value={cardId} onValueChange={(v) => setCardId(v as string)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione um cartão" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem cartão vinculado</SelectItem>
+                    {cards.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {cards.length === 0 && (
+                  <p className="text-xs text-muted-foreground">Nenhum cartão cadastrado. Vá em <strong>Cartões</strong> para adicionar.</p>
+                )}
+              </div>
+            )}
             <div className="col-span-2 space-y-2">
               <Label>Data</Label>
               <Popover>
