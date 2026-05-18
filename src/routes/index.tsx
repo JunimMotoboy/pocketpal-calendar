@@ -170,17 +170,27 @@ function Dashboard() {
                         >
                           <Icon className="h-5 w-5" style={{ color: cat.color }} />
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium">{e.description}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {cat.label}{e.payment_method ? ` · ${e.payment_method}` : ""}{e.notes ? ` · ${e.notes}` : ""}
-                          </p>
-                        </div>
-                        <p className="font-semibold tabular-nums">{formatBRL(Number(e.amount))}</p>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(e.id)} aria-label="Remover">
-                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{e.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {cat.label}{e.payment_method ? ` · ${e.payment_method}` : ""}{e.notes ? ` · ${e.notes}` : ""}
+                      </p>
+                    </div>
+                    <p className="font-semibold tabular-nums">{formatBRL(Number(e.amount))}</p>
+                    <ExpenseDialog
+                      userId={user.id}
+                      expense={e}
+                      onSaved={load}
+                      trigger={
+                        <Button variant="ghost" size="icon" aria-label="Editar">
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
                         </Button>
-                      </li>
+                      }
+                    />
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(e.id)} aria-label="Remover">
+                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </li>
                     );
                   })}
                 </ul>
