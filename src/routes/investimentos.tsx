@@ -210,7 +210,7 @@ function InvestmentsPage() {
                   <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : "Salvar investimento"}</Button>
+              <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : editing ? "Atualizar investimento" : "Salvar investimento"}</Button>
             </form>
           </DialogContent>
         </Dialog>
