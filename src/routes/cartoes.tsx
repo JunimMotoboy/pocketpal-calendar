@@ -189,7 +189,7 @@ function CardsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {items.map((c) => {
-            const used = spent[c.id] ?? 0;
+            const used = (spent[c.id] ?? 0) + Number(c.initial_used ?? 0);
             const pct = c.limit_amount > 0 ? Math.min(100, (used / Number(c.limit_amount)) * 100) : 0;
             const remaining = Number(c.limit_amount) - used;
             const danger = pct >= 80;
