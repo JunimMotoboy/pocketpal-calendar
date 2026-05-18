@@ -22,7 +22,11 @@ export type ExpenseItem = {
   payment_method: string | null;
   spent_on: string;
   notes: string | null;
+  card_id?: string | null;
 };
+
+type CardOption = { id: string; name: string; limit_amount: number };
+
 
 export function ExpenseDialog({
   userId,
@@ -44,9 +48,18 @@ export function ExpenseDialog({
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<Category>("comida");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
+  const [cardId, setCardId] = useState<string | "none">("none");
+  const [cards, setCards] = useState<CardOption[]>([]);
   const [date, setDate] = useState<Date>(initial);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    supabase.from("cards").select("id, name, limit_amount").order("created_at", { ascending: false })
+      .then(({ data }) => setCards((data ?? []) as CardOption[]));
+  }, [open]);
+
 
   useEffect(() => {
     if (open && isEdit && expense) {
@@ -54,6 +67,7 @@ export function ExpenseDialog({
       setAmount(String(expense.amount).replace(".", ","));
       setCategory(expense.category);
       setPaymentMethod((expense.payment_method as PaymentMethod) || "pix");
+      setCardId(expense.card_id ?? "none");
       setDate(parseISO(expense.spent_on));
       setNotes(expense.notes || "");
     }
@@ -62,10 +76,12 @@ export function ExpenseDialog({
       setAmount("");
       setCategory("comida");
       setPaymentMethod("pix");
+      setCardId("none");
       setDate(defaultDate ?? new Date());
       setNotes("");
     }
   }, [open, isEdit, expense, defaultDate]);
+
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

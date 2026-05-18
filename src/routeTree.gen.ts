@@ -13,6 +13,7 @@ import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as InvestimentosRouteImport } from './routes/investimentos'
 import { Route as EntradasRouteImport } from './routes/entradas'
 import { Route as DicasRouteImport } from './routes/dicas'
+import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -36,6 +37,11 @@ const DicasRoute = DicasRouteImport.update({
   path: '/dicas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CartoesRoute = CartoesRouteImport.update({
+  id: '/cartoes',
+  path: '/cartoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -50,6 +56,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cartoes': typeof CartoesRoute
   '/dicas': typeof DicasRoute
   '/entradas': typeof EntradasRoute
   '/investimentos': typeof InvestimentosRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cartoes': typeof CartoesRoute
   '/dicas': typeof DicasRoute
   '/entradas': typeof EntradasRoute
   '/investimentos': typeof InvestimentosRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cartoes': typeof CartoesRoute
   '/dicas': typeof DicasRoute
   '/entradas': typeof EntradasRoute
   '/investimentos': typeof InvestimentosRoute
@@ -77,16 +86,25 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/cartoes'
     | '/dicas'
     | '/entradas'
     | '/investimentos'
     | '/relatorios'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dicas' | '/entradas' | '/investimentos' | '/relatorios'
+  to:
+    | '/'
+    | '/auth'
+    | '/cartoes'
+    | '/dicas'
+    | '/entradas'
+    | '/investimentos'
+    | '/relatorios'
   id:
     | '__root__'
     | '/'
     | '/auth'
+    | '/cartoes'
     | '/dicas'
     | '/entradas'
     | '/investimentos'
@@ -96,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  CartoesRoute: typeof CartoesRoute
   DicasRoute: typeof DicasRoute
   EntradasRoute: typeof EntradasRoute
   InvestimentosRoute: typeof InvestimentosRoute
@@ -132,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DicasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cartoes': {
+      id: '/cartoes'
+      path: '/cartoes'
+      fullPath: '/cartoes'
+      preLoaderRoute: typeof CartoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -152,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  CartoesRoute: CartoesRoute,
   DicasRoute: DicasRoute,
   EntradasRoute: EntradasRoute,
   InvestimentosRoute: InvestimentosRoute,
