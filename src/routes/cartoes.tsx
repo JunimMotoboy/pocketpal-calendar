@@ -55,7 +55,7 @@ function CardsPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("cards")
-      .select("id, name, limit_amount, due_day, closing_day, notes")
+      .select("id, name, limit_amount, due_day, closing_day, notes, initial_used")
       .order("created_at", { ascending: false });
     if (error) { toast.error(error.message); return; }
     setItems((data ?? []) as CardItem[]);
