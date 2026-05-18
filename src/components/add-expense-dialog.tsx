@@ -51,6 +51,7 @@ export function ExpenseDialog({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [cardId, setCardId] = useState<string | "none">("none");
   const [cards, setCards] = useState<CardOption[]>([]);
+  const [installments, setInstallments] = useState<string>("1");
   const [date, setDate] = useState<Date>(initial);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
