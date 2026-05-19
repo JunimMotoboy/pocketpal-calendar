@@ -111,6 +111,11 @@ function Dashboard() {
     [expenses, selected]
   );
 
+  const dayFixed = useMemo(
+    () => fixedDues.filter((f) => isSameDay(f.date, selected)),
+    [fixedDues, selected]
+  );
+
   const totals = useMemo(() => {
     const byCat: Record<string, number> = {};
     let total = 0;
@@ -128,6 +133,8 @@ function Dashboard() {
     }
     return m;
   }, [expenses]);
+
+  const fixedDaysSet = useMemo(() => new Set(fixedDues.map((f) => f.dateKey)), [fixedDues]);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("expenses").delete().eq("id", id);
