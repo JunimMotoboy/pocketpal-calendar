@@ -9,6 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CATEGORIES, CAT_MAP, formatBRL, type Category } from "@/lib/categories";
 import { AddExpenseDialog, ExpenseDialog } from "@/components/add-expense-dialog";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,7 @@ function Dashboard() {
   const [selected, setSelected] = useState<Date>(new Date());
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [fixedRaw, setFixedRaw] = useState<{ id: string; name: string; amount: number; category: Category; due_day: number }[]>([]);
+  const [paidMap, setPaidMap] = useState<Map<string, string>>(new Map()); // key fixed_expense_id -> payment id
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
@@ -63,7 +65,9 @@ function Dashboard() {
     setFetching(true);
     const from = format(startOfMonth(month), "yyyy-MM-dd");
     const to = format(endOfMonth(month), "yyyy-MM-dd");
-    const [expRes, fixRes] = await Promise.all([
+    const y = month.getFullYear();
+    const mo = month.getMonth() + 1;
+    const [expRes, fixRes, payRes] = await Promise.all([
       supabase
         .from("expenses")
         .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
@@ -74,18 +78,52 @@ function Dashboard() {
         .from("fixed_expenses")
         .select("id, name, amount, category, due_day")
         .eq("active", true),
+      supabase
+        .from("fixed_expense_payments")
+        .select("id, fixed_expense_id")
+        .eq("year", y)
+        .eq("month", mo),
     ]);
     setFetching(false);
     if (expRes.error) toast.error(expRes.error.message);
     else setExpenses((expRes.data ?? []) as Expense[]);
     if (fixRes.error) toast.error(fixRes.error.message);
     else setFixedRaw((fixRes.data ?? []) as typeof fixedRaw);
+    if (payRes.error) toast.error(payRes.error.message);
+    else {
+      const m = new Map<string, string>();
+      for (const p of (payRes.data ?? []) as { id: string; fixed_expense_id: string }[]) {
+        m.set(p.fixed_expense_id, p.id);
+      }
+      setPaidMap(m);
+    }
   };
 
   useEffect(() => {
     if (user) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, month]);
+
+  const togglePaid = async (f: FixedDue) => {
+    if (!user) return;
+    const existing = paidMap.get(f.id);
+    if (existing) {
+      const { error } = await supabase.from("fixed_expense_payments").delete().eq("id", existing);
+      if (error) return toast.error(error.message);
+      const next = new Map(paidMap); next.delete(f.id); setPaidMap(next);
+    } else {
+      const y = month.getFullYear();
+      const mo = month.getMonth() + 1;
+      const { data, error } = await supabase
+        .from("fixed_expense_payments")
+        .insert({ user_id: user.id, fixed_expense_id: f.id, year: y, month: mo, paid_on: format(new Date(), "yyyy-MM-dd") })
+        .select("id")
+        .single();
+      if (error) return toast.error(error.message);
+      const next = new Map(paidMap); next.set(f.id, data!.id); setPaidMap(next);
+      toast.success("Marcada como paga");
+    }
+  };
 
   const fixedDues = useMemo<FixedDue[]>(() => {
     const dim = getDaysInMonth(month);
@@ -208,8 +246,14 @@ function Dashboard() {
                   {dayFixed.map((f) => {
                     const cat = CAT_MAP[f.category];
                     const Icon = cat.icon;
+                    const paid = paidMap.has(f.id);
                     return (
                       <li key={`fx-${f.id}`} className="flex items-center gap-3 px-3 py-2">
+                        <Checkbox
+                          checked={paid}
+                          onCheckedChange={() => togglePaid(f)}
+                          aria-label={paid ? "Desmarcar pagamento" : "Marcar como paga"}
+                        />
                         <div
                           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
                           style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 15%, transparent)` }}
@@ -217,12 +261,12 @@ function Dashboard() {
                           <Icon className="h-5 w-5" style={{ color: cat.color }} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium">{f.name}</p>
+                          <p className={cn("truncate font-medium", paid && "line-through text-muted-foreground")}>{f.name}</p>
                           <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <CalendarClock className="h-3 w-3" /> Vence hoje · {cat.label}
+                            <CalendarClock className="h-3 w-3" /> {paid ? "Paga este mês" : "Vence hoje"} · {cat.label}
                           </p>
                         </div>
-                        <p className="font-semibold tabular-nums">{formatBRL(f.amount)}</p>
+                        <p className={cn("font-semibold tabular-nums", paid && "line-through text-muted-foreground")}>{formatBRL(f.amount)}</p>
                         <Link to="/despesas-fixas" aria-label="Gerenciar despesas fixas">
                           <Button variant="ghost" size="icon"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
                         </Link>
