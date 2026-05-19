@@ -53,6 +53,7 @@ function Dashboard() {
   const [selected, setSelected] = useState<Date>(new Date());
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [fixedRaw, setFixedRaw] = useState<{ id: string; name: string; amount: number; category: Category; due_day: number }[]>([]);
+  const [paidMap, setPaidMap] = useState<Map<string, string>>(new Map()); // key fixed_expense_id -> payment id
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
@@ -64,7 +65,9 @@ function Dashboard() {
     setFetching(true);
     const from = format(startOfMonth(month), "yyyy-MM-dd");
     const to = format(endOfMonth(month), "yyyy-MM-dd");
-    const [expRes, fixRes] = await Promise.all([
+    const y = month.getFullYear();
+    const mo = month.getMonth() + 1;
+    const [expRes, fixRes, payRes] = await Promise.all([
       supabase
         .from("expenses")
         .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
@@ -75,18 +78,52 @@ function Dashboard() {
         .from("fixed_expenses")
         .select("id, name, amount, category, due_day")
         .eq("active", true),
+      supabase
+        .from("fixed_expense_payments")
+        .select("id, fixed_expense_id")
+        .eq("year", y)
+        .eq("month", mo),
     ]);
     setFetching(false);
     if (expRes.error) toast.error(expRes.error.message);
     else setExpenses((expRes.data ?? []) as Expense[]);
     if (fixRes.error) toast.error(fixRes.error.message);
     else setFixedRaw((fixRes.data ?? []) as typeof fixedRaw);
+    if (payRes.error) toast.error(payRes.error.message);
+    else {
+      const m = new Map<string, string>();
+      for (const p of (payRes.data ?? []) as { id: string; fixed_expense_id: string }[]) {
+        m.set(p.fixed_expense_id, p.id);
+      }
+      setPaidMap(m);
+    }
   };
 
   useEffect(() => {
     if (user) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, month]);
+
+  const togglePaid = async (f: FixedDue) => {
+    if (!user) return;
+    const existing = paidMap.get(f.id);
+    if (existing) {
+      const { error } = await supabase.from("fixed_expense_payments").delete().eq("id", existing);
+      if (error) return toast.error(error.message);
+      const next = new Map(paidMap); next.delete(f.id); setPaidMap(next);
+    } else {
+      const y = month.getFullYear();
+      const mo = month.getMonth() + 1;
+      const { data, error } = await supabase
+        .from("fixed_expense_payments")
+        .insert({ user_id: user.id, fixed_expense_id: f.id, year: y, month: mo, paid_on: format(new Date(), "yyyy-MM-dd") })
+        .select("id")
+        .single();
+      if (error) return toast.error(error.message);
+      const next = new Map(paidMap); next.set(f.id, data!.id); setPaidMap(next);
+      toast.success("Marcada como paga");
+    }
+  };
 
   const fixedDues = useMemo<FixedDue[]>(() => {
     const dim = getDaysInMonth(month);
