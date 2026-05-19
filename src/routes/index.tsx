@@ -1,8 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { format, startOfMonth, endOfMonth, isSameDay, parseISO } from "date-fns";
+import { format, startOfMonth, endOfMonth, isSameDay, parseISO, getDaysInMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Pencil, CalendarClock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
@@ -35,12 +35,23 @@ type Expense = {
   card_id: string | null;
 };
 
+type FixedDue = {
+  id: string;
+  name: string;
+  amount: number;
+  category: Category;
+  due_day: number;
+  date: Date;
+  dateKey: string;
+};
+
 function Dashboard() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
   const [month, setMonth] = useState<Date>(new Date());
   const [selected, setSelected] = useState<Date>(new Date());
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [fixedRaw, setFixedRaw] = useState<{ id: string; name: string; amount: number; category: Category; due_day: number }[]>([]);
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
@@ -52,15 +63,23 @@ function Dashboard() {
     setFetching(true);
     const from = format(startOfMonth(month), "yyyy-MM-dd");
     const to = format(endOfMonth(month), "yyyy-MM-dd");
-    const { data, error } = await supabase
-      .from("expenses")
-      .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
-      .gte("spent_on", from)
-      .lte("spent_on", to)
-      .order("spent_on", { ascending: false });
+    const [expRes, fixRes] = await Promise.all([
+      supabase
+        .from("expenses")
+        .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
+        .gte("spent_on", from)
+        .lte("spent_on", to)
+        .order("spent_on", { ascending: false }),
+      supabase
+        .from("fixed_expenses")
+        .select("id, name, amount, category, due_day")
+        .eq("active", true),
+    ]);
     setFetching(false);
-    if (error) toast.error(error.message);
-    else setExpenses((data ?? []) as Expense[]);
+    if (expRes.error) toast.error(expRes.error.message);
+    else setExpenses((expRes.data ?? []) as Expense[]);
+    if (fixRes.error) toast.error(fixRes.error.message);
+    else setFixedRaw((fixRes.data ?? []) as typeof fixedRaw);
   };
 
   useEffect(() => {
@@ -68,9 +87,33 @@ function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, month]);
 
+  const fixedDues = useMemo<FixedDue[]>(() => {
+    const dim = getDaysInMonth(month);
+    const y = month.getFullYear();
+    const m = month.getMonth();
+    return fixedRaw.map((f) => {
+      const day = Math.min(f.due_day, dim);
+      const date = new Date(y, m, day);
+      return {
+        id: f.id,
+        name: f.name,
+        amount: Number(f.amount),
+        category: f.category,
+        due_day: f.due_day,
+        date,
+        dateKey: format(date, "yyyy-MM-dd"),
+      };
+    });
+  }, [fixedRaw, month]);
+
   const dayExpenses = useMemo(
     () => expenses.filter((e) => isSameDay(parseISO(e.spent_on), selected)),
     [expenses, selected]
+  );
+
+  const dayFixed = useMemo(
+    () => fixedDues.filter((f) => isSameDay(f.date, selected)),
+    [fixedDues, selected]
   );
 
   const totals = useMemo(() => {
@@ -90,6 +133,8 @@ function Dashboard() {
     }
     return m;
   }, [expenses]);
+
+  const fixedDaysSet = useMemo(() => new Set(fixedDues.map((f) => f.dateKey)), [fixedDues]);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("expenses").delete().eq("id", id);
@@ -133,9 +178,13 @@ function Dashboard() {
               onMonthChange={setMonth}
               locale={ptBR}
               className={cn("p-0 pointer-events-auto")}
-              modifiers={{ hasExpense: (d) => dayTotals.has(format(d, "yyyy-MM-dd")) }}
+              modifiers={{
+                hasExpense: (d) => dayTotals.has(format(d, "yyyy-MM-dd")),
+                hasFixed: (d) => fixedDaysSet.has(format(d, "yyyy-MM-dd")),
+              }}
               modifiersClassNames={{
                 hasExpense: "relative font-semibold text-primary after:absolute after:bottom-1 after:left-1/2 after:h-1 after:w-1 after:-translate-x-1/2 after:rounded-full after:bg-accent",
+                hasFixed: "relative font-semibold text-destructive before:absolute before:top-1 before:right-1 before:h-1.5 before:w-1.5 before:rounded-full before:bg-destructive",
               }}
             />
             {fetching && <p className="mt-2 text-xs text-muted-foreground">Atualizando...</p>}
@@ -154,11 +203,39 @@ function Dashboard() {
               </Badge>
             </CardHeader>
             <CardContent>
-              {dayExpenses.length === 0 ? (
+              {dayFixed.length > 0 && (
+                <ul className="mb-3 divide-y divide-border rounded-lg border border-dashed border-destructive/40 bg-destructive/5">
+                  {dayFixed.map((f) => {
+                    const cat = CAT_MAP[f.category];
+                    const Icon = cat.icon;
+                    return (
+                      <li key={`fx-${f.id}`} className="flex items-center gap-3 px-3 py-2">
+                        <div
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                          style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 15%, transparent)` }}
+                        >
+                          <Icon className="h-5 w-5" style={{ color: cat.color }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium">{f.name}</p>
+                          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <CalendarClock className="h-3 w-3" /> Vence hoje · {cat.label}
+                          </p>
+                        </div>
+                        <p className="font-semibold tabular-nums">{formatBRL(f.amount)}</p>
+                        <Link to="/despesas-fixas" aria-label="Gerenciar despesas fixas">
+                          <Button variant="ghost" size="icon"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {dayExpenses.length === 0 && dayFixed.length === 0 ? (
                 <p className="py-6 text-center text-sm text-muted-foreground">
                   Nenhum gasto neste dia. Toque em <strong>Novo gasto</strong> para registrar.
                 </p>
-              ) : (
+              ) : dayExpenses.length === 0 ? null : (
                 <ul className="divide-y divide-border">
                   {dayExpenses.map((e) => {
                     const cat = CAT_MAP[e.category];
