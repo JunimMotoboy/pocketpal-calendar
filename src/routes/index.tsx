@@ -246,8 +246,14 @@ function Dashboard() {
                   {dayFixed.map((f) => {
                     const cat = CAT_MAP[f.category];
                     const Icon = cat.icon;
+                    const paid = paidMap.has(f.id);
                     return (
                       <li key={`fx-${f.id}`} className="flex items-center gap-3 px-3 py-2">
+                        <Checkbox
+                          checked={paid}
+                          onCheckedChange={() => togglePaid(f)}
+                          aria-label={paid ? "Desmarcar pagamento" : "Marcar como paga"}
+                        />
                         <div
                           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
                           style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 15%, transparent)` }}
@@ -255,12 +261,12 @@ function Dashboard() {
                           <Icon className="h-5 w-5" style={{ color: cat.color }} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium">{f.name}</p>
+                          <p className={cn("truncate font-medium", paid && "line-through text-muted-foreground")}>{f.name}</p>
                           <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <CalendarClock className="h-3 w-3" /> Vence hoje · {cat.label}
+                            <CalendarClock className="h-3 w-3" /> {paid ? "Paga este mês" : "Vence hoje"} · {cat.label}
                           </p>
                         </div>
-                        <p className="font-semibold tabular-nums">{formatBRL(f.amount)}</p>
+                        <p className={cn("font-semibold tabular-nums", paid && "line-through text-muted-foreground")}>{formatBRL(f.amount)}</p>
                         <Link to="/despesas-fixas" aria-label="Gerenciar despesas fixas">
                           <Button variant="ghost" size="icon"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
                         </Link>
