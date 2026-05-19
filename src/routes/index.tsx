@@ -35,6 +35,16 @@ type Expense = {
   card_id: string | null;
 };
 
+type FixedDue = {
+  id: string;
+  name: string;
+  amount: number;
+  category: Category;
+  due_day: number;
+  date: Date;
+  dateKey: string;
+};
+
 function Dashboard() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
