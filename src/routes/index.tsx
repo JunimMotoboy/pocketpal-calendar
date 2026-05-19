@@ -51,6 +51,7 @@ function Dashboard() {
   const [month, setMonth] = useState<Date>(new Date());
   const [selected, setSelected] = useState<Date>(new Date());
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [fixedRaw, setFixedRaw] = useState<{ id: string; name: string; amount: number; category: Category; due_day: number }[]>([]);
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
@@ -62,21 +63,48 @@ function Dashboard() {
     setFetching(true);
     const from = format(startOfMonth(month), "yyyy-MM-dd");
     const to = format(endOfMonth(month), "yyyy-MM-dd");
-    const { data, error } = await supabase
-      .from("expenses")
-      .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
-      .gte("spent_on", from)
-      .lte("spent_on", to)
-      .order("spent_on", { ascending: false });
+    const [expRes, fixRes] = await Promise.all([
+      supabase
+        .from("expenses")
+        .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
+        .gte("spent_on", from)
+        .lte("spent_on", to)
+        .order("spent_on", { ascending: false }),
+      supabase
+        .from("fixed_expenses")
+        .select("id, name, amount, category, due_day")
+        .eq("active", true),
+    ]);
     setFetching(false);
-    if (error) toast.error(error.message);
-    else setExpenses((data ?? []) as Expense[]);
+    if (expRes.error) toast.error(expRes.error.message);
+    else setExpenses((expRes.data ?? []) as Expense[]);
+    if (fixRes.error) toast.error(fixRes.error.message);
+    else setFixedRaw((fixRes.data ?? []) as typeof fixedRaw);
   };
 
   useEffect(() => {
     if (user) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, month]);
+
+  const fixedDues = useMemo<FixedDue[]>(() => {
+    const dim = getDaysInMonth(month);
+    const y = month.getFullYear();
+    const m = month.getMonth();
+    return fixedRaw.map((f) => {
+      const day = Math.min(f.due_day, dim);
+      const date = new Date(y, m, day);
+      return {
+        id: f.id,
+        name: f.name,
+        amount: Number(f.amount),
+        category: f.category,
+        due_day: f.due_day,
+        date,
+        dateKey: format(date, "yyyy-MM-dd"),
+      };
+    });
+  }, [fixedRaw, month]);
 
   const dayExpenses = useMemo(
     () => expenses.filter((e) => isSameDay(parseISO(e.spent_on), selected)),
