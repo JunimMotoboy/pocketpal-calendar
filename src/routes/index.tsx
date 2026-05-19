@@ -178,9 +178,13 @@ function Dashboard() {
               onMonthChange={setMonth}
               locale={ptBR}
               className={cn("p-0 pointer-events-auto")}
-              modifiers={{ hasExpense: (d) => dayTotals.has(format(d, "yyyy-MM-dd")) }}
+              modifiers={{
+                hasExpense: (d) => dayTotals.has(format(d, "yyyy-MM-dd")),
+                hasFixed: (d) => fixedDaysSet.has(format(d, "yyyy-MM-dd")),
+              }}
               modifiersClassNames={{
                 hasExpense: "relative font-semibold text-primary after:absolute after:bottom-1 after:left-1/2 after:h-1 after:w-1 after:-translate-x-1/2 after:rounded-full after:bg-accent",
+                hasFixed: "relative font-semibold text-destructive before:absolute before:top-1 before:right-1 before:h-1.5 before:w-1.5 before:rounded-full before:bg-destructive",
               }}
             />
             {fetching && <p className="mt-2 text-xs text-muted-foreground">Atualizando...</p>}
