@@ -97,6 +97,7 @@ function ReportsPage() {
   const [month, setMonth] = useState<Date>(new Date());
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
   const [incomes, setIncomes] = useState<IncomeRow[]>([]);
+  const [fixed, setFixed] = useState<{ amount: number; category: string }[]>([]);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -106,20 +107,23 @@ function ReportsPage() {
     const to = format(endOfMonth(month), "yyyy-MM-dd");
 
     (async () => {
-      const [e, i] = await Promise.all([
+      const [e, i, f] = await Promise.all([
         supabase.from("expenses").select("amount, category, payment_method").gte("spent_on", from).lte("spent_on", to),
         supabase.from("incomes").select("amount, source").gte("received_on", from).lte("received_on", to),
+        supabase.from("fixed_expenses").select("amount, category").eq("active", true),
       ]);
       setExpenses(((e.data ?? []) as ExpenseRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setIncomes(((i.data ?? []) as IncomeRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
+      setFixed(((f.data ?? []) as { amount: number; category: string }[]).map((r) => ({ ...r, amount: Number(r.amount) })));
     })();
   }, [user, month]);
 
   const catTotals = useMemo(() => {
     const m: Record<string, number> = {};
     for (const e of expenses) m[e.category] = (m[e.category] ?? 0) + e.amount;
+    for (const f of fixed) m[f.category] = (m[f.category] ?? 0) + f.amount;
     return m;
-  }, [expenses]);
+  }, [expenses, fixed]);
 
   const payTotals = useMemo(() => {
     const m: Record<string, number> = {};
@@ -127,8 +131,11 @@ function ReportsPage() {
       const k = e.payment_method ?? "outros";
       m[k] = (m[k] ?? 0) + e.amount;
     }
+    for (const f of fixed) {
+      m["boleto"] = (m["boleto"] ?? 0) + f.amount;
+    }
     return m;
-  }, [expenses]);
+  }, [expenses, fixed]);
 
   const incTotals = useMemo(() => {
     const m: Record<string, number> = {};
@@ -136,7 +143,10 @@ function ReportsPage() {
     return m;
   }, [incomes]);
 
-  const totalExp = useMemo(() => expenses.reduce((s, e) => s + e.amount, 0), [expenses]);
+  const totalExp = useMemo(
+    () => expenses.reduce((s, e) => s + e.amount, 0) + fixed.reduce((s, f) => s + f.amount, 0),
+    [expenses, fixed]
+  );
   const totalInc = useMemo(() => incomes.reduce((s, i) => s + i.amount, 0), [incomes]);
   const saldo = totalInc - totalExp;
 
