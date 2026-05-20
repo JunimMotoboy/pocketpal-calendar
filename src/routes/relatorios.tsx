@@ -131,8 +131,11 @@ function ReportsPage() {
       const k = e.payment_method ?? "outros";
       m[k] = (m[k] ?? 0) + e.amount;
     }
+    for (const f of fixed) {
+      m["boleto"] = (m["boleto"] ?? 0) + f.amount;
+    }
     return m;
-  }, [expenses]);
+  }, [expenses, fixed]);
 
   const incTotals = useMemo(() => {
     const m: Record<string, number> = {};
@@ -140,7 +143,10 @@ function ReportsPage() {
     return m;
   }, [incomes]);
 
-  const totalExp = useMemo(() => expenses.reduce((s, e) => s + e.amount, 0), [expenses]);
+  const totalExp = useMemo(
+    () => expenses.reduce((s, e) => s + e.amount, 0) + fixed.reduce((s, f) => s + f.amount, 0),
+    [expenses, fixed]
+  );
   const totalInc = useMemo(() => incomes.reduce((s, i) => s + i.amount, 0), [incomes]);
   const saldo = totalInc - totalExp;
 
