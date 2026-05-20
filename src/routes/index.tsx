@@ -161,8 +161,12 @@ function Dashboard() {
       byCat[e.category] = (byCat[e.category] ?? 0) + Number(e.amount);
       total += Number(e.amount);
     }
+    for (const f of fixedDues) {
+      byCat[f.category] = (byCat[f.category] ?? 0) + Number(f.amount);
+      total += Number(f.amount);
+    }
     return { byCat, total };
-  }, [expenses]);
+  }, [expenses, fixedDues]);
 
   const dayTotals = useMemo(() => {
     const m = new Map<string, number>();
