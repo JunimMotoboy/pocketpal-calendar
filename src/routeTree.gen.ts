@@ -17,6 +17,7 @@ import { Route as DespesasFixasRouteImport } from './routes/despesas-fixas'
 import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicSendFixedExpenseRemindersRouteImport } from './routes/api/public/send-fixed-expense-reminders'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 
 const RelatoriosRoute = RelatoriosRouteImport.update({
@@ -59,6 +60,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSendFixedExpenseRemindersRoute =
+  ApiPublicSendFixedExpenseRemindersRouteImport.update({
+    id: '/api/public/send-fixed-expense-reminders',
+    path: '/api/public/send-fixed-expense-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -75,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/entradas': typeof EntradasRoute
   '/investimentos': typeof InvestimentosRoute
   '/relatorios': typeof RelatoriosRoute
+  '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
@@ -86,6 +94,7 @@ export interface FileRoutesByTo {
   '/entradas': typeof EntradasRoute
   '/investimentos': typeof InvestimentosRoute
   '/relatorios': typeof RelatoriosRoute
+  '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
@@ -98,6 +107,7 @@ export interface FileRoutesById {
   '/entradas': typeof EntradasRoute
   '/investimentos': typeof InvestimentosRoute
   '/relatorios': typeof RelatoriosRoute
+  '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/entradas'
     | '/investimentos'
     | '/relatorios'
+    | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -122,6 +133,7 @@ export interface FileRouteTypes {
     | '/entradas'
     | '/investimentos'
     | '/relatorios'
+    | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
   id:
     | '__root__'
@@ -133,6 +145,7 @@ export interface FileRouteTypes {
     | '/entradas'
     | '/investimentos'
     | '/relatorios'
+    | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
@@ -145,6 +158,7 @@ export interface RootRouteChildren {
   EntradasRoute: typeof EntradasRoute
   InvestimentosRoute: typeof InvestimentosRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  ApiPublicSendFixedExpenseRemindersRoute: typeof ApiPublicSendFixedExpenseRemindersRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -206,6 +220,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/send-fixed-expense-reminders': {
+      id: '/api/public/send-fixed-expense-reminders'
+      path: '/api/public/send-fixed-expense-reminders'
+      fullPath: '/api/public/send-fixed-expense-reminders'
+      preLoaderRoute: typeof ApiPublicSendFixedExpenseRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
@@ -225,6 +246,8 @@ const rootRouteChildren: RootRouteChildren = {
   EntradasRoute: EntradasRoute,
   InvestimentosRoute: InvestimentosRoute,
   RelatoriosRoute: RelatoriosRoute,
+  ApiPublicSendFixedExpenseRemindersRoute:
+    ApiPublicSendFixedExpenseRemindersRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
