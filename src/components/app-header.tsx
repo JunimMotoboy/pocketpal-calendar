@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Wallet, Calendar as CalIcon, Sparkles, LogOut, TrendingUp, TrendingDown, PieChart, Menu, CreditCard, CalendarClock } from "lucide-react";
+import { Wallet, Calendar as CalIcon, Sparkles, LogOut, TrendingUp, TrendingDown, PieChart, Menu, CreditCard, CalendarClock, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,9 +22,18 @@ export function AppHeader() {
   const loc = useLocation();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Close mobile sheet whenever the route changes
   useEffect(() => { setOpen(false); }, [loc.pathname]);
+
+  useEffect(() => {
+    if (!user) { setIsAdmin(false); return; }
+    supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
+
+  const navItems = isAdmin ? [...NAV, { to: "/admin" as const, label: "Admin", icon: Shield }] : NAV;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -33,7 +42,7 @@ export function AppHeader() {
 
   const NavLinks = ({ onClick }: { onClick?: () => void }) => (
     <>
-      {NAV.map((it) => {
+      {navItems.map((it) => {
         const active = loc.pathname === it.to;
         const Icon = it.icon;
         return (
