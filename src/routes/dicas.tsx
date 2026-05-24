@@ -11,7 +11,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/dicas")({
   head: () => ({
     meta: [
-      { title: "Dicas IA — Gastei" },
+      { title: "Dicas IA — Nix Wallet" },
       { name: "description", content: "Receba dicas personalizadas de IA para usar melhor o seu dinheiro." },
     ],
   }),

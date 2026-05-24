@@ -14,7 +14,7 @@ import { CAT_MAP, PAY_MAP, INC_MAP, formatBRL, CATEGORIES, PAYMENT_METHODS, INCO
 export const Route = createFileRoute("/relatorios")({
   head: () => ({
     meta: [
-      { title: "Relatórios — Gastei" },
+      { title: "Relatórios — Nix Wallet" },
       { name: "description", content: "Veja seus gastos e entradas do mês em gráficos de pizza." },
     ],
   }),

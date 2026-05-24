@@ -76,7 +76,7 @@ export function AppHeader() {
           >
             <Wallet className="h-5 w-5" />
           </div>
-          <span className="text-lg font-bold tracking-tight">Gastei</span>
+          <span className="text-lg font-bold tracking-tight">Nix Wallet</span>
         </Link>
 
         {user && (

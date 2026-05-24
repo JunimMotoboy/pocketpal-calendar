@@ -13,7 +13,7 @@ import { Wallet, Sparkles } from "lucide-react";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Entrar — Gastei" },
+      { title: "Entrar — Nix Wallet" },
       { name: "description", content: "Acesse sua conta para controlar seus gastos." },
     ],
   }),

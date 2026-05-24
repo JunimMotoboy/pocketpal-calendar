@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { CreditCard, Plus, Pencil, Trash2 } from "lucide-react";
+import { CreditCard, Plus, Pencil, Trash2, ListPlus } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/cartoes")({
   head: () => ({
     meta: [
-      { title: "Cartões — Gastei" },
+      { title: "Cartões — Nix Wallet" },
       { name: "description", content: "Cadastre seus cartões de crédito e acompanhe a fatura acumulada." },
     ],
   }),
@@ -33,11 +33,20 @@ type CardItem = {
 
 type ExpenseSum = { card_id: string; amount: number };
 
+type Installment = {
+  id: string;
+  card_id: string;
+  description: string;
+  installment_value: number;
+  remaining_count: number;
+};
+
 function CardsPage() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
   const [items, setItems] = useState<CardItem[]>([]);
   const [spent, setSpent] = useState<Record<string, number>>({});
+  const [installments, setInstallments] = useState<Installment[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CardItem | null>(null);
 
@@ -48,6 +57,14 @@ function CardsPage() {
   const [initialUsed, setInitialUsed] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // Installment dialog state
+  const [instOpen, setInstOpen] = useState(false);
+  const [instCardId, setInstCardId] = useState<string | null>(null);
+  const [instDesc, setInstDesc] = useState("");
+  const [instValue, setInstValue] = useState("");
+  const [instCount, setInstCount] = useState("1");
+  const [instBusy, setInstBusy] = useState(false);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -70,13 +87,27 @@ function CardsPage() {
       if (e.card_id) map[e.card_id] = (map[e.card_id] ?? 0) + Number(e.amount);
     });
     setSpent(map);
+
+    const { data: inst } = await supabase
+      .from("card_installments")
+      .select("id, card_id, description, installment_value, remaining_count")
+      .order("created_at", { ascending: false });
+    setInstallments((inst ?? []) as Installment[]);
   };
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [user]);
 
+  const installmentTotalByCard = useMemo(() => {
+    const map: Record<string, number> = {};
+    installments.forEach((i) => {
+      map[i.card_id] = (map[i.card_id] ?? 0) + Number(i.installment_value) * Number(i.remaining_count);
+    });
+    return map;
+  }, [installments]);
+
   const totalLimit = useMemo(() => items.reduce((s, i) => s + Number(i.limit_amount), 0), [items]);
   const totalSpent = useMemo(
-    () => items.reduce((s, i) => s + (spent[i.id] ?? 0) + Number(i.initial_used ?? 0), 0),
-    [items, spent],
+    () => items.reduce((s, i) => s + (spent[i.id] ?? 0) + Number(i.initial_used ?? 0) + (installmentTotalByCard[i.id] ?? 0), 0),
+    [items, spent, installmentTotalByCard],
   );
 
   const resetForm = () => {
@@ -129,6 +160,41 @@ function CardsPage() {
     const { error } = await supabase.from("cards").delete().eq("id", id);
     if (error) toast.error(error.message);
     else { toast.success("Cartão removido"); load(); }
+  };
+
+  const openInstallment = (cardId: string) => {
+    setInstCardId(cardId);
+    setInstDesc(""); setInstValue(""); setInstCount("1");
+    setInstOpen(true);
+  };
+
+  const submitInstallment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const v = parseFloat(instValue.replace(",", "."));
+    const c = parseInt(instCount, 10);
+    if (!instDesc.trim() || isNaN(v) || v <= 0 || isNaN(c) || c < 1) {
+      toast.error("Preencha descrição, valor e número de parcelas restantes.");
+      return;
+    }
+    setInstBusy(true);
+    const { error } = await supabase.from("card_installments").insert({
+      user_id: user!.id,
+      card_id: instCardId!,
+      description: instDesc.trim(),
+      installment_value: v,
+      remaining_count: c,
+    });
+    setInstBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Parcelamento adicionado!");
+    setInstOpen(false);
+    load();
+  };
+
+  const removeInstallment = async (id: string) => {
+    const { error } = await supabase.from("card_installments").delete().eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success("Parcelamento removido"); load(); }
   };
 
   if (loading || !user) return <div className="flex h-[60vh] items-center justify-center text-muted-foreground">Carregando...</div>;
@@ -189,10 +255,12 @@ function CardsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {items.map((c) => {
-            const used = (spent[c.id] ?? 0) + Number(c.initial_used ?? 0);
+            const instTotal = installmentTotalByCard[c.id] ?? 0;
+            const used = (spent[c.id] ?? 0) + Number(c.initial_used ?? 0) + instTotal;
             const pct = c.limit_amount > 0 ? Math.min(100, (used / Number(c.limit_amount)) * 100) : 0;
             const remaining = Number(c.limit_amount) - used;
             const danger = pct >= 80;
+            const cardInst = installments.filter((i) => i.card_id === c.id);
             return (
               <Card key={c.id} className="overflow-hidden">
                 <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
@@ -227,14 +295,74 @@ function CardsPage() {
                   <p className="text-xs text-muted-foreground">
                     {remaining >= 0 ? `Disponível: ${formatBRL(remaining)}` : `Acima do limite em ${formatBRL(-remaining)}`}
                     {Number(c.initial_used) > 0 && ` · inclui ${formatBRL(Number(c.initial_used))} de saldo anterior`}
+                    {instTotal > 0 && ` · inclui ${formatBRL(instTotal)} em parcelas`}
                   </p>
                   {c.notes && <p className="text-xs text-muted-foreground">{c.notes}</p>}
+
+                  <div className="rounded-lg border border-border/60 p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-xs font-semibold">Parcelamentos em andamento</p>
+                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openInstallment(c.id)}>
+                        <ListPlus className="mr-1 h-3 w-3" /> Adicionar
+                      </Button>
+                    </div>
+                    {cardInst.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">Nenhum parcelamento registrado.</p>
+                    ) : (
+                      <ul className="space-y-1.5">
+                        {cardInst.map((i) => (
+                          <li key={i.id} className="flex items-center justify-between gap-2 text-xs">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate font-medium">{i.description}</p>
+                              <p className="text-muted-foreground tabular-nums">
+                                {i.remaining_count}x de {formatBRL(Number(i.installment_value))} = {formatBRL(Number(i.installment_value) * i.remaining_count)}
+                              </p>
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeInstallment(i.id)} aria-label="Remover">
+                              <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             );
           })}
         </div>
       )}
+
+      <Dialog open={instOpen} onOpenChange={setInstOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Adicionar parcelamento</DialogTitle></DialogHeader>
+          <form onSubmit={submitInstallment} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Descrição</Label>
+              <Input value={instDesc} onChange={(e) => setInstDesc(e.target.value)} placeholder="Ex.: TV Samsung, Geladeira..." required />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Valor da parcela (R$)</Label>
+                <Input inputMode="decimal" value={instValue} onChange={(e) => setInstValue(e.target.value)} placeholder="0,00" required />
+              </div>
+              <div className="space-y-2">
+                <Label>Parcelas restantes</Label>
+                <Input type="number" min={1} max={48} value={instCount} onChange={(e) => setInstCount(e.target.value)} required />
+              </div>
+            </div>
+            {(() => {
+              const v = parseFloat(instValue.replace(",", "."));
+              const c = parseInt(instCount, 10);
+              if (!isNaN(v) && v > 0 && !isNaN(c) && c > 0) {
+                return <p className="text-xs text-muted-foreground">Total restante: {formatBRL(v * c)}</p>;
+              }
+              return null;
+            })()}
+            <Button type="submit" className="w-full" disabled={instBusy}>{instBusy ? "Salvando..." : "Salvar parcelamento"}</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
