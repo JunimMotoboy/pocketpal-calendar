@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      card_installments: {
+        Row: {
+          card_id: string
+          created_at: string
+          description: string
+          id: string
+          installment_value: number
+          remaining_count: number
+          user_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          description: string
+          id?: string
+          installment_value: number
+          remaining_count?: number
+          user_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          installment_value?: number
+          remaining_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_installments_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cards: {
         Row: {
           closing_day: number | null
