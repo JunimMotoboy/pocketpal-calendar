@@ -15,7 +15,7 @@ import { listAppUsers, setUserSuspension, checkIsAdmin } from "@/lib/admin.funct
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Administração — Gastei" }] }),
+  head: () => ({ meta: [{ title: "Administração — Nix Wallet" }] }),
   component: AdminPage,
 });
 

@@ -18,7 +18,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Painel — Gastei" },
+      { title: "Painel — Nix Wallet" },
       { name: "description", content: "Veja seus gastos no calendário, organize por categorias e acompanhe seu mês." },
     ],
   }),

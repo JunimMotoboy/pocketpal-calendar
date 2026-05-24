@@ -15,7 +15,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/despesas-fixas")({
   head: () => ({
     meta: [
-      { title: "Despesas Fixas — Gastei" },
+      { title: "Despesas Fixas — Nix Wallet" },
       { name: "description", content: "Cadastre suas despesas fixas mensais e receba lembretes por e-mail um dia antes do vencimento." },
     ],
   }),

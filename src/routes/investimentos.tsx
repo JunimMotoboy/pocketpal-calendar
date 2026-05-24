@@ -21,7 +21,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/investimentos")({
   head: () => ({
     meta: [
-      { title: "Investimentos — Gastei" },
+      { title: "Investimentos — Nix Wallet" },
       { name: "description", content: "Acompanhe seus investimentos: renda fixa, variável, cripto e mais." },
     ],
   }),

@@ -66,7 +66,7 @@ export const Route = createFileRoute("/api/public/send-fixed-expense-reminders")
 
           const payload = {
             to: it.notify_email,
-            from: `Gastei <notificacoes@notify.junimtech.com.br>`,
+            from: `Nix Wallet <notificacoes@notify.junimtech.com.br>`,
             sender_domain: "notify.junimtech.com.br",
             subject: `Vence amanhã: ${it.name} (${amountBRL})`,
             html,
