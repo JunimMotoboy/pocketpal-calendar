@@ -162,6 +162,7 @@ function ReportsPage() {
   const payMeta: Record<string, { label: string; color: string }> = {};
   const palette = ["oklch(0.55 0.18 280)", "oklch(0.7 0.17 40)", "oklch(0.65 0.18 150)", "oklch(0.65 0.15 230)", "oklch(0.7 0.17 330)", "oklch(0.75 0.16 75)", "oklch(0.6 0.02 220)"];
   PAYMENT_METHODS.forEach((p, idx) => { payMeta[p.value] = { label: p.label, color: palette[idx % palette.length] }; });
+  payMeta["investimento"] = { label: "Investimento", color: "oklch(0.6 0.18 260)" };
   const incMeta: Record<string, { label: string; color: string }> = {};
   INCOME_SOURCES.forEach((s) => { incMeta[s.value] = { label: s.label, color: s.color }; });
   void CAT_MAP; void PAY_MAP; void INC_MAP;
