@@ -280,14 +280,32 @@ function Dashboard() {
               </Badge>
             </CardHeader>
             <CardContent>
+              {cardsDueOnSelected.length > 0 && (
+                <ul className="mb-3 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+                  {cardsDueOnSelected.map((c) => (
+                    <li key={`cd-${c.id}`} className="flex items-center gap-2">
+                      <CalendarClock className="h-4 w-4 text-warning-foreground" />
+                      <span className="font-medium">Vence fatura: {c.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
               {dayFixed.length > 0 && (
-                <ul className="mb-3 divide-y divide-border rounded-lg border border-dashed border-destructive/40 bg-destructive/5">
+                <ul className={cn("mb-3 divide-y rounded-lg border border-dashed")}>
                   {dayFixed.map((f) => {
                     const cat = CAT_MAP[f.category];
                     const Icon = cat.icon;
                     const paid = paidMap.has(f.id);
                     return (
-                      <li key={`fx-${f.id}`} className="flex items-center gap-3 px-3 py-2">
+                      <li
+                        key={`fx-${f.id}`}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 transition-colors",
+                          paid
+                            ? "bg-success/10 border-success/40"
+                            : "bg-destructive/5 border-destructive/40"
+                        )}
+                      >
                         <Checkbox
                           checked={paid}
                           onCheckedChange={() => togglePaid(f)}
@@ -300,12 +318,12 @@ function Dashboard() {
                           <Icon className="h-5 w-5" style={{ color: cat.color }} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className={cn("truncate font-medium", paid && "line-through text-muted-foreground")}>{f.name}</p>
-                          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <p className={cn("truncate font-medium", paid && "text-success")}>{f.name}</p>
+                          <p className={cn("flex items-center gap-1 text-xs", paid ? "text-success" : "text-muted-foreground")}>
                             <CalendarClock className="h-3 w-3" /> {paid ? "Paga este mês" : "Vence hoje"} · {cat.label}
                           </p>
                         </div>
-                        <p className={cn("font-semibold tabular-nums", paid && "line-through text-muted-foreground")}>{formatBRL(f.amount)}</p>
+                        <p className={cn("font-semibold tabular-nums", paid && "text-success")}>{formatBRL(f.amount)}</p>
                         <Link to="/despesas-fixas" aria-label="Gerenciar despesas fixas">
                           <Button variant="ghost" size="icon"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
                         </Link>
