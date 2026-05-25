@@ -188,6 +188,23 @@ function Dashboard() {
 
   const fixedDaysSet = useMemo(() => new Set(fixedDues.map((f) => f.dateKey)), [fixedDues]);
 
+  const cardDueDaysSet = useMemo(() => {
+    const dim = getDaysInMonth(month);
+    const y = month.getFullYear();
+    const m = month.getMonth();
+    return new Set(
+      cards.map((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd"))
+    );
+  }, [cards, month]);
+
+  const cardsDueOnSelected = useMemo(() => {
+    const key = format(selected, "yyyy-MM-dd");
+    const dim = getDaysInMonth(month);
+    const y = month.getFullYear();
+    const m = month.getMonth();
+    return cards.filter((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd") === key);
+  }, [cards, selected, month]);
+
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("expenses").delete().eq("id", id);
     if (error) toast.error(error.message);
