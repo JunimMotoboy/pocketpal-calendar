@@ -125,8 +125,9 @@ function ReportsPage() {
     const m: Record<string, number> = {};
     for (const e of expenses) m[e.category] = (m[e.category] ?? 0) + e.amount;
     for (const f of fixed) m[f.category] = (m[f.category] ?? 0) + f.amount;
+    if (investTotal > 0) m["investimento"] = (m["investimento"] ?? 0) + investTotal;
     return m;
-  }, [expenses, fixed]);
+  }, [expenses, fixed, investTotal]);
 
   const payTotals = useMemo(() => {
     const m: Record<string, number> = {};
@@ -137,8 +138,9 @@ function ReportsPage() {
     for (const f of fixed) {
       m["boleto"] = (m["boleto"] ?? 0) + f.amount;
     }
+    if (investTotal > 0) m["investimento"] = (m["investimento"] ?? 0) + investTotal;
     return m;
-  }, [expenses, fixed]);
+  }, [expenses, fixed, investTotal]);
 
   const incTotals = useMemo(() => {
     const m: Record<string, number> = {};
@@ -147,8 +149,8 @@ function ReportsPage() {
   }, [incomes]);
 
   const totalExp = useMemo(
-    () => expenses.reduce((s, e) => s + e.amount, 0) + fixed.reduce((s, f) => s + f.amount, 0),
-    [expenses, fixed]
+    () => expenses.reduce((s, e) => s + e.amount, 0) + fixed.reduce((s, f) => s + f.amount, 0) + investTotal,
+    [expenses, fixed, investTotal]
   );
   const totalInc = useMemo(() => incomes.reduce((s, i) => s + i.amount, 0), [incomes]);
   const saldo = totalInc - totalExp;
@@ -156,6 +158,7 @@ function ReportsPage() {
   const catMeta = Object.fromEntries(CATEGORIES.map((c) => [c.value, { label: c.label, color: `oklch(var(--cat-${c.value}-fallback))` }])) as Record<string, { label: string; color: string }>;
   // We need actual color values — read from CAT_MAP
   for (const c of CATEGORIES) catMeta[c.value] = { label: c.label, color: c.color };
+  catMeta["investimento"] = { label: "Investimentos", color: "oklch(0.6 0.18 260)" };
   const payMeta: Record<string, { label: string; color: string }> = {};
   const palette = ["oklch(0.55 0.18 280)", "oklch(0.7 0.17 40)", "oklch(0.65 0.18 150)", "oklch(0.65 0.15 230)", "oklch(0.7 0.17 330)", "oklch(0.75 0.16 75)", "oklch(0.6 0.02 220)"];
   PAYMENT_METHODS.forEach((p, idx) => { payMeta[p.value] = { label: p.label, color: palette[idx % palette.length] }; });
