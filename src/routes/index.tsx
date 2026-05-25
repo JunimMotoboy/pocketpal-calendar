@@ -104,6 +104,13 @@ function Dashboard() {
 
   useEffect(() => {
     if (user) load();
+    // When month changes, snap selected day into the new month so the day list refreshes too.
+    setSelected((prev) => {
+      if (prev.getFullYear() === month.getFullYear() && prev.getMonth() === month.getMonth()) return prev;
+      const dim = getDaysInMonth(month);
+      const day = Math.min(prev.getDate(), dim);
+      return new Date(month.getFullYear(), month.getMonth(), day);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, month]);
 
