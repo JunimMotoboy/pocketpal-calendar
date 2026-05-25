@@ -54,6 +54,7 @@ function Dashboard() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [fixedRaw, setFixedRaw] = useState<{ id: string; name: string; amount: number; category: Category; due_day: number }[]>([]);
   const [paidMap, setPaidMap] = useState<Map<string, string>>(new Map()); // key fixed_expense_id -> payment id
+  const [cards, setCards] = useState<{ id: string; name: string; due_day: number }[]>([]);
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
@@ -67,7 +68,7 @@ function Dashboard() {
     const to = format(endOfMonth(month), "yyyy-MM-dd");
     const y = month.getFullYear();
     const mo = month.getMonth() + 1;
-    const [expRes, fixRes, payRes] = await Promise.all([
+    const [expRes, fixRes, payRes, cardsRes] = await Promise.all([
       supabase
         .from("expenses")
         .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
@@ -83,6 +84,7 @@ function Dashboard() {
         .select("id, fixed_expense_id")
         .eq("year", y)
         .eq("month", mo),
+      supabase.from("cards").select("id, name, due_day"),
     ]);
     setFetching(false);
     if (expRes.error) toast.error(expRes.error.message);
@@ -97,10 +99,18 @@ function Dashboard() {
       }
       setPaidMap(m);
     }
+    if (!cardsRes.error) setCards((cardsRes.data ?? []) as { id: string; name: string; due_day: number }[]);
   };
 
   useEffect(() => {
     if (user) load();
+    // When month changes, snap selected day into the new month so the day list refreshes too.
+    setSelected((prev) => {
+      if (prev.getFullYear() === month.getFullYear() && prev.getMonth() === month.getMonth()) return prev;
+      const dim = getDaysInMonth(month);
+      const day = Math.min(prev.getDate(), dim);
+      return new Date(month.getFullYear(), month.getMonth(), day);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, month]);
 
@@ -178,6 +188,23 @@ function Dashboard() {
 
   const fixedDaysSet = useMemo(() => new Set(fixedDues.map((f) => f.dateKey)), [fixedDues]);
 
+  const cardDueDaysSet = useMemo(() => {
+    const dim = getDaysInMonth(month);
+    const y = month.getFullYear();
+    const m = month.getMonth();
+    return new Set(
+      cards.map((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd"))
+    );
+  }, [cards, month]);
+
+  const cardsDueOnSelected = useMemo(() => {
+    const key = format(selected, "yyyy-MM-dd");
+    const dim = getDaysInMonth(month);
+    const y = month.getFullYear();
+    const m = month.getMonth();
+    return cards.filter((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd") === key);
+  }, [cards, selected, month]);
+
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("expenses").delete().eq("id", id);
     if (error) toast.error(error.message);
@@ -208,10 +235,10 @@ function Dashboard() {
       <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
         {/* Calendar */}
         <Card className="h-fit">
-          <CardHeader>
+          <CardHeader className="px-3 sm:px-6">
             <CardTitle className="text-base">Calendário do mês</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-2 sm:px-6">
             <Calendar
               mode="single"
               selected={selected}
@@ -219,16 +246,24 @@ function Dashboard() {
               month={month}
               onMonthChange={setMonth}
               locale={ptBR}
-              className={cn("p-0 pointer-events-auto")}
+              className={cn("p-0 pointer-events-auto w-full [--cell-size:2.75rem] sm:[--cell-size:2.4rem]")}
+              classNames={{ root: "w-full", months: "w-full", month: "w-full" }}
               modifiers={{
                 hasExpense: (d) => dayTotals.has(format(d, "yyyy-MM-dd")),
                 hasFixed: (d) => fixedDaysSet.has(format(d, "yyyy-MM-dd")),
+                hasCardDue: (d) => cardDueDaysSet.has(format(d, "yyyy-MM-dd")),
               }}
               modifiersClassNames={{
                 hasExpense: "relative font-semibold text-primary after:absolute after:bottom-1 after:left-1/2 after:h-1 after:w-1 after:-translate-x-1/2 after:rounded-full after:bg-accent",
                 hasFixed: "relative font-semibold text-destructive before:absolute before:top-1 before:right-1 before:h-1.5 before:w-1.5 before:rounded-full before:bg-destructive",
+                hasCardDue: "relative font-semibold text-warning-foreground bg-warning/30 rounded-md",
               }}
             />
+            <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent" />Gasto</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-destructive" />Despesa fixa</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-warning/60" />Fatura cartão</span>
+            </div>
             {fetching && <p className="mt-2 text-xs text-muted-foreground">Atualizando...</p>}
           </CardContent>
         </Card>
@@ -245,14 +280,32 @@ function Dashboard() {
               </Badge>
             </CardHeader>
             <CardContent>
+              {cardsDueOnSelected.length > 0 && (
+                <ul className="mb-3 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+                  {cardsDueOnSelected.map((c) => (
+                    <li key={`cd-${c.id}`} className="flex items-center gap-2">
+                      <CalendarClock className="h-4 w-4 text-warning-foreground" />
+                      <span className="font-medium">Vence fatura: {c.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
               {dayFixed.length > 0 && (
-                <ul className="mb-3 divide-y divide-border rounded-lg border border-dashed border-destructive/40 bg-destructive/5">
+                <ul className={cn("mb-3 divide-y rounded-lg border border-dashed")}>
                   {dayFixed.map((f) => {
                     const cat = CAT_MAP[f.category];
                     const Icon = cat.icon;
                     const paid = paidMap.has(f.id);
                     return (
-                      <li key={`fx-${f.id}`} className="flex items-center gap-3 px-3 py-2">
+                      <li
+                        key={`fx-${f.id}`}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 transition-colors",
+                          paid
+                            ? "bg-success/10 border-success/40"
+                            : "bg-destructive/5 border-destructive/40"
+                        )}
+                      >
                         <Checkbox
                           checked={paid}
                           onCheckedChange={() => togglePaid(f)}
@@ -265,12 +318,12 @@ function Dashboard() {
                           <Icon className="h-5 w-5" style={{ color: cat.color }} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className={cn("truncate font-medium", paid && "line-through text-muted-foreground")}>{f.name}</p>
-                          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <p className={cn("truncate font-medium", paid && "text-success")}>{f.name}</p>
+                          <p className={cn("flex items-center gap-1 text-xs", paid ? "text-success" : "text-muted-foreground")}>
                             <CalendarClock className="h-3 w-3" /> {paid ? "Paga este mês" : "Vence hoje"} · {cat.label}
                           </p>
                         </div>
-                        <p className={cn("font-semibold tabular-nums", paid && "line-through text-muted-foreground")}>{formatBRL(f.amount)}</p>
+                        <p className={cn("font-semibold tabular-nums", paid && "text-success")}>{formatBRL(f.amount)}</p>
                         <Link to="/despesas-fixas" aria-label="Gerenciar despesas fixas">
                           <Button variant="ghost" size="icon"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
                         </Link>

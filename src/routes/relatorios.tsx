@@ -98,6 +98,7 @@ function ReportsPage() {
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
   const [incomes, setIncomes] = useState<IncomeRow[]>([]);
   const [fixed, setFixed] = useState<{ amount: number; category: string }[]>([]);
+  const [investTotal, setInvestTotal] = useState(0);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -107,14 +108,16 @@ function ReportsPage() {
     const to = format(endOfMonth(month), "yyyy-MM-dd");
 
     (async () => {
-      const [e, i, f] = await Promise.all([
+      const [e, i, f, inv] = await Promise.all([
         supabase.from("expenses").select("amount, category, payment_method").gte("spent_on", from).lte("spent_on", to),
         supabase.from("incomes").select("amount, source").gte("received_on", from).lte("received_on", to),
         supabase.from("fixed_expenses").select("amount, category").eq("active", true),
+        supabase.from("investments").select("amount").gte("invested_on", from).lte("invested_on", to),
       ]);
       setExpenses(((e.data ?? []) as ExpenseRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setIncomes(((i.data ?? []) as IncomeRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setFixed(((f.data ?? []) as { amount: number; category: string }[]).map((r) => ({ ...r, amount: Number(r.amount) })));
+      setInvestTotal(((inv.data ?? []) as { amount: number }[]).reduce((s, r) => s + Number(r.amount), 0));
     })();
   }, [user, month]);
 
@@ -122,8 +125,9 @@ function ReportsPage() {
     const m: Record<string, number> = {};
     for (const e of expenses) m[e.category] = (m[e.category] ?? 0) + e.amount;
     for (const f of fixed) m[f.category] = (m[f.category] ?? 0) + f.amount;
+    if (investTotal > 0) m["investimento"] = (m["investimento"] ?? 0) + investTotal;
     return m;
-  }, [expenses, fixed]);
+  }, [expenses, fixed, investTotal]);
 
   const payTotals = useMemo(() => {
     const m: Record<string, number> = {};
@@ -134,8 +138,9 @@ function ReportsPage() {
     for (const f of fixed) {
       m["boleto"] = (m["boleto"] ?? 0) + f.amount;
     }
+    if (investTotal > 0) m["investimento"] = (m["investimento"] ?? 0) + investTotal;
     return m;
-  }, [expenses, fixed]);
+  }, [expenses, fixed, investTotal]);
 
   const incTotals = useMemo(() => {
     const m: Record<string, number> = {};
@@ -144,8 +149,8 @@ function ReportsPage() {
   }, [incomes]);
 
   const totalExp = useMemo(
-    () => expenses.reduce((s, e) => s + e.amount, 0) + fixed.reduce((s, f) => s + f.amount, 0),
-    [expenses, fixed]
+    () => expenses.reduce((s, e) => s + e.amount, 0) + fixed.reduce((s, f) => s + f.amount, 0) + investTotal,
+    [expenses, fixed, investTotal]
   );
   const totalInc = useMemo(() => incomes.reduce((s, i) => s + i.amount, 0), [incomes]);
   const saldo = totalInc - totalExp;
@@ -153,9 +158,11 @@ function ReportsPage() {
   const catMeta = Object.fromEntries(CATEGORIES.map((c) => [c.value, { label: c.label, color: `oklch(var(--cat-${c.value}-fallback))` }])) as Record<string, { label: string; color: string }>;
   // We need actual color values — read from CAT_MAP
   for (const c of CATEGORIES) catMeta[c.value] = { label: c.label, color: c.color };
+  catMeta["investimento"] = { label: "Investimentos", color: "oklch(0.6 0.18 260)" };
   const payMeta: Record<string, { label: string; color: string }> = {};
   const palette = ["oklch(0.55 0.18 280)", "oklch(0.7 0.17 40)", "oklch(0.65 0.18 150)", "oklch(0.65 0.15 230)", "oklch(0.7 0.17 330)", "oklch(0.75 0.16 75)", "oklch(0.6 0.02 220)"];
   PAYMENT_METHODS.forEach((p, idx) => { payMeta[p.value] = { label: p.label, color: palette[idx % palette.length] }; });
+  payMeta["investimento"] = { label: "Investimento", color: "oklch(0.6 0.18 260)" };
   const incMeta: Record<string, { label: string; color: string }> = {};
   INCOME_SOURCES.forEach((s) => { incMeta[s.value] = { label: s.label, color: s.color }; });
   void CAT_MAP; void PAY_MAP; void INC_MAP;
