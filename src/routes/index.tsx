@@ -54,6 +54,7 @@ function Dashboard() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [fixedRaw, setFixedRaw] = useState<{ id: string; name: string; amount: number; category: Category; due_day: number }[]>([]);
   const [paidMap, setPaidMap] = useState<Map<string, string>>(new Map()); // key fixed_expense_id -> payment id
+  const [cards, setCards] = useState<{ id: string; name: string; due_day: number }[]>([]);
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
@@ -67,7 +68,7 @@ function Dashboard() {
     const to = format(endOfMonth(month), "yyyy-MM-dd");
     const y = month.getFullYear();
     const mo = month.getMonth() + 1;
-    const [expRes, fixRes, payRes] = await Promise.all([
+    const [expRes, fixRes, payRes, cardsRes] = await Promise.all([
       supabase
         .from("expenses")
         .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
@@ -83,6 +84,7 @@ function Dashboard() {
         .select("id, fixed_expense_id")
         .eq("year", y)
         .eq("month", mo),
+      supabase.from("cards").select("id, name, due_day"),
     ]);
     setFetching(false);
     if (expRes.error) toast.error(expRes.error.message);
@@ -97,6 +99,7 @@ function Dashboard() {
       }
       setPaidMap(m);
     }
+    if (!cardsRes.error) setCards((cardsRes.data ?? []) as { id: string; name: string; due_day: number }[]);
   };
 
   useEffect(() => {
