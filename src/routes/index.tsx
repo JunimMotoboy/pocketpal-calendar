@@ -235,10 +235,10 @@ function Dashboard() {
       <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
         {/* Calendar */}
         <Card className="h-fit">
-          <CardHeader>
+          <CardHeader className="px-3 sm:px-6">
             <CardTitle className="text-base">Calendário do mês</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-2 sm:px-6">
             <Calendar
               mode="single"
               selected={selected}
@@ -246,16 +246,24 @@ function Dashboard() {
               month={month}
               onMonthChange={setMonth}
               locale={ptBR}
-              className={cn("p-0 pointer-events-auto")}
+              className={cn("p-0 pointer-events-auto w-full [--cell-size:2.75rem] sm:[--cell-size:2.4rem]")}
+              classNames={{ root: "w-full", months: "w-full", month: "w-full" }}
               modifiers={{
                 hasExpense: (d) => dayTotals.has(format(d, "yyyy-MM-dd")),
                 hasFixed: (d) => fixedDaysSet.has(format(d, "yyyy-MM-dd")),
+                hasCardDue: (d) => cardDueDaysSet.has(format(d, "yyyy-MM-dd")),
               }}
               modifiersClassNames={{
                 hasExpense: "relative font-semibold text-primary after:absolute after:bottom-1 after:left-1/2 after:h-1 after:w-1 after:-translate-x-1/2 after:rounded-full after:bg-accent",
                 hasFixed: "relative font-semibold text-destructive before:absolute before:top-1 before:right-1 before:h-1.5 before:w-1.5 before:rounded-full before:bg-destructive",
+                hasCardDue: "relative font-semibold text-warning-foreground bg-warning/30 rounded-md",
               }}
             />
+            <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent" />Gasto</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-destructive" />Despesa fixa</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-warning/60" />Fatura cartão</span>
+            </div>
             {fetching && <p className="mt-2 text-xs text-muted-foreground">Atualizando...</p>}
           </CardContent>
         </Card>
