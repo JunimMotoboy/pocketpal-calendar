@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { format, startOfMonth, endOfMonth, isSameDay, parseISO, getDaysInMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Trash2, Pencil, CalendarClock } from "lucide-react";
+import { Trash2, Pencil, CalendarClock, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
@@ -224,7 +224,15 @@ function Dashboard() {
       <section className="mb-8 overflow-hidden rounded-2xl border border-border/60 p-6 shadow-[var(--shadow-elegant)]" style={{ backgroundImage: "var(--gradient-hero)" }}>
         <div className="flex flex-wrap items-end justify-between gap-4 text-primary-foreground">
           <div>
-            <p className="text-sm/6 opacity-80">Total de {format(month, "MMMM 'de' yyyy", { locale: ptBR })}</p>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}>
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <p className="text-sm/6 opacity-80">Total de {format(month, "MMMM 'de' yyyy", { locale: ptBR })}</p>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}>
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
             <p className="mt-1 text-4xl font-bold tracking-tight">{formatBRL(totals.total)}</p>
             <p className="mt-1 text-sm opacity-80">{expenses.length} gasto{expenses.length === 1 ? "" : "s"} registrado{expenses.length === 1 ? "" : "s"}</p>
           </div>
