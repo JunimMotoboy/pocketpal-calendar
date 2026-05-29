@@ -252,7 +252,7 @@ function Dashboard() {
             <Calendar
               mode="single"
               selected={selected}
-              onSelect={(d) => d && setSelected(d)}
+              onSelect={(d) => { if (d) { setSelected(d); setDayDialogOpen(true); } }}
               month={month}
               onMonthChange={setMonth}
               locale={ptBR}
