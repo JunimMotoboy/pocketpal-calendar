@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CATEGORIES, CAT_MAP, formatBRL, type Category } from "@/lib/categories";
 import { AddExpenseDialog, ExpenseDialog } from "@/components/add-expense-dialog";
 import { cn } from "@/lib/utils";
