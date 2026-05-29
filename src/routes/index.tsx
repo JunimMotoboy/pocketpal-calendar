@@ -57,6 +57,7 @@ function Dashboard() {
   const [paidMap, setPaidMap] = useState<Map<string, string>>(new Map()); // key fixed_expense_id -> payment id
   const [cards, setCards] = useState<{ id: string; name: string; due_day: number }[]>([]);
   const [fetching, setFetching] = useState(false);
+  const [dayDialogOpen, setDayDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
