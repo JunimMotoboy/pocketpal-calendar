@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CATEGORIES, CAT_MAP, formatBRL, type Category } from "@/lib/categories";
 import { AddExpenseDialog, ExpenseDialog } from "@/components/add-expense-dialog";
 import { cn } from "@/lib/utils";
@@ -56,6 +57,7 @@ function Dashboard() {
   const [paidMap, setPaidMap] = useState<Map<string, string>>(new Map()); // key fixed_expense_id -> payment id
   const [cards, setCards] = useState<{ id: string; name: string; due_day: number }[]>([]);
   const [fetching, setFetching] = useState(false);
+  const [dayDialogOpen, setDayDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
@@ -250,7 +252,7 @@ function Dashboard() {
             <Calendar
               mode="single"
               selected={selected}
-              onSelect={(d) => d && setSelected(d)}
+              onSelect={(d) => { if (d) { setSelected(d); setDayDialogOpen(true); } }}
               month={month}
               onMonthChange={setMonth}
               locale={ptBR}
@@ -415,6 +417,96 @@ function Dashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Day details modal */}
+      <Dialog open={dayDialogOpen} onOpenChange={setDayDialogOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="capitalize">
+              {format(selected, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {cardsDueOnSelected.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Vencimentos de cartão</p>
+                <ul className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+                  {cardsDueOnSelected.map((c) => (
+                    <li key={`md-cd-${c.id}`} className="flex items-center gap-2 py-1">
+                      <CalendarClock className="h-4 w-4 text-warning-foreground" />
+                      <span className="font-medium">Fatura: {c.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {dayFixed.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Despesas fixas</p>
+                <ul className="divide-y rounded-lg border">
+                  {dayFixed.map((f) => {
+                    const cat = CAT_MAP[f.category];
+                    const Icon = cat.icon;
+                    const paid = paidMap.has(f.id);
+                    return (
+                      <li key={`md-fx-${f.id}`} className={cn("flex items-center gap-3 px-3 py-2", paid ? "bg-success/10" : "bg-destructive/5")}>
+                        <Checkbox checked={paid} onCheckedChange={() => togglePaid(f)} />
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 15%, transparent)` }}>
+                          <Icon className="h-4 w-4" style={{ color: cat.color }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className={cn("truncate text-sm font-medium", paid && "text-success")}>{f.name}</p>
+                          <p className="text-xs text-muted-foreground">{cat.label} · {paid ? "Paga" : "A pagar"}</p>
+                        </div>
+                        <p className={cn("text-sm font-semibold tabular-nums", paid && "text-success")}>{formatBRL(f.amount)}</p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {dayExpenses.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Gastos do dia</p>
+                <ul className="divide-y rounded-lg border">
+                  {dayExpenses.map((e) => {
+                    const cat = CAT_MAP[e.category];
+                    const Icon = cat.icon;
+                    return (
+                      <li key={`md-ex-${e.id}`} className="flex items-center gap-3 px-3 py-2">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 15%, transparent)` }}>
+                          <Icon className="h-4 w-4" style={{ color: cat.color }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{e.description}</p>
+                          <p className="text-xs text-muted-foreground">{cat.label}{e.payment_method ? ` · ${e.payment_method}` : ""}</p>
+                        </div>
+                        <p className="text-sm font-semibold tabular-nums">{formatBRL(Number(e.amount))}</p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {cardsDueOnSelected.length === 0 && dayFixed.length === 0 && dayExpenses.length === 0 && (
+              <p className="py-6 text-center text-sm text-muted-foreground">Nada registrado neste dia.</p>
+            )}
+
+            <div className="flex items-center justify-between border-t pt-3">
+              <span className="text-sm text-muted-foreground">Total de gastos do dia</span>
+              <span className="text-base font-bold tabular-nums">
+                {formatBRL(dayExpenses.reduce((s, e) => s + Number(e.amount), 0) + dayFixed.reduce((s, f) => s + Number(f.amount), 0))}
+              </span>
+            </div>
+
+            <AddExpenseDialog userId={user.id} defaultDate={selected} onAdded={() => { load(); }} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
