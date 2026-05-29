@@ -73,6 +73,18 @@ function InvestmentsPage() {
     return m;
   }, [items]);
 
+  // Monthly projected return based on expected_return (% a.a.)
+  const monthlyReturns = useMemo(() => {
+    return items.map((i) => {
+      const rate = Number(i.expected_return ?? 0);
+      const monthly = (Number(i.amount) * (rate / 100)) / 12;
+      const yearly = Number(i.amount) * (rate / 100);
+      return { ...i, monthly, yearly };
+    });
+  }, [items]);
+  const totalMonthly = useMemo(() => monthlyReturns.reduce((s, i) => s + i.monthly, 0), [monthlyReturns]);
+  const totalYearly = useMemo(() => monthlyReturns.reduce((s, i) => s + i.yearly, 0), [monthlyReturns]);
+
   const resetForm = () => {
     setName("");
     setAmount("");
