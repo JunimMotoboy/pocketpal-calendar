@@ -85,6 +85,19 @@ function InvestmentsPage() {
   const totalMonthly = useMemo(() => monthlyReturns.reduce((s, i) => s + i.monthly, 0), [monthlyReturns]);
   const totalYearly = useMemo(() => monthlyReturns.reduce((s, i) => s + i.yearly, 0), [monthlyReturns]);
 
+  // Breakdown of monthly/yearly returns grouped by investment type
+  const returnsByType = useMemo(() => {
+    const m: Record<string, { monthly: number; yearly: number; invested: number }> = {};
+    for (const i of monthlyReturns) {
+      const cur = m[i.type] ?? { monthly: 0, yearly: 0, invested: 0 };
+      cur.monthly += i.monthly;
+      cur.yearly += i.yearly;
+      cur.invested += Number(i.amount);
+      m[i.type] = cur;
+    }
+    return m;
+  }, [monthlyReturns]);
+
   const resetForm = () => {
     setName("");
     setAmount("");
