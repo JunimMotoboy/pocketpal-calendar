@@ -287,18 +287,21 @@ function Dashboard() {
               classNames={{ root: "w-full", months: "w-full", month: "w-full" }}
               modifiers={{
                 hasExpense: (d) => dayTotals.has(format(d, "yyyy-MM-dd")),
-                hasFixed: (d) => fixedDaysSet.has(format(d, "yyyy-MM-dd")),
+                hasFixedPaid: (d) => paidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
+                hasFixedUnpaid: (d) => unpaidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasCardDue: (d) => cardDueDaysSet.has(format(d, "yyyy-MM-dd")),
               }}
               modifiersClassNames={{
                 hasExpense: "relative font-semibold text-primary after:absolute after:bottom-1 after:left-1/2 after:h-1 after:w-1 after:-translate-x-1/2 after:rounded-full after:bg-accent",
-                hasFixed: "relative font-semibold text-destructive before:absolute before:top-1 before:right-1 before:h-1.5 before:w-1.5 before:rounded-full before:bg-destructive",
+                hasFixedUnpaid: "relative font-semibold text-destructive before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-destructive",
+                hasFixedPaid: "relative font-semibold text-success before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-success",
                 hasCardDue: "relative font-semibold text-warning-foreground bg-warning/30 rounded-md",
               }}
             />
             <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent" />Gasto</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-destructive" />Despesa fixa</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-destructive" />Conta a pagar</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-success" />Conta paga</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-warning/60" />Fatura cartão</span>
             </div>
             {fetching && <p className="mt-2 text-xs text-muted-foreground">Atualizando...</p>}
