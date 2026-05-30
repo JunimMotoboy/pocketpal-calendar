@@ -417,34 +417,12 @@ function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Por categoria neste mês</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {CATEGORIES.map((c) => {
-                  const v = totals.byCat[c.value] ?? 0;
-                  const pct = totals.total > 0 ? (v / totals.total) * 100 : 0;
-                  const Icon = c.icon;
-                  return (
-                    <div key={c.value} className="rounded-xl border border-border/60 bg-card p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" style={{ color: c.color }} />
-                          <span className="text-sm font-medium">{c.label}</span>
-                        </div>
-                        <span className="text-sm font-semibold tabular-nums">{formatBRL(v)}</span>
-                      </div>
-                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: c.color }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+          <DailyGoals
+            expenses={expenses}
+            fixedDues={fixedDues}
+            paidMap={paidMap}
+            month={month}
+          />
         </div>
       </div>
 
