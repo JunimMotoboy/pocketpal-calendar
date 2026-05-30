@@ -518,3 +518,92 @@ function Dashboard() {
     </main>
   );
 }
+
+function DailyGoals({
+  expenses,
+  fixedDues,
+  paidMap,
+  month,
+}: {
+  expenses: Expense[];
+  fixedDues: FixedDue[];
+  paidMap: Map<string, string>;
+  month: Date;
+}) {
+  const today = new Date();
+  const todayKey = format(today, "yyyy-MM-dd");
+  const isCurrentMonth = today.getFullYear() === month.getFullYear() && today.getMonth() === month.getMonth();
+
+  const loggedToday = expenses.some((e) => e.spent_on === todayKey);
+  const overdueUnpaid = fixedDues.filter((f) => f.date <= today && !paidMap.has(f.id));
+  const allOverdueSettled = isCurrentMonth ? overdueUnpaid.length === 0 : true;
+  const reviewedMonth = isCurrentMonth;
+
+  const goals = [
+    {
+      key: "log",
+      label: "Registrar um gasto hoje",
+      desc: loggedToday ? "Você já registrou um gasto hoje." : "Anote pelo menos uma despesa para manter o controle.",
+      done: loggedToday,
+    },
+    {
+      key: "pay",
+      label: "Quitar contas vencidas até hoje",
+      desc: allOverdueSettled
+        ? "Tudo em dia este mês!"
+        : `${overdueUnpaid.length} conta${overdueUnpaid.length === 1 ? "" : "s"} pendente${overdueUnpaid.length === 1 ? "" : "s"}.`,
+      done: allOverdueSettled,
+    },
+    {
+      key: "review",
+      label: "Conferir o resumo do mês",
+      desc: reviewedMonth ? "Você está olhando o mês atual." : "Volte para o mês atual para acompanhar suas finanças.",
+      done: reviewedMonth,
+    },
+  ];
+
+  const completed = goals.filter((g) => g.done).length;
+  const pct = (completed / goals.length) * 100;
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <div>
+          <CardTitle className="text-base">Metas diárias</CardTitle>
+          <p className="mt-1 text-xs text-muted-foreground">Pequenos passos para manter o app sempre atualizado.</p>
+        </div>
+        <Badge variant="secondary">{completed}/{goals.length}</Badge>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+        </div>
+        <ul className="space-y-2">
+          {goals.map((g) => (
+            <li
+              key={g.key}
+              className={cn(
+                "flex items-start gap-3 rounded-xl border p-3 transition-colors",
+                g.done ? "border-success/40 bg-success/10" : "border-border/60 bg-card"
+              )}
+            >
+              <div
+                className={cn(
+                  "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+                  g.done ? "border-success bg-success text-success-foreground" : "border-muted-foreground/40"
+                )}
+                aria-hidden
+              >
+                {g.done ? "✓" : ""}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className={cn("text-sm font-medium", g.done && "text-success")}>{g.label}</p>
+                <p className="text-xs text-muted-foreground">{g.desc}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
