@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CATEGORIES, CAT_MAP, formatBRL, type Category } from "@/lib/categories";
+import { CAT_MAP, formatBRL, type Category } from "@/lib/categories";
 import { AddExpenseDialog, ExpenseDialog } from "@/components/add-expense-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -188,7 +188,34 @@ function Dashboard() {
     return m;
   }, [expenses]);
 
-  const fixedDaysSet = useMemo(() => new Set(fixedDues.map((f) => f.dateKey)), [fixedDues]);
+  // For each day with fixed dues, decide if ALL are paid (green) or any unpaid (red)
+  const paidFixedDaysSet = useMemo(() => {
+    const byDay = new Map<string, FixedDue[]>();
+    for (const f of fixedDues) {
+      const arr = byDay.get(f.dateKey) ?? [];
+      arr.push(f);
+      byDay.set(f.dateKey, arr);
+    }
+    const s = new Set<string>();
+    for (const [key, arr] of byDay) {
+      if (arr.every((f) => paidMap.has(f.id))) s.add(key);
+    }
+    return s;
+  }, [fixedDues, paidMap]);
+
+  const unpaidFixedDaysSet = useMemo(() => {
+    const byDay = new Map<string, FixedDue[]>();
+    for (const f of fixedDues) {
+      const arr = byDay.get(f.dateKey) ?? [];
+      arr.push(f);
+      byDay.set(f.dateKey, arr);
+    }
+    const s = new Set<string>();
+    for (const [key, arr] of byDay) {
+      if (arr.some((f) => !paidMap.has(f.id))) s.add(key);
+    }
+    return s;
+  }, [fixedDues, paidMap]);
 
   const cardDueDaysSet = useMemo(() => {
     const dim = getDaysInMonth(month);
@@ -260,18 +287,21 @@ function Dashboard() {
               classNames={{ root: "w-full", months: "w-full", month: "w-full" }}
               modifiers={{
                 hasExpense: (d) => dayTotals.has(format(d, "yyyy-MM-dd")),
-                hasFixed: (d) => fixedDaysSet.has(format(d, "yyyy-MM-dd")),
+                hasFixedPaid: (d) => paidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
+                hasFixedUnpaid: (d) => unpaidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasCardDue: (d) => cardDueDaysSet.has(format(d, "yyyy-MM-dd")),
               }}
               modifiersClassNames={{
                 hasExpense: "relative font-semibold text-primary after:absolute after:bottom-1 after:left-1/2 after:h-1 after:w-1 after:-translate-x-1/2 after:rounded-full after:bg-accent",
-                hasFixed: "relative font-semibold text-destructive before:absolute before:top-1 before:right-1 before:h-1.5 before:w-1.5 before:rounded-full before:bg-destructive",
+                hasFixedUnpaid: "relative font-semibold text-destructive before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-destructive",
+                hasFixedPaid: "relative font-semibold text-success before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-success",
                 hasCardDue: "relative font-semibold text-warning-foreground bg-warning/30 rounded-md",
               }}
             />
             <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent" />Gasto</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-destructive" />Despesa fixa</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-destructive" />Conta a pagar</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-success" />Conta paga</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-warning/60" />Fatura cartão</span>
             </div>
             {fetching && <p className="mt-2 text-xs text-muted-foreground">Atualizando...</p>}
@@ -387,34 +417,12 @@ function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Por categoria neste mês</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {CATEGORIES.map((c) => {
-                  const v = totals.byCat[c.value] ?? 0;
-                  const pct = totals.total > 0 ? (v / totals.total) * 100 : 0;
-                  const Icon = c.icon;
-                  return (
-                    <div key={c.value} className="rounded-xl border border-border/60 bg-card p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" style={{ color: c.color }} />
-                          <span className="text-sm font-medium">{c.label}</span>
-                        </div>
-                        <span className="text-sm font-semibold tabular-nums">{formatBRL(v)}</span>
-                      </div>
-                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: c.color }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+          <DailyGoals
+            expenses={expenses}
+            fixedDues={fixedDues}
+            paidMap={paidMap}
+            month={month}
+          />
         </div>
       </div>
 
@@ -508,5 +516,94 @@ function Dashboard() {
         </DialogContent>
       </Dialog>
     </main>
+  );
+}
+
+function DailyGoals({
+  expenses,
+  fixedDues,
+  paidMap,
+  month,
+}: {
+  expenses: Expense[];
+  fixedDues: FixedDue[];
+  paidMap: Map<string, string>;
+  month: Date;
+}) {
+  const today = new Date();
+  const todayKey = format(today, "yyyy-MM-dd");
+  const isCurrentMonth = today.getFullYear() === month.getFullYear() && today.getMonth() === month.getMonth();
+
+  const loggedToday = expenses.some((e) => e.spent_on === todayKey);
+  const overdueUnpaid = fixedDues.filter((f) => f.date <= today && !paidMap.has(f.id));
+  const allOverdueSettled = isCurrentMonth ? overdueUnpaid.length === 0 : true;
+  const reviewedMonth = isCurrentMonth;
+
+  const goals = [
+    {
+      key: "log",
+      label: "Registrar um gasto hoje",
+      desc: loggedToday ? "Você já registrou um gasto hoje." : "Anote pelo menos uma despesa para manter o controle.",
+      done: loggedToday,
+    },
+    {
+      key: "pay",
+      label: "Quitar contas vencidas até hoje",
+      desc: allOverdueSettled
+        ? "Tudo em dia este mês!"
+        : `${overdueUnpaid.length} conta${overdueUnpaid.length === 1 ? "" : "s"} pendente${overdueUnpaid.length === 1 ? "" : "s"}.`,
+      done: allOverdueSettled,
+    },
+    {
+      key: "review",
+      label: "Conferir o resumo do mês",
+      desc: reviewedMonth ? "Você está olhando o mês atual." : "Volte para o mês atual para acompanhar suas finanças.",
+      done: reviewedMonth,
+    },
+  ];
+
+  const completed = goals.filter((g) => g.done).length;
+  const pct = (completed / goals.length) * 100;
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <div>
+          <CardTitle className="text-base">Metas diárias</CardTitle>
+          <p className="mt-1 text-xs text-muted-foreground">Pequenos passos para manter o app sempre atualizado.</p>
+        </div>
+        <Badge variant="secondary">{completed}/{goals.length}</Badge>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+        </div>
+        <ul className="space-y-2">
+          {goals.map((g) => (
+            <li
+              key={g.key}
+              className={cn(
+                "flex items-start gap-3 rounded-xl border p-3 transition-colors",
+                g.done ? "border-success/40 bg-success/10" : "border-border/60 bg-card"
+              )}
+            >
+              <div
+                className={cn(
+                  "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+                  g.done ? "border-success bg-success text-success-foreground" : "border-muted-foreground/40"
+                )}
+                aria-hidden
+              >
+                {g.done ? "✓" : ""}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className={cn("text-sm font-medium", g.done && "text-success")}>{g.label}</p>
+                <p className="text-xs text-muted-foreground">{g.desc}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   );
 }
