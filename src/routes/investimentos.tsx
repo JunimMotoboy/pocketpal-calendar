@@ -258,6 +258,33 @@ function InvestmentsPage() {
               <p className="mt-1 text-2xl font-bold tabular-nums text-primary">{formatBRL(totalYearly)}</p>
             </div>
           </div>
+          {Object.keys(returnsByType).length > 0 && (
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Recebimento por tipo / mês</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {INVESTMENT_TYPES.map((t) => {
+                  const r = returnsByType[t.value];
+                  if (!r || r.monthly <= 0) return null;
+                  const Icon = t.icon;
+                  return (
+                    <div key={`rt-${t.value}`} className="flex items-center gap-3 rounded-lg border p-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `color-mix(in oklab, ${t.color} 15%, transparent)` }}>
+                        <Icon className="h-4 w-4" style={{ color: t.color }} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{t.label}</p>
+                        <p className="text-xs text-muted-foreground tabular-nums">{formatBRL(r.invested)} aplicado</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold tabular-nums text-success">+ {formatBRL(r.monthly)}/mês</p>
+                        <p className="text-xs text-muted-foreground tabular-nums">{formatBRL(r.yearly)}/ano</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {monthlyReturns.filter((i) => i.monthly > 0).length === 0 ? (
             <p className="text-sm text-muted-foreground">Informe o "Rendimento esperado (% a.a.)" em cada aplicação para ver a projeção mensal.</p>
           ) : (
