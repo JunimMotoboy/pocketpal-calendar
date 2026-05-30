@@ -188,7 +188,34 @@ function Dashboard() {
     return m;
   }, [expenses]);
 
-  const fixedDaysSet = useMemo(() => new Set(fixedDues.map((f) => f.dateKey)), [fixedDues]);
+  // For each day with fixed dues, decide if ALL are paid (green) or any unpaid (red)
+  const paidFixedDaysSet = useMemo(() => {
+    const byDay = new Map<string, FixedDue[]>();
+    for (const f of fixedDues) {
+      const arr = byDay.get(f.dateKey) ?? [];
+      arr.push(f);
+      byDay.set(f.dateKey, arr);
+    }
+    const s = new Set<string>();
+    for (const [key, arr] of byDay) {
+      if (arr.every((f) => paidMap.has(f.id))) s.add(key);
+    }
+    return s;
+  }, [fixedDues, paidMap]);
+
+  const unpaidFixedDaysSet = useMemo(() => {
+    const byDay = new Map<string, FixedDue[]>();
+    for (const f of fixedDues) {
+      const arr = byDay.get(f.dateKey) ?? [];
+      arr.push(f);
+      byDay.set(f.dateKey, arr);
+    }
+    const s = new Set<string>();
+    for (const [key, arr] of byDay) {
+      if (arr.some((f) => !paidMap.has(f.id))) s.add(key);
+    }
+    return s;
+  }, [fixedDues, paidMap]);
 
   const cardDueDaysSet = useMemo(() => {
     const dim = getDaysInMonth(month);
