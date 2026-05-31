@@ -73,30 +73,6 @@ function InvestmentsPage() {
     return m;
   }, [items]);
 
-  // Monthly projected return based on expected_return (% a.a.)
-  const monthlyReturns = useMemo(() => {
-    return items.map((i) => {
-      const rate = Number(i.expected_return ?? 0);
-      const monthly = (Number(i.amount) * (rate / 100)) / 12;
-      const yearly = Number(i.amount) * (rate / 100);
-      return { ...i, monthly, yearly };
-    });
-  }, [items]);
-  const totalMonthly = useMemo(() => monthlyReturns.reduce((s, i) => s + i.monthly, 0), [monthlyReturns]);
-  const totalYearly = useMemo(() => monthlyReturns.reduce((s, i) => s + i.yearly, 0), [monthlyReturns]);
-
-  // Breakdown of monthly/yearly returns grouped by investment type
-  const returnsByType = useMemo(() => {
-    const m: Record<string, { monthly: number; yearly: number; invested: number }> = {};
-    for (const i of monthlyReturns) {
-      const cur = m[i.type] ?? { monthly: 0, yearly: 0, invested: 0 };
-      cur.monthly += i.monthly;
-      cur.yearly += i.yearly;
-      cur.invested += Number(i.amount);
-      m[i.type] = cur;
-    }
-    return m;
-  }, [monthlyReturns]);
 
   const resetForm = () => {
     setName("");
@@ -240,80 +216,6 @@ function InvestmentsPage() {
           </DialogContent>
         </Dialog>
       </section>
-
-      {/* Projected returns */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-base">Rendimentos projetados</CardTitle>
-          <p className="text-xs text-muted-foreground">Estimativa com base no rendimento esperado (% a.a.) informado em cada aplicação.</p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl border bg-success/5 p-4">
-              <p className="text-xs text-muted-foreground">Recebimento estimado / mês</p>
-              <p className="mt-1 text-2xl font-bold tabular-nums text-success">{formatBRL(totalMonthly)}</p>
-            </div>
-            <div className="rounded-xl border bg-primary/5 p-4">
-              <p className="text-xs text-muted-foreground">Recebimento estimado / ano</p>
-              <p className="mt-1 text-2xl font-bold tabular-nums text-primary">{formatBRL(totalYearly)}</p>
-            </div>
-          </div>
-          {Object.keys(returnsByType).length > 0 && (
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Recebimento por tipo / mês</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {INVESTMENT_TYPES.map((t) => {
-                  const r = returnsByType[t.value];
-                  if (!r || r.monthly <= 0) return null;
-                  const Icon = t.icon;
-                  return (
-                    <div key={`rt-${t.value}`} className="flex items-center gap-3 rounded-lg border p-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `color-mix(in oklab, ${t.color} 15%, transparent)` }}>
-                        <Icon className="h-4 w-4" style={{ color: t.color }} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{t.label}</p>
-                        <p className="text-xs text-muted-foreground tabular-nums">{formatBRL(r.invested)} aplicado</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold tabular-nums text-success">+ {formatBRL(r.monthly)}/mês</p>
-                        <p className="text-xs text-muted-foreground tabular-nums">{formatBRL(r.yearly)}/ano</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {monthlyReturns.filter((i) => i.monthly > 0).length === 0 ? (
-            <p className="text-sm text-muted-foreground">Informe o "Rendimento esperado (% a.a.)" em cada aplicação para ver a projeção mensal.</p>
-          ) : (
-            <ul className="divide-y rounded-lg border">
-              {monthlyReturns.filter((i) => i.monthly > 0).map((i) => {
-                const t = INV_MAP[i.type];
-                const Icon = t.icon;
-                return (
-                  <li key={`mr-${i.id}`} className="flex items-center gap-3 px-3 py-2">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `color-mix(in oklab, ${t.color} 15%, transparent)` }}>
-                      <Icon className="h-4 w-4" style={{ color: t.color }} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{i.name}</p>
-                      <p className="text-xs text-muted-foreground">{formatBRL(Number(i.amount))} · {i.expected_return}% a.a.</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold tabular-nums text-success">+ {formatBRL(i.monthly)}/mês</p>
-                      <p className="text-xs text-muted-foreground tabular-nums">{formatBRL(i.yearly)}/ano</p>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
