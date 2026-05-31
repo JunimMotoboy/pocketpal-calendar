@@ -76,6 +76,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const [queryClient] = useState(() => new QueryClient());
+  useTheme();
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background">
