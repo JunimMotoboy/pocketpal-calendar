@@ -52,10 +52,18 @@ export const Route = createRootRoute({
   notFoundComponent: NotFoundComponent,
 });
 
+const themeScript = `
+  (function(){
+    var t = localStorage.getItem('nixwallet:theme');
+    if (t === 'dark') document.documentElement.classList.add('dark');
+  })();
+`;
+
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <HeadContent />
       </head>
       <body>
