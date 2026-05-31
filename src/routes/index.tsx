@@ -519,6 +519,14 @@ function Dashboard() {
   );
 }
 
+const MOTIVATIONAL_MESSAGES = [
+  "Parabéns! Controlar os gastos é o primeiro passo para a liberdade financeira.",
+  "Excelente! Dias sem gastos são pequenas vitórias que se tornam grandes conquistas.",
+  "Muito bem! Cada real economizado hoje é um investimento no seu futuro.",
+  "Incrível! A disciplina de hoje constrói a tranquilidade de amanhã.",
+  "Ótimo trabalho! Seu esforço para manter o controle está dando resultados.",
+];
+
 function DailyGoals({
   expenses,
   fixedDues,
@@ -539,12 +547,45 @@ function DailyGoals({
   const allOverdueSettled = isCurrentMonth ? overdueUnpaid.length === 0 : true;
   const reviewedMonth = isCurrentMonth;
 
+  const [noExpensesToday, setNoExpensesToday] = useState(() => {
+    try {
+      return localStorage.getItem(`nixwallet:noexpenses:${todayKey}`) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  const handleNoExpenses = () => {
+    const next = !noExpensesToday;
+    setNoExpensesToday(next);
+    try {
+      localStorage.setItem(`nixwallet:noexpenses:${todayKey}`, next ? "1" : "0");
+    } catch {}
+    if (next) {
+      const msg = MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)];
+      toast.success(msg);
+    }
+  };
+
   const goals = [
     {
       key: "log",
       label: "Registrar um gasto hoje",
-      desc: loggedToday ? "Você já registrou um gasto hoje." : "Anote pelo menos uma despesa para manter o controle.",
-      done: loggedToday,
+      desc: loggedToday
+        ? "Você já registrou um gasto hoje."
+        : "Anote pelo menos uma despesa para manter o controle.",
+      done: loggedToday || noExpensesToday,
+      interactive: false,
+    },
+    {
+      key: "noexpense",
+      label: "Não tive gastos hoje",
+      desc: noExpensesToday
+        ? "Você marcou que não teve gastos hoje. Continue assim!"
+        : "Marque aqui se hoje não houve nenhuma despesa.",
+      done: noExpensesToday,
+      interactive: true,
+      onToggle: handleNoExpenses,
     },
     {
       key: "pay",
@@ -553,12 +594,14 @@ function DailyGoals({
         ? "Tudo em dia este mês!"
         : `${overdueUnpaid.length} conta${overdueUnpaid.length === 1 ? "" : "s"} pendente${overdueUnpaid.length === 1 ? "" : "s"}.`,
       done: allOverdueSettled,
+      interactive: false,
     },
     {
       key: "review",
       label: "Conferir o resumo do mês",
       desc: reviewedMonth ? "Você está olhando o mês atual." : "Volte para o mês atual para acompanhar suas finanças.",
       done: reviewedMonth,
+      interactive: false,
     },
   ];
 
@@ -584,8 +627,10 @@ function DailyGoals({
               key={g.key}
               className={cn(
                 "flex items-start gap-3 rounded-xl border p-3 transition-colors",
-                g.done ? "border-success/40 bg-success/10" : "border-border/60 bg-card"
+                g.done ? "border-success/40 bg-success/10" : "border-border/60 bg-card",
+                (g as any).interactive && "cursor-pointer hover:border-primary/40"
               )}
+              onClick={(g as any).interactive ? (g as any).onToggle : undefined}
             >
               <div
                 className={cn(
