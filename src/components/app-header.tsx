@@ -85,6 +85,9 @@ export function AppHeader() {
           <>
             <nav className="hidden lg:flex items-center gap-1">
               <NavLinks />
+              <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label={theme === "dark" ? "Tema claro" : "Tema escuro"}>
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
               <Button variant="ghost" size="sm" onClick={handleLogout} className="ml-1">
                 <LogOut className="h-4 w-4 mr-1" />
                 Sair
