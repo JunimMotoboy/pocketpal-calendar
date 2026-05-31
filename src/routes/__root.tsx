@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { AppHeader } from "@/components/app-header";
+import { useTheme } from "@/hooks/use-theme";
 
 import appCss from "../styles.css?url";
 
@@ -51,10 +52,18 @@ export const Route = createRootRoute({
   notFoundComponent: NotFoundComponent,
 });
 
+const themeScript = `
+  (function(){
+    var t = localStorage.getItem('nixwallet:theme');
+    if (t === 'dark') document.documentElement.classList.add('dark');
+  })();
+`;
+
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <HeadContent />
       </head>
       <body>
@@ -67,6 +76,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const [queryClient] = useState(() => new QueryClient());
+  useTheme();
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background">

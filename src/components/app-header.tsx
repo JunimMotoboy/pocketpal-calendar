@@ -1,8 +1,9 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Wallet, Calendar as CalIcon, Sparkles, LogOut, TrendingUp, TrendingDown, PieChart, Menu, CreditCard, CalendarClock, Shield } from "lucide-react";
+import { Wallet, Calendar as CalIcon, Sparkles, LogOut, TrendingUp, TrendingDown, PieChart, Menu, CreditCard, CalendarClock, Shield, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,7 @@ const NAV = [
 
 export function AppHeader() {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const loc = useLocation();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
@@ -83,6 +85,9 @@ export function AppHeader() {
           <>
             <nav className="hidden lg:flex items-center gap-1">
               <NavLinks />
+              <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label={theme === "dark" ? "Tema claro" : "Tema escuro"}>
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
               <Button variant="ghost" size="sm" onClick={handleLogout} className="ml-1">
                 <LogOut className="h-4 w-4 mr-1" />
                 Sair
@@ -98,7 +103,11 @@ export function AppHeader() {
               <SheetContent side="right" className="w-72">
                 <div className="mt-8 flex flex-col gap-1">
                   <NavLinks onClick={() => setOpen(false)} />
-                  <Button variant="ghost" onClick={() => { handleLogout(); setOpen(false); }} className="justify-start mt-4">
+                  <Button variant="ghost" onClick={() => { toggleTheme(); }} className="justify-start mt-2">
+                    {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+                    {theme === "dark" ? "Tema claro" : "Tema escuro"}
+                  </Button>
+                  <Button variant="ghost" onClick={() => { handleLogout(); setOpen(false); }} className="justify-start mt-2">
                     <LogOut className="h-4 w-4 mr-2" />
                     Sair
                   </Button>
