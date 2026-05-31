@@ -1,8 +1,9 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Wallet, Calendar as CalIcon, Sparkles, LogOut, TrendingUp, TrendingDown, PieChart, Menu, CreditCard, CalendarClock, Shield } from "lucide-react";
+import { Wallet, Calendar as CalIcon, Sparkles, LogOut, TrendingUp, TrendingDown, PieChart, Menu, CreditCard, CalendarClock, Shield, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
