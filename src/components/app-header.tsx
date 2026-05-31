@@ -20,6 +20,7 @@ const NAV = [
 
 export function AppHeader() {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const loc = useLocation();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
