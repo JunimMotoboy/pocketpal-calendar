@@ -45,8 +45,24 @@ function AuthPage() {
   };
 
   useEffect(() => {
-    if (!loading && user) nav({ to: "/" });
-  }, [user, loading, nav]);
+    if (!loading && user) {
+      if (pendingEmail) toast.success("Email confirmado! Redirecionando...");
+      nav({ to: "/" });
+    }
+  }, [user, loading, nav, pendingEmail]);
+
+  // Detecta automaticamente quando o email for confirmado (mesmo em outra aba)
+  useEffect(() => {
+    if (!pendingEmail) return;
+    const interval = setInterval(async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        toast.success("Email confirmado com sucesso!");
+        nav({ to: "/" });
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [pendingEmail, nav]);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
