@@ -94,12 +94,16 @@ export function AppHeader() {
               </Button>
             </nav>
 
-            <Sheet open={open} onOpenChange={setOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
+            <div className="flex items-center gap-1 lg:hidden">
+              <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label={theme === "dark" ? "Tema claro" : "Tema escuro"}>
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+              <Sheet open={open} onOpenChange={setOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
               <SheetContent side="right" className="w-72">
                 <div className="mt-8 flex flex-col gap-1">
                   <NavLinks onClick={() => setOpen(false)} />
@@ -114,6 +118,7 @@ export function AppHeader() {
                 </div>
               </SheetContent>
             </Sheet>
+            </div>
           </>
         )}
       </div>
