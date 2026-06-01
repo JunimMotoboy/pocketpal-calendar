@@ -27,6 +27,22 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+
+  const handleResend = async () => {
+    if (!pendingEmail) return;
+    setResending(true);
+    const redirectUrl = `${window.location.origin}/`;
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: pendingEmail,
+      options: { emailRedirectTo: redirectUrl },
+    });
+    setResending(false);
+    if (error) toast.error(translateAuthError(error.message));
+    else toast.success("Email de verificação reenviado. Confira sua caixa de entrada.");
+  };
 
   useEffect(() => {
     if (!loading && user) nav({ to: "/" });
