@@ -27,6 +27,22 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+
+  const handleResend = async () => {
+    if (!pendingEmail) return;
+    setResending(true);
+    const redirectUrl = `${window.location.origin}/`;
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: pendingEmail,
+      options: { emailRedirectTo: redirectUrl },
+    });
+    setResending(false);
+    if (error) toast.error(translateAuthError(error.message));
+    else toast.success("Email de verificação reenviado. Confira sua caixa de entrada.");
+  };
 
   useEffect(() => {
     if (!loading && user) nav({ to: "/" });
@@ -91,8 +107,8 @@ function AuthPage() {
     setBusy(false);
     if (error) toast.error(translateAuthError(error.message));
     else {
-      toast.success("Conta criada! Você já pode entrar.");
-      nav({ to: "/" });
+      setPendingEmail(email.trim());
+      toast.success("Conta criada! Verifique seu email para confirmar.");
     }
   };
 
@@ -122,6 +138,32 @@ function AuthPage() {
         </div>
 
         <Card className="border-border/60 shadow-[var(--shadow-elegant)]">
+          {pendingEmail ? (
+            <>
+              <CardHeader>
+                <CardTitle>Verifique seu email</CardTitle>
+                <CardDescription>
+                  Enviamos um link de confirmação para <strong>{pendingEmail}</strong>. Clique no link para ativar sua conta.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Não recebeu? Verifique sua caixa de spam ou reenvie o email abaixo.
+                </p>
+                <Button onClick={handleResend} disabled={resending} className="w-full">
+                  {resending ? "Reenviando..." : "Reenviar email de verificação"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setPendingEmail(null)}
+                >
+                  Voltar
+                </Button>
+              </CardContent>
+            </>
+          ) : (
+          <>
           <CardHeader>
             <CardTitle>Bem-vindo</CardTitle>
             <CardDescription>Entre ou crie uma conta para começar</CardDescription>
@@ -171,6 +213,8 @@ function AuthPage() {
               </TabsContent>
             </Tabs>
           </CardContent>
+          </>
+          )}
         </Card>
       </div>
     </div>
