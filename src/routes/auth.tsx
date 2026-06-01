@@ -107,8 +107,8 @@ function AuthPage() {
     setBusy(false);
     if (error) toast.error(translateAuthError(error.message));
     else {
-      toast.success("Conta criada! Você já pode entrar.");
-      nav({ to: "/" });
+      setPendingEmail(email.trim());
+      toast.success("Conta criada! Verifique seu email para confirmar.");
     }
   };
 
