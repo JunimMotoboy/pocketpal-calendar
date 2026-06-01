@@ -213,6 +213,8 @@ function AuthPage() {
               </TabsContent>
             </Tabs>
           </CardContent>
+          </>
+          )}
         </Card>
       </div>
     </div>
