@@ -138,6 +138,32 @@ function AuthPage() {
         </div>
 
         <Card className="border-border/60 shadow-[var(--shadow-elegant)]">
+          {pendingEmail ? (
+            <>
+              <CardHeader>
+                <CardTitle>Verifique seu email</CardTitle>
+                <CardDescription>
+                  Enviamos um link de confirmação para <strong>{pendingEmail}</strong>. Clique no link para ativar sua conta.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Não recebeu? Verifique sua caixa de spam ou reenvie o email abaixo.
+                </p>
+                <Button onClick={handleResend} disabled={resending} className="w-full">
+                  {resending ? "Reenviando..." : "Reenviar email de verificação"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setPendingEmail(null)}
+                >
+                  Voltar
+                </Button>
+              </CardContent>
+            </>
+          ) : (
+          <>
           <CardHeader>
             <CardTitle>Bem-vindo</CardTitle>
             <CardDescription>Entre ou crie uma conta para começar</CardDescription>
