@@ -159,7 +159,10 @@ function AuthPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="su-pass">Senha</Label>
-                    <Input id="su-pass" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <Input id="su-pass" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <p className="text-xs text-muted-foreground">
+                      Mínimo 8 caracteres, com 1 maiúscula e 1 minúscula.
+                    </p>
                   </div>
                   <Button type="submit" className="w-full" disabled={busy}>
                     {busy ? "Criando..." : "Criar conta"}
