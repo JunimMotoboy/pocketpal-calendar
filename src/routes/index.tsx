@@ -326,12 +326,14 @@ function Dashboard() {
                 hasFixedPaid: (d) => paidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasFixedUnpaid: (d) => unpaidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasCardDue: (d) => cardDueDaysSet.has(format(d, "yyyy-MM-dd")),
+                hasGoal: (d) => goalContribDaysSet.has(format(d, "yyyy-MM-dd")),
               }}
               modifiersClassNames={{
                 hasExpense: "relative font-semibold text-primary after:absolute after:bottom-1 after:left-1/2 after:h-1 after:w-1 after:-translate-x-1/2 after:rounded-full after:bg-accent",
                 hasFixedUnpaid: "relative font-semibold text-destructive before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-destructive",
                 hasFixedPaid: "relative font-semibold text-success before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-success",
                 hasCardDue: "relative font-semibold text-warning-foreground bg-warning/30 rounded-md",
+                hasGoal: "ring-2 ring-amber-500/60 rounded-md",
               }}
             />
             <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
