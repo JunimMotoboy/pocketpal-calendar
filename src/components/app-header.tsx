@@ -15,6 +15,7 @@ const NAV = [
   { to: "/investimentos", label: "Investimentos", icon: TrendingDown },
   { to: "/cartoes", label: "Cartões", icon: CreditCard },
   { to: "/relatorios", label: "Relatórios", icon: PieChart },
+  { to: "/metas", label: "Metas", icon: Trophy },
   { to: "/dicas", label: "Dicas IA", icon: Sparkles },
 ];
 
