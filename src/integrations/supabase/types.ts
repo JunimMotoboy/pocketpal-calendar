@@ -305,6 +305,63 @@ export type Database = {
         }
         Relationships: []
       }
+      goal_contributions: {
+        Row: {
+          amount: number
+          created_at: string
+          goal_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          goal_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          goal_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      goals: {
+        Row: {
+          completed: boolean
+          created_at: string
+          current_amount: number
+          frequency: Database["public"]["Enums"]["goal_frequency"]
+          id: string
+          name: string
+          target_amount: number
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          current_amount?: number
+          frequency?: Database["public"]["Enums"]["goal_frequency"]
+          id?: string
+          name: string
+          target_amount: number
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          current_amount?: number
+          frequency?: Database["public"]["Enums"]["goal_frequency"]
+          id?: string
+          name?: string
+          target_amount?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       incomes: {
         Row: {
           amount: number
@@ -487,6 +544,7 @@ export type Database = {
         | "compras"
         | "moradia"
         | "outros"
+      goal_frequency: "diaria" | "semanal" | "quinzenal" | "mensal"
       income_source:
         | "salario"
         | "freelance"
@@ -651,6 +709,7 @@ export const Constants = {
         "moradia",
         "outros",
       ],
+      goal_frequency: ["diaria", "semanal", "quinzenal", "mensal"],
       income_source: [
         "salario",
         "freelance",
