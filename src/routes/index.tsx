@@ -192,6 +192,16 @@ function Dashboard() {
     [fixedDues, selected]
   );
 
+  const dayGoalContribs = useMemo(
+    () => goalContribs.filter((c) => isSameDay(parseISO(c.contributed_on), selected)),
+    [goalContribs, selected]
+  );
+
+  const goalContribDaysSet = useMemo(
+    () => new Set(goalContribs.map((c) => c.contributed_on)),
+    [goalContribs]
+  );
+
   const totals = useMemo(() => {
     const byCat: Record<string, number> = {};
     let total = 0;
