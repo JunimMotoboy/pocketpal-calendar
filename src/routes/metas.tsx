@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Trophy, Plus, Trash2, CheckCircle2 } from "lucide-react";
+import { Trophy, Plus, Trash2, CheckCircle2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -55,16 +55,17 @@ const FREQ_LABEL: Record<Frequency, string> = {
   mensal: "Mensal",
 };
 
+const emptyForm = { name: "", target: "", frequency: "mensal" as Frequency };
+
 function MetasPage() {
   const { user } = useAuth();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // create dialog
-  const [openCreate, setOpenCreate] = useState(false);
-  const [name, setName] = useState("");
-  const [target, setTarget] = useState("");
-  const [frequency, setFrequency] = useState<Frequency>("mensal");
+  // create/edit dialog
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
   // contribute dialog
   const [contribGoal, setContribGoal] = useState<Goal | null>(null);
@@ -87,24 +88,55 @@ function MetasPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  const handleCreate = async () => {
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setFormOpen(true);
+  };
+
+  const openEdit = (g: Goal) => {
+    setEditingId(g.id);
+    setForm({
+      name: g.name,
+      target: String(g.target_amount),
+      frequency: g.frequency,
+    });
+    setFormOpen(true);
+  };
+
+  const handleSave = async () => {
     if (!user) return;
-    const value = parseFloat(target.replace(",", "."));
-    if (!name.trim()) return toast.error("Informe um nome para a meta");
+    const value = parseFloat(form.target.replace(",", "."));
+    if (!form.name.trim()) return toast.error("Informe um nome para a meta");
     if (!value || value <= 0) return toast.error("Informe um valor válido");
 
-    const { error } = await supabase.from("goals").insert({
-      user_id: user.id,
-      name: name.trim(),
-      target_amount: value,
-      frequency,
-    });
-    if (error) return toast.error("Erro ao criar meta");
-    toast.success("Meta criada!");
-    setName("");
-    setTarget("");
-    setFrequency("mensal");
-    setOpenCreate(false);
+    if (editingId) {
+      const goal = goals.find((g) => g.id === editingId);
+      const completed = goal ? Number(goal.current_amount) >= value : false;
+      const { error } = await supabase
+        .from("goals")
+        .update({
+          name: form.name.trim(),
+          target_amount: value,
+          frequency: form.frequency,
+          completed,
+        })
+        .eq("id", editingId);
+      if (error) return toast.error("Erro ao atualizar meta");
+      toast.success("Meta atualizada!");
+    } else {
+      const { error } = await supabase.from("goals").insert({
+        user_id: user.id,
+        name: form.name.trim(),
+        target_amount: value,
+        frequency: form.frequency,
+      });
+      if (error) return toast.error("Erro ao criar meta");
+      toast.success("Meta criada!");
+    }
+    setFormOpen(false);
+    setEditingId(null);
+    setForm(emptyForm);
     load();
   };
 
@@ -120,6 +152,7 @@ function MetasPage() {
       user_id: user.id,
       goal_id: contribGoal.id,
       amount: value,
+      contributed_on: new Date().toISOString().slice(0, 10),
     });
     if (cErr) return toast.error("Erro ao registrar valor");
 
@@ -140,7 +173,9 @@ function MetasPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Excluir esta meta?")) return;
+    if (!confirm("Excluir esta meta e todos os seus aportes?")) return;
+    // delete contributions first (no cascade)
+    await supabase.from("goal_contributions").delete().eq("goal_id", id);
     const { error } = await supabase.from("goals").delete().eq("id", id);
     if (error) return toast.error("Erro ao excluir");
     toast.success("Meta excluída");
@@ -154,24 +189,24 @@ function MetasPage() {
           <Trophy className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold tracking-tight">Metas</h1>
         </div>
-        <Dialog open={openCreate} onOpenChange={setOpenCreate}>
+        <Dialog open={formOpen} onOpenChange={(o) => { setFormOpen(o); if (!o) { setEditingId(null); setForm(emptyForm); } }}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={openCreate}>
               <Plus className="h-4 w-4 mr-1" />
               Nova Meta
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Nova Meta</DialogTitle>
+              <DialogTitle>{editingId ? "Editar Meta" : "Nova Meta"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
               <div className="space-y-1">
                 <Label>Nome da meta</Label>
                 <Input
                   placeholder="Ex: Reserva de Emergência"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
@@ -181,13 +216,13 @@ function MetasPage() {
                   inputMode="decimal"
                   step="0.01"
                   placeholder="100,00"
-                  value={target}
-                  onChange={(e) => setTarget(e.target.value)}
+                  value={form.target}
+                  onChange={(e) => setForm({ ...form, target: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>Frequência</Label>
-                <Select value={frequency} onValueChange={(v) => setFrequency(v as Frequency)}>
+                <Select value={form.frequency} onValueChange={(v) => setForm({ ...form, frequency: v as Frequency })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -201,10 +236,10 @@ function MetasPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setOpenCreate(false)}>
+              <Button variant="ghost" onClick={() => setFormOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleCreate}>Salvar</Button>
+              <Button onClick={handleSave}>Salvar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -228,9 +263,9 @@ function MetasPage() {
               <Card key={g.id} className="overflow-hidden">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <CardTitle className="text-base flex items-center gap-2">
-                        {g.name}
+                    <div className="min-w-0">
+                      <CardTitle className="text-base flex items-center gap-2 flex-wrap">
+                        <span className="truncate">{g.name}</span>
                         {g.completed && (
                           <Badge className="bg-green-600 hover:bg-green-700">
                             <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -242,14 +277,24 @@ function MetasPage() {
                         Frequência: {FREQ_LABEL[g.frequency]}
                       </p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(g.id)}
-                      aria-label="Excluir"
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    <div className="flex shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEdit(g)}
+                        aria-label="Editar"
+                      >
+                        <Pencil className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(g.id)}
+                        aria-label="Excluir"
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -298,6 +343,9 @@ function MetasPage() {
               onChange={(e) => setContribValue(e.target.value)}
               autoFocus
             />
+            <p className="text-xs text-muted-foreground pt-1">
+              O valor será registrado na data de hoje e aparecerá no calendário do painel.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setContribGoal(null)}>

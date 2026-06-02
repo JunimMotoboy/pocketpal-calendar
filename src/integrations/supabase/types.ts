@@ -308,6 +308,7 @@ export type Database = {
       goal_contributions: {
         Row: {
           amount: number
+          contributed_on: string
           created_at: string
           goal_id: string
           id: string
@@ -315,6 +316,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          contributed_on?: string
           created_at?: string
           goal_id: string
           id?: string
@@ -322,6 +324,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          contributed_on?: string
           created_at?: string
           goal_id?: string
           id?: string

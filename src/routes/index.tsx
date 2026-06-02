@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { format, startOfMonth, endOfMonth, isSameDay, parseISO, getDaysInMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Trash2, Pencil, CalendarClock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, Pencil, CalendarClock, ChevronLeft, ChevronRight, Trophy } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
@@ -47,6 +47,14 @@ type FixedDue = {
   dateKey: string;
 };
 
+type GoalContribution = {
+  id: string;
+  goal_id: string;
+  amount: number;
+  contributed_on: string;
+  goal_name: string;
+};
+
 function Dashboard() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
@@ -56,6 +64,7 @@ function Dashboard() {
   const [fixedRaw, setFixedRaw] = useState<{ id: string; name: string; amount: number; category: Category; due_day: number }[]>([]);
   const [paidMap, setPaidMap] = useState<Map<string, string>>(new Map()); // key fixed_expense_id -> payment id
   const [cards, setCards] = useState<{ id: string; name: string; due_day: number }[]>([]);
+  const [goalContribs, setGoalContribs] = useState<GoalContribution[]>([]);
   const [fetching, setFetching] = useState(false);
   const [dayDialogOpen, setDayDialogOpen] = useState(false);
 
@@ -70,7 +79,7 @@ function Dashboard() {
     const to = format(endOfMonth(month), "yyyy-MM-dd");
     const y = month.getFullYear();
     const mo = month.getMonth() + 1;
-    const [expRes, fixRes, payRes, cardsRes] = await Promise.all([
+    const [expRes, fixRes, payRes, cardsRes, gcRes] = await Promise.all([
       supabase
         .from("expenses")
         .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
@@ -87,6 +96,11 @@ function Dashboard() {
         .eq("year", y)
         .eq("month", mo),
       supabase.from("cards").select("id, name, due_day"),
+      supabase
+        .from("goal_contributions")
+        .select("id, goal_id, amount, contributed_on")
+        .gte("contributed_on", from)
+        .lte("contributed_on", to),
     ]);
     setFetching(false);
     if (expRes.error) toast.error(expRes.error.message);
@@ -102,6 +116,18 @@ function Dashboard() {
       setPaidMap(m);
     }
     if (!cardsRes.error) setCards((cardsRes.data ?? []) as { id: string; name: string; due_day: number }[]);
+
+    // Join contributions with goal names client-side
+    const rawGc = (gcRes.data ?? []) as { id: string; goal_id: string; amount: number; contributed_on: string }[];
+    if (rawGc.length > 0) {
+      const ids = Array.from(new Set(rawGc.map((g) => g.goal_id)));
+      const { data: goalsData } = await supabase.from("goals").select("id, name").in("id", ids);
+      const nameMap = new Map<string, string>();
+      for (const g of (goalsData ?? []) as { id: string; name: string }[]) nameMap.set(g.id, g.name);
+      setGoalContribs(rawGc.map((c) => ({ ...c, amount: Number(c.amount), goal_name: nameMap.get(c.goal_id) ?? "Meta" })));
+    } else {
+      setGoalContribs([]);
+    }
   };
 
   useEffect(() => {
@@ -164,6 +190,16 @@ function Dashboard() {
   const dayFixed = useMemo(
     () => fixedDues.filter((f) => isSameDay(f.date, selected)),
     [fixedDues, selected]
+  );
+
+  const dayGoalContribs = useMemo(
+    () => goalContribs.filter((c) => isSameDay(parseISO(c.contributed_on), selected)),
+    [goalContribs, selected]
+  );
+
+  const goalContribDaysSet = useMemo(
+    () => new Set(goalContribs.map((c) => c.contributed_on)),
+    [goalContribs]
   );
 
   const totals = useMemo(() => {
@@ -290,12 +326,14 @@ function Dashboard() {
                 hasFixedPaid: (d) => paidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasFixedUnpaid: (d) => unpaidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasCardDue: (d) => cardDueDaysSet.has(format(d, "yyyy-MM-dd")),
+                hasGoal: (d) => goalContribDaysSet.has(format(d, "yyyy-MM-dd")),
               }}
               modifiersClassNames={{
                 hasExpense: "relative font-semibold text-primary after:absolute after:bottom-1 after:left-1/2 after:h-1 after:w-1 after:-translate-x-1/2 after:rounded-full after:bg-accent",
                 hasFixedUnpaid: "relative font-semibold text-destructive before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-destructive",
                 hasFixedPaid: "relative font-semibold text-success before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-success",
                 hasCardDue: "relative font-semibold text-warning-foreground bg-warning/30 rounded-md",
+                hasGoal: "ring-2 ring-amber-500/60 rounded-md",
               }}
             />
             <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
@@ -303,6 +341,7 @@ function Dashboard() {
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-destructive" />Conta a pagar</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-success" />Conta paga</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-warning/60" />Fatura cartão</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm ring-2 ring-amber-500/60" />Meta</span>
             </div>
             {fetching && <p className="mt-2 text-xs text-muted-foreground">Atualizando...</p>}
           </CardContent>
@@ -372,7 +411,26 @@ function Dashboard() {
                   })}
                 </ul>
               )}
-              {dayExpenses.length === 0 && dayFixed.length === 0 ? (
+              {dayGoalContribs.length > 0 && (
+                <ul className="mb-3 divide-y rounded-lg border border-amber-500/30 bg-amber-500/5">
+                  {dayGoalContribs.map((c) => (
+                    <li key={`gc-${c.id}`} className="flex items-center gap-3 px-3 py-2">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15">
+                        <Trophy className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium">{c.goal_name}</p>
+                        <p className="text-xs text-muted-foreground">Aporte para meta</p>
+                      </div>
+                      <p className="font-semibold tabular-nums text-amber-600">+{formatBRL(c.amount)}</p>
+                      <Link to="/metas" aria-label="Ir para metas">
+                        <Button variant="ghost" size="icon"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {dayExpenses.length === 0 && dayFixed.length === 0 && dayGoalContribs.length === 0 ? (
                 <p className="py-6 text-center text-sm text-muted-foreground">
                   Nenhum gasto neste dia. Toque em <strong>Novo gasto</strong> para registrar.
                 </p>

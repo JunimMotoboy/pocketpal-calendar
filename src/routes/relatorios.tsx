@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { startOfMonth, endOfMonth, format, subMonths, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, PieChart as PieIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, PieChart as PieIcon, Filter, CreditCard, TrendingUp } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -202,9 +202,18 @@ function ReportsPage() {
 
       <Tabs defaultValue="categorias">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="categorias">Gastos por categoria</TabsTrigger>
-          <TabsTrigger value="pagamento">Forma de pagamento</TabsTrigger>
-          <TabsTrigger value="entradas">Entradas por fonte</TabsTrigger>
+          <TabsTrigger value="categorias" aria-label="Gastos por categoria">
+            <Filter className="h-4 w-4 sm:hidden" />
+            <span className="hidden sm:inline">Gastos por categoria</span>
+          </TabsTrigger>
+          <TabsTrigger value="pagamento" aria-label="Forma de pagamento">
+            <CreditCard className="h-4 w-4 sm:hidden" />
+            <span className="hidden sm:inline">Forma de pagamento</span>
+          </TabsTrigger>
+          <TabsTrigger value="entradas" aria-label="Entradas por fonte">
+            <TrendingUp className="h-4 w-4 sm:hidden" />
+            <span className="hidden sm:inline">Entradas por fonte</span>
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="categorias" className="mt-4">
           <PieCard title="Distribuição dos gastos por categoria" data={catData} total={totalExp} />
