@@ -98,7 +98,7 @@ function Dashboard() {
       supabase.from("cards").select("id, name, due_day"),
       supabase
         .from("goal_contributions")
-        .select("id, goal_id, amount, contributed_on, goals(name)")
+        .select("id, goal_id, amount, contributed_on")
         .gte("contributed_on", from)
         .lte("contributed_on", to),
     ]);
