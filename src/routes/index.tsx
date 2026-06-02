@@ -411,7 +411,26 @@ function Dashboard() {
                   })}
                 </ul>
               )}
-              {dayExpenses.length === 0 && dayFixed.length === 0 ? (
+              {dayGoalContribs.length > 0 && (
+                <ul className="mb-3 divide-y rounded-lg border border-amber-500/30 bg-amber-500/5">
+                  {dayGoalContribs.map((c) => (
+                    <li key={`gc-${c.id}`} className="flex items-center gap-3 px-3 py-2">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15">
+                        <Trophy className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium">{c.goal_name}</p>
+                        <p className="text-xs text-muted-foreground">Aporte para meta</p>
+                      </div>
+                      <p className="font-semibold tabular-nums text-amber-600">+{formatBRL(c.amount)}</p>
+                      <Link to="/metas" aria-label="Ir para metas">
+                        <Button variant="ghost" size="icon"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {dayExpenses.length === 0 && dayFixed.length === 0 && dayGoalContribs.length === 0 ? (
                 <p className="py-6 text-center text-sm text-muted-foreground">
                   Nenhum gasto neste dia. Toque em <strong>Novo gasto</strong> para registrar.
                 </p>
