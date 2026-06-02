@@ -47,6 +47,14 @@ type FixedDue = {
   dateKey: string;
 };
 
+type GoalContribution = {
+  id: string;
+  goal_id: string;
+  amount: number;
+  contributed_on: string;
+  goal_name: string;
+};
+
 function Dashboard() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
