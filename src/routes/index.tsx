@@ -116,6 +116,18 @@ function Dashboard() {
       setPaidMap(m);
     }
     if (!cardsRes.error) setCards((cardsRes.data ?? []) as { id: string; name: string; due_day: number }[]);
+
+    // Join contributions with goal names client-side
+    const rawGc = (gcRes.data ?? []) as { id: string; goal_id: string; amount: number; contributed_on: string }[];
+    if (rawGc.length > 0) {
+      const ids = Array.from(new Set(rawGc.map((g) => g.goal_id)));
+      const { data: goalsData } = await supabase.from("goals").select("id, name").in("id", ids);
+      const nameMap = new Map<string, string>();
+      for (const g of (goalsData ?? []) as { id: string; name: string }[]) nameMap.set(g.id, g.name);
+      setGoalContribs(rawGc.map((c) => ({ ...c, amount: Number(c.amount), goal_name: nameMap.get(c.goal_id) ?? "Meta" })));
+    } else {
+      setGoalContribs([]);
+    }
   };
 
   useEffect(() => {
