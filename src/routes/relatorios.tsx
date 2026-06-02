@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { startOfMonth, endOfMonth, format, subMonths, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, PieChart as PieIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, PieChart as PieIcon, Filter, CreditCard, TrendingUp } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
