@@ -64,6 +64,7 @@ function Dashboard() {
   const [fixedRaw, setFixedRaw] = useState<{ id: string; name: string; amount: number; category: Category; due_day: number }[]>([]);
   const [paidMap, setPaidMap] = useState<Map<string, string>>(new Map()); // key fixed_expense_id -> payment id
   const [cards, setCards] = useState<{ id: string; name: string; due_day: number }[]>([]);
+  const [goalContribs, setGoalContribs] = useState<GoalContribution[]>([]);
   const [fetching, setFetching] = useState(false);
   const [dayDialogOpen, setDayDialogOpen] = useState(false);
 
