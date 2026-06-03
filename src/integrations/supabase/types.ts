@@ -22,6 +22,7 @@ export type Database = {
           id: string
           installment_value: number
           remaining_count: number
+          start_month: string
           user_id: string
         }
         Insert: {
@@ -31,6 +32,7 @@ export type Database = {
           id?: string
           installment_value: number
           remaining_count?: number
+          start_month?: string
           user_id: string
         }
         Update: {
@@ -40,6 +42,7 @@ export type Database = {
           id?: string
           installment_value?: number
           remaining_count?: number
+          start_month?: string
           user_id?: string
         }
         Relationships: [

@@ -55,6 +55,15 @@ type GoalContribution = {
   goal_name: string;
 };
 
+type CardInstallment = {
+  id: string;
+  card_id: string;
+  description: string;
+  installment_value: number;
+  remaining_count: number;
+  start_month: string;
+};
+
 function Dashboard() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
@@ -64,6 +73,7 @@ function Dashboard() {
   const [fixedRaw, setFixedRaw] = useState<{ id: string; name: string; amount: number; category: Category; due_day: number }[]>([]);
   const [paidMap, setPaidMap] = useState<Map<string, string>>(new Map()); // key fixed_expense_id -> payment id
   const [cards, setCards] = useState<{ id: string; name: string; due_day: number }[]>([]);
+  const [cardInstallments, setCardInstallments] = useState<CardInstallment[]>([]);
   const [goalContribs, setGoalContribs] = useState<GoalContribution[]>([]);
   const [fetching, setFetching] = useState(false);
   const [dayDialogOpen, setDayDialogOpen] = useState(false);
@@ -79,7 +89,7 @@ function Dashboard() {
     const to = format(endOfMonth(month), "yyyy-MM-dd");
     const y = month.getFullYear();
     const mo = month.getMonth() + 1;
-    const [expRes, fixRes, payRes, cardsRes, gcRes] = await Promise.all([
+    const [expRes, fixRes, payRes, cardsRes, gcRes, instRes] = await Promise.all([
       supabase
         .from("expenses")
         .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
@@ -101,6 +111,9 @@ function Dashboard() {
         .select("id, goal_id, amount, contributed_on")
         .gte("contributed_on", from)
         .lte("contributed_on", to),
+      supabase
+        .from("card_installments")
+        .select("id, card_id, description, installment_value, remaining_count, start_month"),
     ]);
     setFetching(false);
     if (expRes.error) toast.error(expRes.error.message);
@@ -116,6 +129,7 @@ function Dashboard() {
       setPaidMap(m);
     }
     if (!cardsRes.error) setCards((cardsRes.data ?? []) as { id: string; name: string; due_day: number }[]);
+    if (!instRes.error) setCardInstallments((instRes.data ?? []) as CardInstallment[]);
 
     // Join contributions with goal names client-side
     const rawGc = (gcRes.data ?? []) as { id: string; goal_id: string; amount: number; contributed_on: string }[];
@@ -262,13 +276,36 @@ function Dashboard() {
     );
   }, [cards, month]);
 
+  // Installments active in displayed month, grouped by card
+  const installmentsByCardThisMonth = useMemo(() => {
+    const map = new Map<string, { id: string; description: string; value: number }[]>();
+    const ty = month.getFullYear();
+    const tm = month.getMonth() + 1;
+    for (const i of cardInstallments) {
+      const [sy, sm] = i.start_month.split("-").map(Number);
+      const diff = (ty - sy) * 12 + (tm - sm);
+      if (diff >= 0 && diff < i.remaining_count) {
+        const arr = map.get(i.card_id) ?? [];
+        arr.push({ id: i.id, description: i.description, value: Number(i.installment_value) });
+        map.set(i.card_id, arr);
+      }
+    }
+    return map;
+  }, [cardInstallments, month]);
+
   const cardsDueOnSelected = useMemo(() => {
     const key = format(selected, "yyyy-MM-dd");
     const dim = getDaysInMonth(month);
     const y = month.getFullYear();
     const m = month.getMonth();
-    return cards.filter((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd") === key);
-  }, [cards, selected, month]);
+    return cards
+      .filter((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd") === key)
+      .map((c) => {
+        const parts = installmentsByCardThisMonth.get(c.id) ?? [];
+        const total = parts.reduce((s, p) => s + p.value, 0);
+        return { ...c, installments: parts, installmentsTotal: total };
+      });
+  }, [cards, selected, month, installmentsByCardThisMonth]);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("expenses").delete().eq("id", id);
@@ -360,11 +397,28 @@ function Dashboard() {
             </CardHeader>
             <CardContent>
               {cardsDueOnSelected.length > 0 && (
-                <ul className="mb-3 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+                <ul className="mb-3 space-y-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
                   {cardsDueOnSelected.map((c) => (
-                    <li key={`cd-${c.id}`} className="flex items-center gap-2">
-                      <CalendarClock className="h-4 w-4 text-warning-foreground" />
-                      <span className="font-medium">Vence fatura: {c.name}</span>
+                    <li key={`cd-${c.id}`} className="space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-2 font-medium">
+                          <CalendarClock className="h-4 w-4 text-warning-foreground" />
+                          Vence fatura: {c.name}
+                        </span>
+                        {c.installmentsTotal > 0 && (
+                          <span className="font-semibold tabular-nums">{formatBRL(c.installmentsTotal)}</span>
+                        )}
+                      </div>
+                      {c.installments.length > 0 && (
+                        <ul className="ml-6 space-y-0.5 text-xs text-muted-foreground">
+                          {c.installments.map((p) => (
+                            <li key={p.id} className="flex items-center justify-between gap-2">
+                              <span className="truncate">• {p.description}</span>
+                              <span className="tabular-nums">{formatBRL(p.value)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -497,11 +551,28 @@ function Dashboard() {
             {cardsDueOnSelected.length > 0 && (
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Vencimentos de cartão</p>
-                <ul className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+                <ul className="space-y-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
                   {cardsDueOnSelected.map((c) => (
-                    <li key={`md-cd-${c.id}`} className="flex items-center gap-2 py-1">
-                      <CalendarClock className="h-4 w-4 text-warning-foreground" />
-                      <span className="font-medium">Fatura: {c.name}</span>
+                    <li key={`md-cd-${c.id}`} className="space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-2 font-medium">
+                          <CalendarClock className="h-4 w-4 text-warning-foreground" />
+                          Fatura: {c.name}
+                        </span>
+                        {c.installmentsTotal > 0 && (
+                          <span className="font-semibold tabular-nums">{formatBRL(c.installmentsTotal)}</span>
+                        )}
+                      </div>
+                      {c.installments.length > 0 && (
+                        <ul className="ml-6 space-y-0.5 text-xs text-muted-foreground">
+                          {c.installments.map((p) => (
+                            <li key={`md-cd-i-${p.id}`} className="flex items-center justify-between gap-2">
+                              <span className="truncate">• {p.description}</span>
+                              <span className="tabular-nums">{formatBRL(p.value)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </li>
                   ))}
                 </ul>

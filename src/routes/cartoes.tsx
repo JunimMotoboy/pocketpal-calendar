@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatBRL } from "@/lib/categories";
 import { toast } from "sonner";
 
@@ -39,16 +43,30 @@ type Installment = {
   description: string;
   installment_value: number;
   remaining_count: number;
+  start_month: string; // YYYY-MM-DD (first day of month)
 };
+
+const today = new Date();
+const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+
+// Helper: does an installment include the given YYYY-MM key?
+function installmentIncludesMonth(inst: Installment, monthKey: string): boolean {
+  const [sy, sm] = inst.start_month.split("-").map(Number);
+  const [ty, tm] = monthKey.split("-").map(Number);
+  const diff = (ty - sy) * 12 + (tm - sm);
+  return diff >= 0 && diff < inst.remaining_count;
+}
 
 function CardsPage() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
   const [items, setItems] = useState<CardItem[]>([]);
   const [spent, setSpent] = useState<Record<string, number>>({});
+  const [spentMonth, setSpentMonth] = useState<Record<string, number>>({});
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CardItem | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<CardItem | null>(null);
 
   const [name, setName] = useState("");
   const [limitAmount, setLimitAmount] = useState("");
@@ -61,9 +79,11 @@ function CardsPage() {
   // Installment dialog state
   const [instOpen, setInstOpen] = useState(false);
   const [instCardId, setInstCardId] = useState<string | null>(null);
+  const [instEditing, setInstEditing] = useState<Installment | null>(null);
   const [instDesc, setInstDesc] = useState("");
   const [instValue, setInstValue] = useState("");
   const [instCount, setInstCount] = useState("1");
+  const [instStart, setInstStart] = useState(currentMonthKey); // YYYY-MM
   const [instBusy, setInstBusy] = useState(false);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
@@ -79,23 +99,30 @@ function CardsPage() {
 
     const { data: exp } = await supabase
       .from("expenses")
-      .select("card_id, amount")
+      .select("card_id, amount, spent_on")
       .eq("payment_method", "credito")
       .not("card_id", "is", null);
-    const map: Record<string, number> = {};
-    (exp as ExpenseSum[] | null)?.forEach((e) => {
-      if (e.card_id) map[e.card_id] = (map[e.card_id] ?? 0) + Number(e.amount);
+    const all: Record<string, number> = {};
+    const mo: Record<string, number> = {};
+    (exp as (ExpenseSum & { spent_on: string })[] | null)?.forEach((e) => {
+      if (!e.card_id) return;
+      all[e.card_id] = (all[e.card_id] ?? 0) + Number(e.amount);
+      if (e.spent_on && e.spent_on.startsWith(currentMonthKey)) {
+        mo[e.card_id] = (mo[e.card_id] ?? 0) + Number(e.amount);
+      }
     });
-    setSpent(map);
+    setSpent(all);
+    setSpentMonth(mo);
 
     const { data: inst } = await supabase
       .from("card_installments")
-      .select("id, card_id, description, installment_value, remaining_count")
+      .select("id, card_id, description, installment_value, remaining_count, start_month")
       .order("created_at", { ascending: false });
     setInstallments((inst ?? []) as Installment[]);
   };
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [user]);
 
+  // Total remaining of all installments per card
   const installmentTotalByCard = useMemo(() => {
     const map: Record<string, number> = {};
     installments.forEach((i) => {
@@ -104,8 +131,23 @@ function CardsPage() {
     return map;
   }, [installments]);
 
+  // Installment of CURRENT month per card (1 parcel each, only if month is in range)
+  const installmentMonthByCard = useMemo(() => {
+    const map: Record<string, number> = {};
+    installments.forEach((i) => {
+      if (installmentIncludesMonth(i, currentMonthKey)) {
+        map[i.card_id] = (map[i.card_id] ?? 0) + Number(i.installment_value);
+      }
+    });
+    return map;
+  }, [installments]);
+
   const totalLimit = useMemo(() => items.reduce((s, i) => s + Number(i.limit_amount), 0), [items]);
-  const totalSpent = useMemo(
+  const totalInvoice = useMemo(
+    () => items.reduce((s, i) => s + (spentMonth[i.id] ?? 0) + (installmentMonthByCard[i.id] ?? 0), 0),
+    [items, spentMonth, installmentMonthByCard],
+  );
+  const totalUsed = useMemo(
     () => items.reduce((s, i) => s + (spent[i.id] ?? 0) + Number(i.initial_used ?? 0) + (installmentTotalByCard[i.id] ?? 0), 0),
     [items, spent, installmentTotalByCard],
   );
@@ -156,15 +198,29 @@ function CardsPage() {
     resetForm(); setOpen(false); load();
   };
 
-  const remove = async (id: string) => {
-    const { error } = await supabase.from("cards").delete().eq("id", id);
+  const confirmRemove = async () => {
+    if (!confirmDelete) return;
+    const { error } = await supabase.from("cards").delete().eq("id", confirmDelete.id);
     if (error) toast.error(error.message);
     else { toast.success("Cartão removido"); load(); }
+    setConfirmDelete(null);
   };
 
-  const openInstallment = (cardId: string) => {
+  const openInstallmentNew = (cardId: string) => {
     setInstCardId(cardId);
+    setInstEditing(null);
     setInstDesc(""); setInstValue(""); setInstCount("1");
+    setInstStart(currentMonthKey);
+    setInstOpen(true);
+  };
+
+  const openInstallmentEdit = (i: Installment) => {
+    setInstCardId(i.card_id);
+    setInstEditing(i);
+    setInstDesc(i.description);
+    setInstValue(String(i.installment_value).replace(".", ","));
+    setInstCount(String(i.remaining_count));
+    setInstStart(i.start_month.slice(0, 7));
     setInstOpen(true);
   };
 
@@ -176,17 +232,28 @@ function CardsPage() {
       toast.error("Preencha descrição, valor e número de parcelas restantes.");
       return;
     }
+    if (!/^\d{4}-\d{2}$/.test(instStart)) {
+      toast.error("Informe o mês inicial das parcelas.");
+      return;
+    }
     setInstBusy(true);
-    const { error } = await supabase.from("card_installments").insert({
-      user_id: user!.id,
-      card_id: instCardId!,
-      description: instDesc.trim(),
-      installment_value: v,
-      remaining_count: c,
-    });
-    setInstBusy(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Parcelamento adicionado!");
+    const start_month = `${instStart}-01`;
+    if (instEditing) {
+      const { error } = await supabase.from("card_installments").update({
+        description: instDesc.trim(), installment_value: v, remaining_count: c, start_month,
+      }).eq("id", instEditing.id);
+      setInstBusy(false);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Parcelamento atualizado!");
+    } else {
+      const { error } = await supabase.from("card_installments").insert({
+        user_id: user!.id, card_id: instCardId!, description: instDesc.trim(),
+        installment_value: v, remaining_count: c, start_month,
+      });
+      setInstBusy(false);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Parcelamento adicionado!");
+    }
     setInstOpen(false);
     load();
   };
@@ -206,9 +273,9 @@ function CardsPage() {
         style={{ backgroundImage: "linear-gradient(135deg, oklch(0.35 0.12 260) 0%, oklch(0.5 0.18 300) 60%, oklch(0.7 0.16 20) 100%)" }}
       >
         <div>
-          <p className="flex items-center gap-2 text-sm opacity-90"><CreditCard className="h-4 w-4" /> Fatura acumulada</p>
-          <p className="mt-1 text-4xl font-bold tracking-tight">{formatBRL(totalSpent)}</p>
-          <p className="mt-1 text-sm opacity-80">de {formatBRL(totalLimit)} em {items.length} cartão{items.length === 1 ? "" : "ões"}</p>
+          <p className="flex items-center gap-2 text-sm opacity-90"><CreditCard className="h-4 w-4" /> Fatura do mês</p>
+          <p className="mt-1 text-4xl font-bold tracking-tight">{formatBRL(totalInvoice)}</p>
+          <p className="mt-1 text-sm opacity-80">Total utilizado: {formatBRL(totalUsed)} de {formatBRL(totalLimit)}</p>
         </div>
         <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); setOpen(v); }}>
           <DialogTrigger asChild>
@@ -256,6 +323,8 @@ function CardsPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {items.map((c) => {
             const instTotal = installmentTotalByCard[c.id] ?? 0;
+            const instMonth = installmentMonthByCard[c.id] ?? 0;
+            const invoice = (spentMonth[c.id] ?? 0) + instMonth;
             const used = (spent[c.id] ?? 0) + Number(c.initial_used ?? 0) + instTotal;
             const pct = c.limit_amount > 0 ? Math.min(100, (used / Number(c.limit_amount)) * 100) : 0;
             const remaining = Number(c.limit_amount) - used;
@@ -275,14 +344,17 @@ function CardsPage() {
                   </div>
                   <div className="flex">
                     <Button variant="ghost" size="icon" onClick={() => openEdit(c)} aria-label="Editar"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => remove(c.id)} aria-label="Remover"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => setConfirmDelete(c)} aria-label="Remover"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className="text-xs text-muted-foreground">Fatura atual</p>
-                      <p className="text-2xl font-bold tabular-nums">{formatBRL(used)}</p>
+                      <p className="text-xs text-muted-foreground">Fatura do mês</p>
+                      <p className="text-2xl font-bold tabular-nums">{formatBRL(invoice)}</p>
+                      <p className="mt-1 text-xs text-muted-foreground tabular-nums">
+                        Total utilizado: <span className="font-semibold">{formatBRL(used)}</span>
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-muted-foreground">Limite</p>
@@ -302,7 +374,7 @@ function CardsPage() {
                   <div className="rounded-lg border border-border/60 p-3">
                     <div className="mb-2 flex items-center justify-between">
                       <p className="text-xs font-semibold">Parcelamentos em andamento</p>
-                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openInstallment(c.id)}>
+                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openInstallmentNew(c.id)}>
                         <ListPlus className="mr-1 h-3 w-3" /> Adicionar
                       </Button>
                     </div>
@@ -310,19 +382,26 @@ function CardsPage() {
                       <p className="text-xs text-muted-foreground">Nenhum parcelamento registrado.</p>
                     ) : (
                       <ul className="space-y-1.5">
-                        {cardInst.map((i) => (
-                          <li key={i.id} className="flex items-center justify-between gap-2 text-xs">
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate font-medium">{i.description}</p>
-                              <p className="text-muted-foreground tabular-nums">
-                                {i.remaining_count}x de {formatBRL(Number(i.installment_value))} = {formatBRL(Number(i.installment_value) * i.remaining_count)}
-                              </p>
-                            </div>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeInstallment(i.id)} aria-label="Remover">
-                              <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                            </Button>
-                          </li>
-                        ))}
+                        {cardInst.map((i) => {
+                          const [sy, sm] = i.start_month.split("-").map(Number);
+                          const startLabel = new Date(sy, sm - 1, 1).toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
+                          return (
+                            <li key={i.id} className="flex items-center justify-between gap-2 text-xs">
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate font-medium">{i.description}</p>
+                                <p className="text-muted-foreground tabular-nums">
+                                  {i.remaining_count}x de {formatBRL(Number(i.installment_value))} · a partir de {startLabel}
+                                </p>
+                              </div>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openInstallmentEdit(i)} aria-label="Editar">
+                                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeInstallment(i.id)} aria-label="Remover">
+                                <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                              </Button>
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </div>
@@ -335,7 +414,7 @@ function CardsPage() {
 
       <Dialog open={instOpen} onOpenChange={setInstOpen}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Adicionar parcelamento</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{instEditing ? "Editar parcelamento" : "Adicionar parcelamento"}</DialogTitle></DialogHeader>
           <form onSubmit={submitInstallment} className="space-y-4">
             <div className="space-y-2">
               <Label>Descrição</Label>
@@ -351,6 +430,11 @@ function CardsPage() {
                 <Input type="number" min={1} max={48} value={instCount} onChange={(e) => setInstCount(e.target.value)} required />
               </div>
             </div>
+            <div className="space-y-2">
+              <Label>Mês da primeira parcela restante</Label>
+              <Input type="month" value={instStart} onChange={(e) => setInstStart(e.target.value)} required />
+              <p className="text-xs text-muted-foreground">As parcelas serão exibidas no calendário a partir deste mês.</p>
+            </div>
             {(() => {
               const v = parseFloat(instValue.replace(",", "."));
               const c = parseInt(instCount, 10);
@@ -359,10 +443,28 @@ function CardsPage() {
               }
               return null;
             })()}
-            <Button type="submit" className="w-full" disabled={instBusy}>{instBusy ? "Salvando..." : "Salvar parcelamento"}</Button>
+            <Button type="submit" className="w-full" disabled={instBusy}>{instBusy ? "Salvando..." : instEditing ? "Atualizar parcelamento" : "Salvar parcelamento"}</Button>
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(v) => !v && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cartão?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o cartão <strong>{confirmDelete?.name}</strong>?
+              Esta ação não pode ser desfeita e também removerá os parcelamentos vinculados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
