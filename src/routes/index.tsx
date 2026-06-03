@@ -276,13 +276,36 @@ function Dashboard() {
     );
   }, [cards, month]);
 
+  // Installments active in displayed month, grouped by card
+  const installmentsByCardThisMonth = useMemo(() => {
+    const map = new Map<string, { id: string; description: string; value: number }[]>();
+    const ty = month.getFullYear();
+    const tm = month.getMonth() + 1;
+    for (const i of cardInstallments) {
+      const [sy, sm] = i.start_month.split("-").map(Number);
+      const diff = (ty - sy) * 12 + (tm - sm);
+      if (diff >= 0 && diff < i.remaining_count) {
+        const arr = map.get(i.card_id) ?? [];
+        arr.push({ id: i.id, description: i.description, value: Number(i.installment_value) });
+        map.set(i.card_id, arr);
+      }
+    }
+    return map;
+  }, [cardInstallments, month]);
+
   const cardsDueOnSelected = useMemo(() => {
     const key = format(selected, "yyyy-MM-dd");
     const dim = getDaysInMonth(month);
     const y = month.getFullYear();
     const m = month.getMonth();
-    return cards.filter((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd") === key);
-  }, [cards, selected, month]);
+    return cards
+      .filter((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd") === key)
+      .map((c) => {
+        const parts = installmentsByCardThisMonth.get(c.id) ?? [];
+        const total = parts.reduce((s, p) => s + p.value, 0);
+        return { ...c, installments: parts, installmentsTotal: total };
+      });
+  }, [cards, selected, month, installmentsByCardThisMonth]);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("expenses").delete().eq("id", id);
