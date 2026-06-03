@@ -129,6 +129,7 @@ function Dashboard() {
       setPaidMap(m);
     }
     if (!cardsRes.error) setCards((cardsRes.data ?? []) as { id: string; name: string; due_day: number }[]);
+    if (!instRes.error) setCardInstallments((instRes.data ?? []) as CardInstallment[]);
 
     // Join contributions with goal names client-side
     const rawGc = (gcRes.data ?? []) as { id: string; goal_id: string; amount: number; contributed_on: string }[];
