@@ -89,7 +89,7 @@ function Dashboard() {
     const to = format(endOfMonth(month), "yyyy-MM-dd");
     const y = month.getFullYear();
     const mo = month.getMonth() + 1;
-    const [expRes, fixRes, payRes, cardsRes, gcRes] = await Promise.all([
+    const [expRes, fixRes, payRes, cardsRes, gcRes, instRes] = await Promise.all([
       supabase
         .from("expenses")
         .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
@@ -111,6 +111,9 @@ function Dashboard() {
         .select("id, goal_id, amount, contributed_on")
         .gte("contributed_on", from)
         .lte("contributed_on", to),
+      supabase
+        .from("card_installments")
+        .select("id, card_id, description, installment_value, remaining_count, start_month"),
     ]);
     setFetching(false);
     if (expRes.error) toast.error(expRes.error.message);
