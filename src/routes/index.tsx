@@ -397,11 +397,28 @@ function Dashboard() {
             </CardHeader>
             <CardContent>
               {cardsDueOnSelected.length > 0 && (
-                <ul className="mb-3 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+                <ul className="mb-3 space-y-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
                   {cardsDueOnSelected.map((c) => (
-                    <li key={`cd-${c.id}`} className="flex items-center gap-2">
-                      <CalendarClock className="h-4 w-4 text-warning-foreground" />
-                      <span className="font-medium">Vence fatura: {c.name}</span>
+                    <li key={`cd-${c.id}`} className="space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-2 font-medium">
+                          <CalendarClock className="h-4 w-4 text-warning-foreground" />
+                          Vence fatura: {c.name}
+                        </span>
+                        {c.installmentsTotal > 0 && (
+                          <span className="font-semibold tabular-nums">{formatBRL(c.installmentsTotal)}</span>
+                        )}
+                      </div>
+                      {c.installments.length > 0 && (
+                        <ul className="ml-6 space-y-0.5 text-xs text-muted-foreground">
+                          {c.installments.map((p) => (
+                            <li key={p.id} className="flex items-center justify-between gap-2">
+                              <span className="truncate">• {p.description}</span>
+                              <span className="tabular-nums">{formatBRL(p.value)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </li>
                   ))}
                 </ul>
