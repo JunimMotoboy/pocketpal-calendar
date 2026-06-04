@@ -101,20 +101,13 @@ function CardsPage() {
 
     const { data: exp } = await supabase
       .from("expenses")
-      .select("card_id, amount, spent_on")
+      .select("id, card_id, description, amount, spent_on")
       .eq("payment_method", "credito")
       .not("card_id", "is", null);
-    const all: Record<string, number> = {};
-    const mo: Record<string, number> = {};
-    (exp as (ExpenseSum & { spent_on: string })[] | null)?.forEach((e) => {
-      if (!e.card_id) return;
-      all[e.card_id] = (all[e.card_id] ?? 0) + Number(e.amount);
-      if (e.spent_on && e.spent_on.startsWith(currentMonthKey)) {
-        mo[e.card_id] = (mo[e.card_id] ?? 0) + Number(e.amount);
-      }
-    });
-    setSpent(all);
-    setSpentMonth(mo);
+    setAllExpenses(
+      ((exp ?? []) as { id: string; card_id: string; description: string; amount: number; spent_on: string }[])
+        .map((e) => ({ ...e, amount: Number(e.amount) })),
+    );
 
     const { data: inst } = await supabase
       .from("card_installments")
@@ -123,6 +116,31 @@ function CardsPage() {
     setInstallments((inst ?? []) as Installment[]);
   };
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [user]);
+
+  // Aggregate totals from raw expenses, reactive to viewMonthKey
+  const spent = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const e of allExpenses) map[e.card_id] = (map[e.card_id] ?? 0) + Number(e.amount);
+    return map;
+  }, [allExpenses]);
+
+  const expensesByCardThisMonth = useMemo(() => {
+    const map: Record<string, typeof allExpenses> = {};
+    for (const e of allExpenses) {
+      if (e.spent_on && e.spent_on.startsWith(viewMonthKey)) {
+        (map[e.card_id] ||= []).push(e);
+      }
+    }
+    return map;
+  }, [allExpenses, viewMonthKey]);
+
+  const spentMonth = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const [id, arr] of Object.entries(expensesByCardThisMonth)) {
+      map[id] = arr.reduce((s, e) => s + Number(e.amount), 0);
+    }
+    return map;
+  }, [expensesByCardThisMonth]);
 
   // Total remaining of all installments per card
   const installmentTotalByCard = useMemo(() => {
