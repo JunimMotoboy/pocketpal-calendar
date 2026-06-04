@@ -569,9 +569,7 @@ function Dashboard() {
                           <CalendarClock className="h-4 w-4 text-warning-foreground" />
                           Fatura: {c.name}
                         </span>
-                        {c.installmentsTotal > 0 && (
-                          <span className="font-semibold tabular-nums">{formatBRL(c.installmentsTotal)}</span>
-                        )}
+                        <span className="font-semibold tabular-nums">{formatBRL(c.invoiceTotal)}</span>
                       </div>
                       {c.installments.length > 0 && (
                         <ul className="ml-6 space-y-0.5 text-xs text-muted-foreground">
