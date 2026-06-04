@@ -152,15 +152,23 @@ function CardsPage() {
   }, [installments]);
 
   // Installment of CURRENT month per card (1 parcel each, only if month is in range)
-  const installmentMonthByCard = useMemo(() => {
-    const map: Record<string, number> = {};
+  const installmentsByCardThisMonth = useMemo(() => {
+    const map: Record<string, Installment[]> = {};
     installments.forEach((i) => {
-      if (installmentIncludesMonth(i, currentMonthKey)) {
-        map[i.card_id] = (map[i.card_id] ?? 0) + Number(i.installment_value);
+      if (installmentIncludesMonth(i, viewMonthKey)) {
+        (map[i.card_id] ||= []).push(i);
       }
     });
     return map;
-  }, [installments]);
+  }, [installments, viewMonthKey]);
+
+  const installmentMonthByCard = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const [id, arr] of Object.entries(installmentsByCardThisMonth)) {
+      map[id] = arr.reduce((s, i) => s + Number(i.installment_value), 0);
+    }
+    return map;
+  }, [installmentsByCardThisMonth]);
 
   const totalLimit = useMemo(() => items.reduce((s, i) => s + Number(i.limit_amount), 0), [items]);
   const totalInvoice = useMemo(
