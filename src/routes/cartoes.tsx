@@ -35,7 +35,7 @@ type CardItem = {
   initial_used: number;
 };
 
-type ExpenseSum = { card_id: string; amount: number };
+
 
 type Installment = {
   id: string;
