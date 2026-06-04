@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { CreditCard, Plus, Pencil, Trash2, ListPlus } from "lucide-react";
+import { CreditCard, Plus, Pencil, Trash2, ListPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ type CardItem = {
   initial_used: number;
 };
 
-type ExpenseSum = { card_id: string; amount: number };
+
 
 type Installment = {
   id: string;
@@ -60,9 +60,11 @@ function installmentIncludesMonth(inst: Installment, monthKey: string): boolean 
 function CardsPage() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
+  const [viewMonth, setViewMonth] = useState<Date>(new Date());
+  const viewMonthKey = `${viewMonth.getFullYear()}-${String(viewMonth.getMonth() + 1).padStart(2, "0")}`;
+  const viewMonthLabel = viewMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
   const [items, setItems] = useState<CardItem[]>([]);
-  const [spent, setSpent] = useState<Record<string, number>>({});
-  const [spentMonth, setSpentMonth] = useState<Record<string, number>>({});
+  const [allExpenses, setAllExpenses] = useState<{ id: string; card_id: string; description: string; amount: number; spent_on: string }[]>([]);
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CardItem | null>(null);
@@ -99,20 +101,13 @@ function CardsPage() {
 
     const { data: exp } = await supabase
       .from("expenses")
-      .select("card_id, amount, spent_on")
+      .select("id, card_id, description, amount, spent_on")
       .eq("payment_method", "credito")
       .not("card_id", "is", null);
-    const all: Record<string, number> = {};
-    const mo: Record<string, number> = {};
-    (exp as (ExpenseSum & { spent_on: string })[] | null)?.forEach((e) => {
-      if (!e.card_id) return;
-      all[e.card_id] = (all[e.card_id] ?? 0) + Number(e.amount);
-      if (e.spent_on && e.spent_on.startsWith(currentMonthKey)) {
-        mo[e.card_id] = (mo[e.card_id] ?? 0) + Number(e.amount);
-      }
-    });
-    setSpent(all);
-    setSpentMonth(mo);
+    setAllExpenses(
+      ((exp ?? []) as { id: string; card_id: string; description: string; amount: number; spent_on: string }[])
+        .map((e) => ({ ...e, amount: Number(e.amount) })),
+    );
 
     const { data: inst } = await supabase
       .from("card_installments")
@@ -121,6 +116,31 @@ function CardsPage() {
     setInstallments((inst ?? []) as Installment[]);
   };
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [user]);
+
+  // Aggregate totals from raw expenses, reactive to viewMonthKey
+  const spent = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const e of allExpenses) map[e.card_id] = (map[e.card_id] ?? 0) + Number(e.amount);
+    return map;
+  }, [allExpenses]);
+
+  const expensesByCardThisMonth = useMemo(() => {
+    const map: Record<string, typeof allExpenses> = {};
+    for (const e of allExpenses) {
+      if (e.spent_on && e.spent_on.startsWith(viewMonthKey)) {
+        (map[e.card_id] ||= []).push(e);
+      }
+    }
+    return map;
+  }, [allExpenses, viewMonthKey]);
+
+  const spentMonth = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const [id, arr] of Object.entries(expensesByCardThisMonth)) {
+      map[id] = arr.reduce((s, e) => s + Number(e.amount), 0);
+    }
+    return map;
+  }, [expensesByCardThisMonth]);
 
   // Total remaining of all installments per card
   const installmentTotalByCard = useMemo(() => {
@@ -132,15 +152,23 @@ function CardsPage() {
   }, [installments]);
 
   // Installment of CURRENT month per card (1 parcel each, only if month is in range)
-  const installmentMonthByCard = useMemo(() => {
-    const map: Record<string, number> = {};
+  const installmentsByCardThisMonth = useMemo(() => {
+    const map: Record<string, Installment[]> = {};
     installments.forEach((i) => {
-      if (installmentIncludesMonth(i, currentMonthKey)) {
-        map[i.card_id] = (map[i.card_id] ?? 0) + Number(i.installment_value);
+      if (installmentIncludesMonth(i, viewMonthKey)) {
+        (map[i.card_id] ||= []).push(i);
       }
     });
     return map;
-  }, [installments]);
+  }, [installments, viewMonthKey]);
+
+  const installmentMonthByCard = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const [id, arr] of Object.entries(installmentsByCardThisMonth)) {
+      map[id] = arr.reduce((s, i) => s + Number(i.installment_value), 0);
+    }
+    return map;
+  }, [installmentsByCardThisMonth]);
 
   const totalLimit = useMemo(() => items.reduce((s, i) => s + Number(i.limit_amount), 0), [items]);
   const totalInvoice = useMemo(
@@ -273,7 +301,16 @@ function CardsPage() {
         style={{ backgroundImage: "linear-gradient(135deg, oklch(0.35 0.12 260) 0%, oklch(0.5 0.18 300) 60%, oklch(0.7 0.16 20) 100%)" }}
       >
         <div>
-          <p className="flex items-center gap-2 text-sm opacity-90"><CreditCard className="h-4 w-4" /> Fatura do mês</p>
+          <p className="flex items-center gap-2 text-sm opacity-90"><CreditCard className="h-4 w-4" /> Fatura</p>
+          <div className="mt-1 flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setViewMonth((p) => new Date(p.getFullYear(), p.getMonth() - 1, 1))} aria-label="Mês anterior">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <p className="text-xs capitalize opacity-90 min-w-[8rem] text-center">{viewMonthLabel}</p>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setViewMonth((p) => new Date(p.getFullYear(), p.getMonth() + 1, 1))} aria-label="Próximo mês">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
           <p className="mt-1 text-4xl font-bold tracking-tight">{formatBRL(totalInvoice)}</p>
           <p className="mt-1 text-sm opacity-80">Limite total: {formatBRL(totalLimit)}</p>
         </div>
@@ -350,7 +387,7 @@ function CardsPage() {
                 <CardContent className="space-y-3">
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className="text-xs text-muted-foreground">Fatura do mês</p>
+                      <p className="text-xs text-muted-foreground capitalize">Fatura · {viewMonthLabel}</p>
                       <p className="text-2xl font-bold tabular-nums">{formatBRL(invoice)}</p>
                     </div>
                     <div className="text-right">
@@ -364,9 +401,35 @@ function CardsPage() {
                   <p className="text-xs text-muted-foreground">
                     {remaining >= 0 ? `Disponível: ${formatBRL(remaining)}` : `Acima do limite em ${formatBRL(-remaining)}`}
                     {Number(c.initial_used) > 0 && ` · inclui ${formatBRL(Number(c.initial_used))} de saldo anterior`}
-                    {instTotal > 0 && ` · inclui ${formatBRL(instTotal)} em parcelas`}
+                    {instTotal > 0 && ` · inclui ${formatBRL(instTotal)} em parcelas (total)`}
                   </p>
                   {c.notes && <p className="text-xs text-muted-foreground">{c.notes}</p>}
+
+                  {(() => {
+                    const monthPurchases = expensesByCardThisMonth[c.id] ?? [];
+                    const monthInst = installmentsByCardThisMonth[c.id] ?? [];
+                    if (monthPurchases.length === 0 && monthInst.length === 0) return null;
+                    return (
+                      <div className="rounded-lg border border-border/60 p-3">
+                        <p className="mb-2 text-xs font-semibold capitalize">Detalhamento · {viewMonthLabel}</p>
+                        <ul className="space-y-1 text-xs">
+                          {monthInst.map((i) => (
+                            <li key={`m-i-${i.id}`} className="flex items-center justify-between gap-2">
+                              <span className="truncate text-muted-foreground">• {i.description} <span className="opacity-60">(parcela)</span></span>
+                              <span className="tabular-nums">{formatBRL(Number(i.installment_value))}</span>
+                            </li>
+                          ))}
+                          {monthPurchases.map((e) => (
+                            <li key={`m-e-${e.id}`} className="flex items-center justify-between gap-2">
+                              <span className="truncate text-muted-foreground">• {e.description || "Compra"} <span className="opacity-60">({e.spent_on.slice(8, 10)}/{e.spent_on.slice(5, 7)})</span></span>
+                              <span className="tabular-nums">{formatBRL(Number(e.amount))}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })()}
+
 
                   <div className="rounded-lg border border-border/60 p-3">
                     <div className="mb-2 flex items-center justify-between">
