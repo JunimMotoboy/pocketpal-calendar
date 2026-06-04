@@ -293,6 +293,16 @@ function Dashboard() {
     return map;
   }, [cardInstallments, month]);
 
+  const monthCardExpenseByCard = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of expenses) {
+      if (e.payment_method === "credito" && e.card_id) {
+        map.set(e.card_id, (map.get(e.card_id) ?? 0) + Number(e.amount));
+      }
+    }
+    return map;
+  }, [expenses]);
+
   const cardsDueOnSelected = useMemo(() => {
     const key = format(selected, "yyyy-MM-dd");
     const dim = getDaysInMonth(month);
@@ -302,10 +312,12 @@ function Dashboard() {
       .filter((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd") === key)
       .map((c) => {
         const parts = installmentsByCardThisMonth.get(c.id) ?? [];
-        const total = parts.reduce((s, p) => s + p.value, 0);
-        return { ...c, installments: parts, installmentsTotal: total };
+        const instTotal = parts.reduce((s, p) => s + p.value, 0);
+        const expTotal = monthCardExpenseByCard.get(c.id) ?? 0;
+        const invoiceTotal = instTotal + expTotal;
+        return { ...c, installments: parts, installmentsTotal: instTotal, invoiceTotal };
       });
-  }, [cards, selected, month, installmentsByCardThisMonth]);
+  }, [cards, selected, month, installmentsByCardThisMonth, monthCardExpenseByCard]);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("expenses").delete().eq("id", id);
@@ -405,9 +417,7 @@ function Dashboard() {
                           <CalendarClock className="h-4 w-4 text-warning-foreground" />
                           Vence fatura: {c.name}
                         </span>
-                        {c.installmentsTotal > 0 && (
-                          <span className="font-semibold tabular-nums">{formatBRL(c.installmentsTotal)}</span>
-                        )}
+                        <span className="font-semibold tabular-nums">{formatBRL(c.invoiceTotal)}</span>
                       </div>
                       {c.installments.length > 0 && (
                         <ul className="ml-6 space-y-0.5 text-xs text-muted-foreground">
@@ -559,9 +569,7 @@ function Dashboard() {
                           <CalendarClock className="h-4 w-4 text-warning-foreground" />
                           Fatura: {c.name}
                         </span>
-                        {c.installmentsTotal > 0 && (
-                          <span className="font-semibold tabular-nums">{formatBRL(c.installmentsTotal)}</span>
-                        )}
+                        <span className="font-semibold tabular-nums">{formatBRL(c.invoiceTotal)}</span>
                       </div>
                       {c.installments.length > 0 && (
                         <ul className="ml-6 space-y-0.5 text-xs text-muted-foreground">
