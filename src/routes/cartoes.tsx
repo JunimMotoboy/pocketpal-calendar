@@ -275,7 +275,7 @@ function CardsPage() {
         <div>
           <p className="flex items-center gap-2 text-sm opacity-90"><CreditCard className="h-4 w-4" /> Fatura do mês</p>
           <p className="mt-1 text-4xl font-bold tracking-tight">{formatBRL(totalInvoice)}</p>
-          <p className="mt-1 text-sm opacity-80">Total utilizado: {formatBRL(totalUsed)} de {formatBRL(totalLimit)}</p>
+          <p className="mt-1 text-sm opacity-80">Limite total: {formatBRL(totalLimit)}</p>
         </div>
         <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); setOpen(v); }}>
           <DialogTrigger asChild>
