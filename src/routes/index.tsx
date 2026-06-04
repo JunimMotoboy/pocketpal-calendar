@@ -574,12 +574,18 @@ function Dashboard() {
                         </span>
                         <span className="font-semibold tabular-nums">{formatBRL(c.invoiceTotal)}</span>
                       </div>
-                      {c.installments.length > 0 && (
+                      {(c.installments.length > 0 || c.purchases.length > 0) && (
                         <ul className="ml-6 space-y-0.5 text-xs text-muted-foreground">
                           {c.installments.map((p) => (
                             <li key={`md-cd-i-${p.id}`} className="flex items-center justify-between gap-2">
-                              <span className="truncate">• {p.description}</span>
+                              <span className="truncate">• {p.description} <span className="opacity-60">(parcela)</span></span>
                               <span className="tabular-nums">{formatBRL(p.value)}</span>
+                            </li>
+                          ))}
+                          {c.purchases.map((e) => (
+                            <li key={`md-cd-e-${e.id}`} className="flex items-center justify-between gap-2">
+                              <span className="truncate">• {e.description}</span>
+                              <span className="tabular-nums">{formatBRL(Number(e.amount))}</span>
                             </li>
                           ))}
                         </ul>
