@@ -301,7 +301,16 @@ function CardsPage() {
         style={{ backgroundImage: "linear-gradient(135deg, oklch(0.35 0.12 260) 0%, oklch(0.5 0.18 300) 60%, oklch(0.7 0.16 20) 100%)" }}
       >
         <div>
-          <p className="flex items-center gap-2 text-sm opacity-90"><CreditCard className="h-4 w-4" /> Fatura do mês</p>
+          <p className="flex items-center gap-2 text-sm opacity-90"><CreditCard className="h-4 w-4" /> Fatura</p>
+          <div className="mt-1 flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setViewMonth((p) => new Date(p.getFullYear(), p.getMonth() - 1, 1))} aria-label="Mês anterior">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <p className="text-xs capitalize opacity-90 min-w-[8rem] text-center">{viewMonthLabel}</p>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setViewMonth((p) => new Date(p.getFullYear(), p.getMonth() + 1, 1))} aria-label="Próximo mês">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
           <p className="mt-1 text-4xl font-bold tracking-tight">{formatBRL(totalInvoice)}</p>
           <p className="mt-1 text-sm opacity-80">Limite total: {formatBRL(totalLimit)}</p>
         </div>
