@@ -60,6 +60,9 @@ function installmentIncludesMonth(inst: Installment, monthKey: string): boolean 
 function CardsPage() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
+  const [viewMonth, setViewMonth] = useState<Date>(new Date());
+  const viewMonthKey = `${viewMonth.getFullYear()}-${String(viewMonth.getMonth() + 1).padStart(2, "0")}`;
+  const viewMonthLabel = viewMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
   const [items, setItems] = useState<CardItem[]>([]);
   const [spent, setSpent] = useState<Record<string, number>>({});
   const [spentMonth, setSpentMonth] = useState<Record<string, number>>({});
