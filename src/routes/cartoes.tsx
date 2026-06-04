@@ -387,7 +387,7 @@ function CardsPage() {
                 <CardContent className="space-y-3">
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className="text-xs text-muted-foreground">Fatura do mês</p>
+                      <p className="text-xs text-muted-foreground capitalize">Fatura · {viewMonthLabel}</p>
                       <p className="text-2xl font-bold tabular-nums">{formatBRL(invoice)}</p>
                     </div>
                     <div className="text-right">
@@ -401,9 +401,35 @@ function CardsPage() {
                   <p className="text-xs text-muted-foreground">
                     {remaining >= 0 ? `Disponível: ${formatBRL(remaining)}` : `Acima do limite em ${formatBRL(-remaining)}`}
                     {Number(c.initial_used) > 0 && ` · inclui ${formatBRL(Number(c.initial_used))} de saldo anterior`}
-                    {instTotal > 0 && ` · inclui ${formatBRL(instTotal)} em parcelas`}
+                    {instTotal > 0 && ` · inclui ${formatBRL(instTotal)} em parcelas (total)`}
                   </p>
                   {c.notes && <p className="text-xs text-muted-foreground">{c.notes}</p>}
+
+                  {(() => {
+                    const monthPurchases = expensesByCardThisMonth[c.id] ?? [];
+                    const monthInst = installmentsByCardThisMonth[c.id] ?? [];
+                    if (monthPurchases.length === 0 && monthInst.length === 0) return null;
+                    return (
+                      <div className="rounded-lg border border-border/60 p-3">
+                        <p className="mb-2 text-xs font-semibold capitalize">Detalhamento · {viewMonthLabel}</p>
+                        <ul className="space-y-1 text-xs">
+                          {monthInst.map((i) => (
+                            <li key={`m-i-${i.id}`} className="flex items-center justify-between gap-2">
+                              <span className="truncate text-muted-foreground">• {i.description} <span className="opacity-60">(parcela)</span></span>
+                              <span className="tabular-nums">{formatBRL(Number(i.installment_value))}</span>
+                            </li>
+                          ))}
+                          {monthPurchases.map((e) => (
+                            <li key={`m-e-${e.id}`} className="flex items-center justify-between gap-2">
+                              <span className="truncate text-muted-foreground">• {e.description || "Compra"} <span className="opacity-60">({e.spent_on.slice(8, 10)}/{e.spent_on.slice(5, 7)})</span></span>
+                              <span className="tabular-nums">{formatBRL(Number(e.amount))}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })()}
+
 
                   <div className="rounded-lg border border-border/60 p-3">
                     <div className="mb-2 flex items-center justify-between">
