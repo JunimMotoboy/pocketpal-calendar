@@ -352,9 +352,6 @@ function CardsPage() {
                     <div>
                       <p className="text-xs text-muted-foreground">Fatura do mês</p>
                       <p className="text-2xl font-bold tabular-nums">{formatBRL(invoice)}</p>
-                      <p className="mt-1 text-xs text-muted-foreground tabular-nums">
-                        Total utilizado: <span className="font-semibold">{formatBRL(used)}</span>
-                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-muted-foreground">Limite</p>
