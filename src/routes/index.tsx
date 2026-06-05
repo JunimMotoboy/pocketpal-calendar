@@ -305,9 +305,22 @@ function Dashboard() {
     const y = month.getFullYear();
     const m = month.getMonth();
     return new Set(
-      cards.map((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd"))
+      cards
+        .filter((c) => !invoicePaidMap.has(c.id))
+        .map((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd"))
     );
-  }, [cards, month]);
+  }, [cards, month, invoicePaidMap]);
+
+  const cardPaidDaysSet = useMemo(() => {
+    const dim = getDaysInMonth(month);
+    const y = month.getFullYear();
+    const m = month.getMonth();
+    return new Set(
+      cards
+        .filter((c) => invoicePaidMap.has(c.id))
+        .map((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd"))
+    );
+  }, [cards, month, invoicePaidMap]);
 
   // Installments active in displayed month, grouped by card
   const installmentsByCardThisMonth = useMemo(() => {
