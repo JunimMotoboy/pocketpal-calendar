@@ -189,6 +189,27 @@ function Dashboard() {
     }
   };
 
+  const toggleInvoicePaid = async (cardId: string, amount: number) => {
+    if (!user) return;
+    const existing = invoicePaidMap.get(cardId);
+    if (existing) {
+      const { error } = await supabase.from("card_invoice_payments").delete().eq("id", existing);
+      if (error) return toast.error(error.message);
+      const next = new Map(invoicePaidMap); next.delete(cardId); setInvoicePaidMap(next);
+    } else {
+      const { data, error } = await supabase
+        .from("card_invoice_payments")
+        .insert({ user_id: user.id, card_id: cardId, month_key: monthKey, amount })
+        .select("id")
+        .single();
+      if (error) return toast.error(error.message);
+      const next = new Map(invoicePaidMap); next.set(cardId, data!.id); setInvoicePaidMap(next);
+      toast.success("Fatura marcada como paga");
+    }
+  };
+
+
+
   const fixedDues = useMemo<FixedDue[]>(() => {
     const dim = getDaysInMonth(month);
     const y = month.getFullYear();
