@@ -474,12 +474,18 @@ function Dashboard() {
                         </span>
                         <span className={cn("font-semibold tabular-nums", paid && "text-success")}>{formatBRL(c.invoiceTotal)}</span>
                       </div>
-                      {c.installments.length > 0 && (
+                      {(c.installments.length > 0 || c.purchases.length > 0) && (
                         <ul className="ml-6 space-y-0.5 text-xs text-muted-foreground">
                           {c.installments.map((p) => (
                             <li key={p.id} className="flex items-center justify-between gap-2">
-                              <span className="truncate">• {p.description}</span>
+                              <span className="truncate">• {p.description} <span className="opacity-60">(parcela)</span></span>
                               <span className="tabular-nums">{formatBRL(p.value)}</span>
+                            </li>
+                          ))}
+                          {c.purchases.map((e) => (
+                            <li key={`p-${e.id}`} className="flex items-center justify-between gap-2">
+                              <span className="truncate">• {e.description} <span className="opacity-60">({e.spent_on.slice(8,10)}/{e.spent_on.slice(5,7)})</span></span>
+                              <span className="tabular-nums">{formatBRL(Number(e.amount))}</span>
                             </li>
                           ))}
                         </ul>
