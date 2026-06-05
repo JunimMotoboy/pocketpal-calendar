@@ -137,6 +137,11 @@ function Dashboard() {
     }
     if (!cardsRes.error) setCards((cardsRes.data ?? []) as { id: string; name: string; due_day: number }[]);
     if (!instRes.error) setCardInstallments((instRes.data ?? []) as CardInstallment[]);
+    if (invPayRes && !invPayRes.error) {
+      const m = new Map<string, string>();
+      for (const p of (invPayRes.data ?? []) as { id: string; card_id: string }[]) m.set(p.card_id, p.id);
+      setInvoicePaidMap(m);
+    }
 
     // Join contributions with goal names client-side
     const rawGc = (gcRes.data ?? []) as { id: string; goal_id: string; amount: number; contributed_on: string }[];
