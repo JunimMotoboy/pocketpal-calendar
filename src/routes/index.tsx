@@ -424,6 +424,7 @@ function Dashboard() {
                 hasFixedPaid: (d) => paidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasFixedUnpaid: (d) => unpaidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasCardDue: (d) => cardDueDaysSet.has(format(d, "yyyy-MM-dd")),
+                hasCardPaid: (d) => cardPaidDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasGoal: (d) => goalContribDaysSet.has(format(d, "yyyy-MM-dd")),
               }}
               modifiersClassNames={{
@@ -431,6 +432,7 @@ function Dashboard() {
                 hasFixedUnpaid: "relative font-semibold text-destructive before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-destructive",
                 hasFixedPaid: "relative font-semibold text-success before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-success",
                 hasCardDue: "relative font-semibold text-warning-foreground bg-warning/30 rounded-md",
+                hasCardPaid: "relative font-semibold text-success bg-success/15 rounded-md",
                 hasGoal: "ring-2 ring-amber-500/60 rounded-md",
               }}
             />
@@ -439,6 +441,7 @@ function Dashboard() {
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-destructive" />Conta a pagar</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-success" />Conta paga</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-warning/60" />Fatura cartão</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-success/40" />Fatura paga</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm ring-2 ring-amber-500/60" />Meta</span>
             </div>
             {fetching && <p className="mt-2 text-xs text-muted-foreground">Atualizando...</p>}
