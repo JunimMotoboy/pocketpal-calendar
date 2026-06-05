@@ -117,13 +117,6 @@ function CardsPage() {
   };
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [user]);
 
-  // Aggregate totals from raw expenses, reactive to viewMonthKey
-  const spent = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const e of allExpenses) map[e.card_id] = (map[e.card_id] ?? 0) + Number(e.amount);
-    return map;
-  }, [allExpenses]);
-
   const expensesByCardThisMonth = useMemo(() => {
     const map: Record<string, typeof allExpenses> = {};
     for (const e of allExpenses) {
@@ -142,16 +135,7 @@ function CardsPage() {
     return map;
   }, [expensesByCardThisMonth]);
 
-  // Total remaining of all installments per card
-  const installmentTotalByCard = useMemo(() => {
-    const map: Record<string, number> = {};
-    installments.forEach((i) => {
-      map[i.card_id] = (map[i.card_id] ?? 0) + Number(i.installment_value) * Number(i.remaining_count);
-    });
-    return map;
-  }, [installments]);
-
-  // Installment of CURRENT month per card (1 parcel each, only if month is in range)
+  // Installment of selected month per card (1 parcel each, only if month is in range)
   const installmentsByCardThisMonth = useMemo(() => {
     const map: Record<string, Installment[]> = {};
     installments.forEach((i) => {
@@ -174,10 +158,6 @@ function CardsPage() {
   const totalInvoice = useMemo(
     () => items.reduce((s, i) => s + (spentMonth[i.id] ?? 0) + (installmentMonthByCard[i.id] ?? 0), 0),
     [items, spentMonth, installmentMonthByCard],
-  );
-  const totalUsed = useMemo(
-    () => items.reduce((s, i) => s + (spent[i.id] ?? 0) + Number(i.initial_used ?? 0) + (installmentTotalByCard[i.id] ?? 0), 0),
-    [items, spent, installmentTotalByCard],
   );
 
   const resetForm = () => {
@@ -359,12 +339,11 @@ function CardsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {items.map((c) => {
-            const instTotal = installmentTotalByCard[c.id] ?? 0;
             const instMonth = installmentMonthByCard[c.id] ?? 0;
-            const invoice = (spentMonth[c.id] ?? 0) + instMonth;
-            const used = (spent[c.id] ?? 0) + Number(c.initial_used ?? 0) + instTotal;
-            const pct = c.limit_amount > 0 ? Math.min(100, (used / Number(c.limit_amount)) * 100) : 0;
-            const remaining = Number(c.limit_amount) - used;
+            const spentInMonth = spentMonth[c.id] ?? 0;
+            const invoice = spentInMonth + instMonth;
+            const pct = c.limit_amount > 0 ? Math.min(100, (invoice / Number(c.limit_amount)) * 100) : 0;
+            const remaining = Number(c.limit_amount) - invoice;
             const danger = pct >= 80;
             const cardInst = installments.filter((i) => i.card_id === c.id);
             return (
@@ -399,9 +378,8 @@ function CardsPage() {
                     <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: danger ? "oklch(0.62 0.22 25)" : "oklch(0.62 0.18 260)" }} />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {remaining >= 0 ? `Disponível: ${formatBRL(remaining)}` : `Acima do limite em ${formatBRL(-remaining)}`}
-                    {Number(c.initial_used) > 0 && ` · inclui ${formatBRL(Number(c.initial_used))} de saldo anterior`}
-                    {instTotal > 0 && ` · inclui ${formatBRL(instTotal)} em parcelas (total)`}
+                    {remaining >= 0 ? `Limite disponível no mês: ${formatBRL(remaining)}` : `Fatura do mês acima do limite em ${formatBRL(-remaining)}`}
+                    {` · parcelas do mês: ${formatBRL(instMonth)} · compras do mês: ${formatBRL(spentInMonth)}`}
                   </p>
                   {c.notes && <p className="text-xs text-muted-foreground">{c.notes}</p>}
 
