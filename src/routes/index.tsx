@@ -485,7 +485,8 @@ function Dashboard() {
                         </ul>
                       )}
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
               {dayFixed.length > 0 && (
