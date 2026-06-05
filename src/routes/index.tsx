@@ -92,7 +92,7 @@ function Dashboard() {
     const to = format(endOfMonth(month), "yyyy-MM-dd");
     const y = month.getFullYear();
     const mo = month.getMonth() + 1;
-    const [expRes, fixRes, payRes, cardsRes, gcRes, instRes] = await Promise.all([
+    const [expRes, fixRes, payRes, cardsRes, gcRes, instRes, invPayRes] = await Promise.all([
       supabase
         .from("expenses")
         .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
