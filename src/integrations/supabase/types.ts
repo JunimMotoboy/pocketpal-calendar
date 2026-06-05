@@ -55,6 +55,47 @@ export type Database = {
           },
         ]
       }
+      card_invoice_payments: {
+        Row: {
+          amount: number
+          card_id: string
+          created_at: string
+          id: string
+          month_key: string
+          paid_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          card_id: string
+          created_at?: string
+          id?: string
+          month_key: string
+          paid_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          card_id?: string
+          created_at?: string
+          id?: string
+          month_key?: string
+          paid_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_invoice_payments_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cards: {
         Row: {
           closing_day: number | null

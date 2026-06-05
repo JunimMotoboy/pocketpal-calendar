@@ -74,9 +74,12 @@ function Dashboard() {
   const [paidMap, setPaidMap] = useState<Map<string, string>>(new Map()); // key fixed_expense_id -> payment id
   const [cards, setCards] = useState<{ id: string; name: string; due_day: number }[]>([]);
   const [cardInstallments, setCardInstallments] = useState<CardInstallment[]>([]);
+  const [invoicePaidMap, setInvoicePaidMap] = useState<Map<string, string>>(new Map()); // card_id -> payment id (for current viewed month)
   const [goalContribs, setGoalContribs] = useState<GoalContribution[]>([]);
   const [fetching, setFetching] = useState(false);
   const [dayDialogOpen, setDayDialogOpen] = useState(false);
+
+  const monthKey = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`;
 
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
@@ -89,7 +92,7 @@ function Dashboard() {
     const to = format(endOfMonth(month), "yyyy-MM-dd");
     const y = month.getFullYear();
     const mo = month.getMonth() + 1;
-    const [expRes, fixRes, payRes, cardsRes, gcRes, instRes] = await Promise.all([
+    const [expRes, fixRes, payRes, cardsRes, gcRes, instRes, invPayRes] = await Promise.all([
       supabase
         .from("expenses")
         .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
@@ -114,6 +117,10 @@ function Dashboard() {
       supabase
         .from("card_installments")
         .select("id, card_id, description, installment_value, remaining_count, start_month"),
+      supabase
+        .from("card_invoice_payments")
+        .select("id, card_id")
+        .eq("month_key", `${y}-${String(mo).padStart(2, "0")}`),
     ]);
     setFetching(false);
     if (expRes.error) toast.error(expRes.error.message);
@@ -130,6 +137,11 @@ function Dashboard() {
     }
     if (!cardsRes.error) setCards((cardsRes.data ?? []) as { id: string; name: string; due_day: number }[]);
     if (!instRes.error) setCardInstallments((instRes.data ?? []) as CardInstallment[]);
+    if (invPayRes && !invPayRes.error) {
+      const m = new Map<string, string>();
+      for (const p of (invPayRes.data ?? []) as { id: string; card_id: string }[]) m.set(p.card_id, p.id);
+      setInvoicePaidMap(m);
+    }
 
     // Join contributions with goal names client-side
     const rawGc = (gcRes.data ?? []) as { id: string; goal_id: string; amount: number; contributed_on: string }[];
@@ -176,6 +188,27 @@ function Dashboard() {
       toast.success("Marcada como paga");
     }
   };
+
+  const toggleInvoicePaid = async (cardId: string, amount: number) => {
+    if (!user) return;
+    const existing = invoicePaidMap.get(cardId);
+    if (existing) {
+      const { error } = await supabase.from("card_invoice_payments").delete().eq("id", existing);
+      if (error) return toast.error(error.message);
+      const next = new Map(invoicePaidMap); next.delete(cardId); setInvoicePaidMap(next);
+    } else {
+      const { data, error } = await supabase
+        .from("card_invoice_payments")
+        .insert({ user_id: user.id, card_id: cardId, month_key: monthKey, amount })
+        .select("id")
+        .single();
+      if (error) return toast.error(error.message);
+      const next = new Map(invoicePaidMap); next.set(cardId, data!.id); setInvoicePaidMap(next);
+      toast.success("Fatura marcada como paga");
+    }
+  };
+
+
 
   const fixedDues = useMemo<FixedDue[]>(() => {
     const dim = getDaysInMonth(month);
@@ -272,9 +305,22 @@ function Dashboard() {
     const y = month.getFullYear();
     const m = month.getMonth();
     return new Set(
-      cards.map((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd"))
+      cards
+        .filter((c) => !invoicePaidMap.has(c.id))
+        .map((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd"))
     );
-  }, [cards, month]);
+  }, [cards, month, invoicePaidMap]);
+
+  const cardPaidDaysSet = useMemo(() => {
+    const dim = getDaysInMonth(month);
+    const y = month.getFullYear();
+    const m = month.getMonth();
+    return new Set(
+      cards
+        .filter((c) => invoicePaidMap.has(c.id))
+        .map((c) => format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd"))
+    );
+  }, [cards, month, invoicePaidMap]);
 
   // Installments active in displayed month, grouped by card
   const installmentsByCardThisMonth = useMemo(() => {
@@ -378,6 +424,7 @@ function Dashboard() {
                 hasFixedPaid: (d) => paidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasFixedUnpaid: (d) => unpaidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasCardDue: (d) => cardDueDaysSet.has(format(d, "yyyy-MM-dd")),
+                hasCardPaid: (d) => cardPaidDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasGoal: (d) => goalContribDaysSet.has(format(d, "yyyy-MM-dd")),
               }}
               modifiersClassNames={{
@@ -385,6 +432,7 @@ function Dashboard() {
                 hasFixedUnpaid: "relative font-semibold text-destructive before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-destructive",
                 hasFixedPaid: "relative font-semibold text-success before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-success",
                 hasCardDue: "relative font-semibold text-warning-foreground bg-warning/30 rounded-md",
+                hasCardPaid: "relative font-semibold text-success bg-success/15 rounded-md",
                 hasGoal: "ring-2 ring-amber-500/60 rounded-md",
               }}
             />
@@ -393,6 +441,7 @@ function Dashboard() {
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-destructive" />Conta a pagar</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-success" />Conta paga</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-warning/60" />Fatura cartão</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-success/40" />Fatura paga</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm ring-2 ring-amber-500/60" />Meta</span>
             </div>
             {fetching && <p className="mt-2 text-xs text-muted-foreground">Atualizando...</p>}
@@ -413,27 +462,37 @@ function Dashboard() {
             <CardContent>
               {cardsDueOnSelected.length > 0 && (
                 <ul className="mb-3 space-y-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
-                  {cardsDueOnSelected.map((c) => (
-                    <li key={`cd-${c.id}`} className="space-y-1">
+                  {cardsDueOnSelected.map((c) => {
+                    const paid = invoicePaidMap.has(c.id);
+                    return (
+                    <li key={`cd-${c.id}`} className={cn("space-y-1 rounded-md p-1", paid && "bg-success/10")}>
                       <div className="flex items-center justify-between gap-2">
                         <span className="flex items-center gap-2 font-medium">
-                          <CalendarClock className="h-4 w-4 text-warning-foreground" />
-                          Vence fatura: {c.name}
+                          <Checkbox checked={paid} onCheckedChange={() => toggleInvoicePaid(c.id, c.invoiceTotal)} aria-label="Marcar fatura como paga" />
+                          <CalendarClock className={cn("h-4 w-4", paid ? "text-success" : "text-warning-foreground")} />
+                          <span className={cn(paid && "text-success line-through")}>Fatura: {c.name}</span>
                         </span>
-                        <span className="font-semibold tabular-nums">{formatBRL(c.invoiceTotal)}</span>
+                        <span className={cn("font-semibold tabular-nums", paid && "text-success")}>{formatBRL(c.invoiceTotal)}</span>
                       </div>
-                      {c.installments.length > 0 && (
+                      {(c.installments.length > 0 || c.purchases.length > 0) && (
                         <ul className="ml-6 space-y-0.5 text-xs text-muted-foreground">
                           {c.installments.map((p) => (
                             <li key={p.id} className="flex items-center justify-between gap-2">
-                              <span className="truncate">• {p.description}</span>
+                              <span className="truncate">• {p.description} <span className="opacity-60">(parcela)</span></span>
                               <span className="tabular-nums">{formatBRL(p.value)}</span>
+                            </li>
+                          ))}
+                          {c.purchases.map((e) => (
+                            <li key={`p-${e.id}`} className="flex items-center justify-between gap-2">
+                              <span className="truncate">• {e.description} <span className="opacity-60">({e.spent_on.slice(8,10)}/{e.spent_on.slice(5,7)})</span></span>
+                              <span className="tabular-nums">{formatBRL(Number(e.amount))}</span>
                             </li>
                           ))}
                         </ul>
                       )}
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
               {dayFixed.length > 0 && (
@@ -565,14 +624,17 @@ function Dashboard() {
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Vencimentos de cartão</p>
                 <ul className="space-y-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
-                  {cardsDueOnSelected.map((c) => (
-                    <li key={`md-cd-${c.id}`} className="space-y-1">
+                  {cardsDueOnSelected.map((c) => {
+                    const paid = invoicePaidMap.has(c.id);
+                    return (
+                    <li key={`md-cd-${c.id}`} className={cn("space-y-1 rounded-md p-1", paid && "bg-success/10")}>
                       <div className="flex items-center justify-between gap-2">
                         <span className="flex items-center gap-2 font-medium">
-                          <CalendarClock className="h-4 w-4 text-warning-foreground" />
-                          Fatura: {c.name}
+                          <Checkbox checked={paid} onCheckedChange={() => toggleInvoicePaid(c.id, c.invoiceTotal)} aria-label="Marcar fatura como paga" />
+                          <CalendarClock className={cn("h-4 w-4", paid ? "text-success" : "text-warning-foreground")} />
+                          <span className={cn(paid && "text-success line-through")}>Fatura: {c.name}</span>
                         </span>
-                        <span className="font-semibold tabular-nums">{formatBRL(c.invoiceTotal)}</span>
+                        <span className={cn("font-semibold tabular-nums", paid && "text-success")}>{formatBRL(c.invoiceTotal)}</span>
                       </div>
                       {(c.installments.length > 0 || c.purchases.length > 0) && (
                         <ul className="ml-6 space-y-0.5 text-xs text-muted-foreground">
@@ -591,7 +653,8 @@ function Dashboard() {
                         </ul>
                       )}
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               </div>
             )}
