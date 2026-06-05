@@ -462,14 +462,17 @@ function Dashboard() {
             <CardContent>
               {cardsDueOnSelected.length > 0 && (
                 <ul className="mb-3 space-y-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
-                  {cardsDueOnSelected.map((c) => (
-                    <li key={`cd-${c.id}`} className="space-y-1">
+                  {cardsDueOnSelected.map((c) => {
+                    const paid = invoicePaidMap.has(c.id);
+                    return (
+                    <li key={`cd-${c.id}`} className={cn("space-y-1 rounded-md p-1", paid && "bg-success/10")}>
                       <div className="flex items-center justify-between gap-2">
                         <span className="flex items-center gap-2 font-medium">
-                          <CalendarClock className="h-4 w-4 text-warning-foreground" />
-                          Vence fatura: {c.name}
+                          <Checkbox checked={paid} onCheckedChange={() => toggleInvoicePaid(c.id, c.invoiceTotal)} aria-label="Marcar fatura como paga" />
+                          <CalendarClock className={cn("h-4 w-4", paid ? "text-success" : "text-warning-foreground")} />
+                          <span className={cn(paid && "text-success line-through")}>Fatura: {c.name}</span>
                         </span>
-                        <span className="font-semibold tabular-nums">{formatBRL(c.invoiceTotal)}</span>
+                        <span className={cn("font-semibold tabular-nums", paid && "text-success")}>{formatBRL(c.invoiceTotal)}</span>
                       </div>
                       {c.installments.length > 0 && (
                         <ul className="ml-6 space-y-0.5 text-xs text-muted-foreground">
