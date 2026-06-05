@@ -117,6 +117,10 @@ function Dashboard() {
       supabase
         .from("card_installments")
         .select("id, card_id, description, installment_value, remaining_count, start_month"),
+      supabase
+        .from("card_invoice_payments")
+        .select("id, card_id")
+        .eq("month_key", `${y}-${String(mo).padStart(2, "0")}`),
     ]);
     setFetching(false);
     if (expRes.error) toast.error(expRes.error.message);
