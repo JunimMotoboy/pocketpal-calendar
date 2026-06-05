@@ -74,9 +74,12 @@ function Dashboard() {
   const [paidMap, setPaidMap] = useState<Map<string, string>>(new Map()); // key fixed_expense_id -> payment id
   const [cards, setCards] = useState<{ id: string; name: string; due_day: number }[]>([]);
   const [cardInstallments, setCardInstallments] = useState<CardInstallment[]>([]);
+  const [invoicePaidMap, setInvoicePaidMap] = useState<Map<string, string>>(new Map()); // card_id -> payment id (for current viewed month)
   const [goalContribs, setGoalContribs] = useState<GoalContribution[]>([]);
   const [fetching, setFetching] = useState(false);
   const [dayDialogOpen, setDayDialogOpen] = useState(false);
+
+  const monthKey = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`;
 
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
