@@ -334,6 +334,51 @@ function CardsPage() {
         </Dialog>
       </section>
 
+      {(() => {
+        const activeThisMonth: {
+          cardName: string;
+          dueDay: number;
+          dueDate: string;
+          description: string;
+          value: number;
+        }[] = [];
+        for (const c of items) {
+          const list = installmentsByCardThisMonth[c.id] ?? [];
+          for (const i of list) {
+            const dueDate = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), c.due_day);
+            activeThisMonth.push({
+              cardName: c.name,
+              dueDay: c.due_day,
+              dueDate: dueDate.toLocaleDateString("pt-BR"),
+              description: i.description,
+              value: Number(i.installment_value),
+            });
+          }
+        }
+        if (activeThisMonth.length === 0) return null;
+        activeThisMonth.sort((a, b) => a.dueDay - b.dueDay);
+        return (
+          <Card className="mb-6 border border-border/60">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold">Parcelas ativas · {viewMonthLabel}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {activeThisMonth.map((p, idx) => (
+                  <li key={idx} className="flex items-center justify-between gap-3 text-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{p.description}</p>
+                      <p className="text-xs text-muted-foreground">{p.cardName} · vence {p.dueDate}</p>
+                    </div>
+                    <span className="tabular-nums font-semibold">{formatBRL(p.value)}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {items.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Nenhum cartão cadastrado ainda. Adicione um para acompanhar a fatura.</CardContent></Card>
       ) : (
