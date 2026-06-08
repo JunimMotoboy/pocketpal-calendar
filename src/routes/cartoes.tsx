@@ -116,6 +116,15 @@ function CardsPage() {
       .select("id, card_id, description, installment_value, remaining_count, start_month")
       .order("created_at", { ascending: false });
     setInstallments((inst ?? []) as Installment[]);
+
+    const { data: paid } = await supabase
+      .from("card_installment_payments")
+      .select("id, installment_id, month_key");
+    const map: Record<string, string> = {};
+    for (const p of (paid ?? []) as { id: string; installment_id: string; month_key: string }[]) {
+      map[`${p.installment_id}|${p.month_key}`] = p.id;
+    }
+    setPaidInstallments(map);
   };
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [user]);
 
