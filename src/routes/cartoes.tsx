@@ -549,6 +549,52 @@ function CardsPage() {
                       </ul>
                     )}
                   </div>
+
+                  {(() => {
+                    const byMonth: Record<string, { id: string; description: string; value: number }[]> = {};
+                    for (const i of cardInst) {
+                      for (const key of Object.keys(paidInstallments)) {
+                        const [instId, mk] = key.split("|");
+                        if (instId !== i.id) continue;
+                        (byMonth[mk] ||= []).push({
+                          id: i.id,
+                          description: i.description,
+                          value: Number(i.installment_value),
+                        });
+                      }
+                    }
+                    const months = Object.keys(byMonth).sort((a, b) => b.localeCompare(a));
+                    if (months.length === 0) return null;
+                    return (
+                      <div className="rounded-lg border border-border/60 p-3">
+                        <p className="mb-2 text-xs font-semibold">Histórico de parcelas pagas</p>
+                        <div className="space-y-2">
+                          {months.map((mk) => {
+                            const [y, m] = mk.split("-").map(Number);
+                            const label = new Date(y, m - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+                            const list = byMonth[mk];
+                            const total = list.reduce((s, x) => s + x.value, 0);
+                            return (
+                              <div key={mk}>
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-medium capitalize">{label}</span>
+                                  <span className="tabular-nums text-muted-foreground">{formatBRL(total)}</span>
+                                </div>
+                                <ul className="mt-1 space-y-0.5 pl-3">
+                                  {list.map((p, idx) => (
+                                    <li key={`${mk}-${p.id}-${idx}`} className="flex items-center justify-between text-xs text-muted-foreground">
+                                      <span className="truncate">• {p.description}</span>
+                                      <span className="tabular-nums">{formatBRL(p.value)}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             );
