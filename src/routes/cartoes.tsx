@@ -573,12 +573,22 @@ function CardsPage() {
                             const [y, m] = mk.split("-").map(Number);
                             const label = new Date(y, m - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
                             const list = byMonth[mk];
-                            const total = list.reduce((s, x) => s + x.value, 0);
+                            const totalPaid = list.reduce((s, x) => s + x.value, 0);
+                            let pending = 0;
+                            for (const i of cardInst) {
+                              if (installmentIncludesMonth(i, mk) && !paidInstallments[`${i.id}|${mk}`]) {
+                                pending += Number(i.installment_value);
+                              }
+                            }
                             return (
                               <div key={mk}>
                                 <div className="flex items-center justify-between text-xs">
                                   <span className="font-medium capitalize">{label}</span>
-                                  <span className="tabular-nums text-muted-foreground">{formatBRL(total)}</span>
+                                  <span className="tabular-nums text-muted-foreground">{formatBRL(totalPaid)}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                  <span>Pendente</span>
+                                  <span className="tabular-nums">{formatBRL(pending)}</span>
                                 </div>
                                 <ul className="mt-1 space-y-0.5 pl-3">
                                   {list.map((p, idx) => (
