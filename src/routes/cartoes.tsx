@@ -160,10 +160,48 @@ function CardsPage() {
   const installmentMonthByCard = useMemo(() => {
     const map: Record<string, number> = {};
     for (const [id, arr] of Object.entries(installmentsByCardThisMonth)) {
-      map[id] = arr.reduce((s, i) => s + Number(i.installment_value), 0);
+      map[id] = arr.reduce(
+        (s, i) => s + (paidInstallments[`${i.id}|${viewMonthKey}`] ? 0 : Number(i.installment_value)),
+        0,
+      );
     }
     return map;
-  }, [installmentsByCardThisMonth]);
+  }, [installmentsByCardThisMonth, paidInstallments, viewMonthKey]);
+
+  const toggleInstallmentPaid = async (instId: string, isPaid: boolean) => {
+    if (!user) return;
+    const key = `${instId}|${viewMonthKey}`;
+    if (isPaid) {
+      const existingId = paidInstallments[key];
+      if (!existingId) return;
+      // optimistic
+      setPaidInstallments((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      const { error } = await supabase.from("card_installment_payments").delete().eq("id", existingId);
+      if (error) { toast.error(error.message); load(); }
+    } else {
+      const tempId = `temp-${Date.now()}`;
+      setPaidInstallments((prev) => ({ ...prev, [key]: tempId }));
+      const { data, error } = await supabase
+        .from("card_installment_payments")
+        .insert({ user_id: user.id, installment_id: instId, month_key: viewMonthKey })
+        .select("id")
+        .single();
+      if (error) {
+        toast.error(error.message);
+        setPaidInstallments((prev) => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+      } else if (data) {
+        setPaidInstallments((prev) => ({ ...prev, [key]: data.id }));
+      }
+    }
+  };
 
   const totalLimit = useMemo(() => items.reduce((s, i) => s + Number(i.limit_amount), 0), [items]);
   const totalInvoice = useMemo(
