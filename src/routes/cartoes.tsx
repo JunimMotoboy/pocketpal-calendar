@@ -385,6 +385,7 @@ function CardsPage() {
 
       {(() => {
         const activeThisMonth: {
+          instId: string;
           cardName: string;
           dueDay: number;
           dueDate: string;
@@ -396,6 +397,7 @@ function CardsPage() {
           for (const i of list) {
             const dueDate = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), c.due_day);
             activeThisMonth.push({
+              instId: i.id,
               cardName: c.name,
               dueDay: c.due_day,
               dueDate: dueDate.toLocaleDateString("pt-BR"),
@@ -413,15 +415,25 @@ function CardsPage() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-2">
-                {activeThisMonth.map((p, idx) => (
-                  <li key={idx} className="flex items-center justify-between gap-3 text-sm">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{p.description}</p>
-                      <p className="text-xs text-muted-foreground">{p.cardName} · vence {p.dueDate}</p>
-                    </div>
-                    <span className="tabular-nums font-semibold">{formatBRL(p.value)}</span>
-                  </li>
-                ))}
+                {activeThisMonth.map((p) => {
+                  const paid = !!paidInstallments[`${p.instId}|${viewMonthKey}`];
+                  return (
+                    <li key={p.instId} className="flex items-center justify-between gap-3 text-sm">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <Checkbox
+                          checked={paid}
+                          onCheckedChange={() => toggleInstallmentPaid(p.instId, paid)}
+                          aria-label={`Marcar ${p.description} como paga`}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className={`truncate font-medium ${paid ? "text-muted-foreground line-through" : ""}`}>{p.description}</p>
+                          <p className="text-xs text-muted-foreground">{p.cardName} · vence {p.dueDate}</p>
+                        </div>
+                      </div>
+                      <span className={`tabular-nums font-semibold ${paid ? "text-muted-foreground line-through" : ""}`}>{formatBRL(p.value)}</span>
+                    </li>
+                  );
+                })}
               </ul>
             </CardContent>
           </Card>
