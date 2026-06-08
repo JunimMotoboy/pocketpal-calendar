@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      card_installment_payments: {
+        Row: {
+          created_at: string
+          id: string
+          installment_id: string
+          month_key: string
+          paid_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          installment_id: string
+          month_key: string
+          paid_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          installment_id?: string
+          month_key?: string
+          paid_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_installment_payments_installment_id_fkey"
+            columns: ["installment_id"]
+            isOneToOne: false
+            referencedRelation: "card_installments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_installments: {
         Row: {
           card_id: string

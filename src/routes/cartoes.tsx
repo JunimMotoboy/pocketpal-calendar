@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -66,6 +67,7 @@ function CardsPage() {
   const [items, setItems] = useState<CardItem[]>([]);
   const [allExpenses, setAllExpenses] = useState<{ id: string; card_id: string; description: string; amount: number; spent_on: string }[]>([]);
   const [installments, setInstallments] = useState<Installment[]>([]);
+  const [paidInstallments, setPaidInstallments] = useState<Record<string, string>>({}); // key: `${installment_id}|${month_key}` -> payment row id
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CardItem | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<CardItem | null>(null);
@@ -114,6 +116,15 @@ function CardsPage() {
       .select("id, card_id, description, installment_value, remaining_count, start_month")
       .order("created_at", { ascending: false });
     setInstallments((inst ?? []) as Installment[]);
+
+    const { data: paid } = await supabase
+      .from("card_installment_payments")
+      .select("id, installment_id, month_key");
+    const map: Record<string, string> = {};
+    for (const p of (paid ?? []) as { id: string; installment_id: string; month_key: string }[]) {
+      map[`${p.installment_id}|${p.month_key}`] = p.id;
+    }
+    setPaidInstallments(map);
   };
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [user]);
 
@@ -149,10 +160,48 @@ function CardsPage() {
   const installmentMonthByCard = useMemo(() => {
     const map: Record<string, number> = {};
     for (const [id, arr] of Object.entries(installmentsByCardThisMonth)) {
-      map[id] = arr.reduce((s, i) => s + Number(i.installment_value), 0);
+      map[id] = arr.reduce(
+        (s, i) => s + (paidInstallments[`${i.id}|${viewMonthKey}`] ? 0 : Number(i.installment_value)),
+        0,
+      );
     }
     return map;
-  }, [installmentsByCardThisMonth]);
+  }, [installmentsByCardThisMonth, paidInstallments, viewMonthKey]);
+
+  const toggleInstallmentPaid = async (instId: string, isPaid: boolean) => {
+    if (!user) return;
+    const key = `${instId}|${viewMonthKey}`;
+    if (isPaid) {
+      const existingId = paidInstallments[key];
+      if (!existingId) return;
+      // optimistic
+      setPaidInstallments((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      const { error } = await supabase.from("card_installment_payments").delete().eq("id", existingId);
+      if (error) { toast.error(error.message); load(); }
+    } else {
+      const tempId = `temp-${Date.now()}`;
+      setPaidInstallments((prev) => ({ ...prev, [key]: tempId }));
+      const { data, error } = await supabase
+        .from("card_installment_payments")
+        .insert({ user_id: user.id, installment_id: instId, month_key: viewMonthKey })
+        .select("id")
+        .single();
+      if (error) {
+        toast.error(error.message);
+        setPaidInstallments((prev) => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+      } else if (data) {
+        setPaidInstallments((prev) => ({ ...prev, [key]: data.id }));
+      }
+    }
+  };
 
   const totalLimit = useMemo(() => items.reduce((s, i) => s + Number(i.limit_amount), 0), [items]);
   const totalInvoice = useMemo(
@@ -336,6 +385,7 @@ function CardsPage() {
 
       {(() => {
         const activeThisMonth: {
+          instId: string;
           cardName: string;
           dueDay: number;
           dueDate: string;
@@ -347,6 +397,7 @@ function CardsPage() {
           for (const i of list) {
             const dueDate = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), c.due_day);
             activeThisMonth.push({
+              instId: i.id,
               cardName: c.name,
               dueDay: c.due_day,
               dueDate: dueDate.toLocaleDateString("pt-BR"),
@@ -364,15 +415,25 @@ function CardsPage() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-2">
-                {activeThisMonth.map((p, idx) => (
-                  <li key={idx} className="flex items-center justify-between gap-3 text-sm">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{p.description}</p>
-                      <p className="text-xs text-muted-foreground">{p.cardName} · vence {p.dueDate}</p>
-                    </div>
-                    <span className="tabular-nums font-semibold">{formatBRL(p.value)}</span>
-                  </li>
-                ))}
+                {activeThisMonth.map((p) => {
+                  const paid = !!paidInstallments[`${p.instId}|${viewMonthKey}`];
+                  return (
+                    <li key={p.instId} className="flex items-center justify-between gap-3 text-sm">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <Checkbox
+                          checked={paid}
+                          onCheckedChange={() => toggleInstallmentPaid(p.instId, paid)}
+                          aria-label={`Marcar ${p.description} como paga`}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className={`truncate font-medium ${paid ? "text-muted-foreground line-through" : ""}`}>{p.description}</p>
+                          <p className="text-xs text-muted-foreground">{p.cardName} · vence {p.dueDate}</p>
+                        </div>
+                      </div>
+                      <span className={`tabular-nums font-semibold ${paid ? "text-muted-foreground line-through" : ""}`}>{formatBRL(p.value)}</span>
+                    </li>
+                  );
+                })}
               </ul>
             </CardContent>
           </Card>
