@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -66,6 +67,7 @@ function CardsPage() {
   const [items, setItems] = useState<CardItem[]>([]);
   const [allExpenses, setAllExpenses] = useState<{ id: string; card_id: string; description: string; amount: number; spent_on: string }[]>([]);
   const [installments, setInstallments] = useState<Installment[]>([]);
+  const [paidInstallments, setPaidInstallments] = useState<Record<string, string>>({}); // key: `${installment_id}|${month_key}` -> payment row id
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CardItem | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<CardItem | null>(null);
