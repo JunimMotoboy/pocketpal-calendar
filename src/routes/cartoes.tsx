@@ -361,29 +361,29 @@ function CardsPage() {
             <form onSubmit={submit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-2">
-                  <Label>Nome do cartão</Label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Nubank, Itaú Visa..." required />
+                  <Label htmlFor="card-name">Nome do cartão</Label>
+                  <Input id="card-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Nubank, Itaú Visa..." required />
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>Limite (R$)</Label>
-                  <Input inputMode="decimal" value={limitAmount} onChange={(e) => setLimitAmount(e.target.value)} placeholder="0,00" required />
+                  <Label htmlFor="card-limit">Limite (R$)</Label>
+                  <Input id="card-limit" inputMode="decimal" value={limitAmount} onChange={(e) => setLimitAmount(e.target.value)} placeholder="0,00" required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Dia do vencimento</Label>
-                  <Input type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required />
+                  <Label htmlFor="card-due">Dia do vencimento</Label>
+                  <Input id="card-due" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Dia do fechamento (opcional)</Label>
-                  <Input type="number" min={1} max={31} value={closingDay} onChange={(e) => setClosingDay(e.target.value)} />
+                  <Label htmlFor="card-close">Dia do fechamento (opcional)</Label>
+                  <Input id="card-close" type="number" min={1} max={31} value={closingDay} onChange={(e) => setClosingDay(e.target.value)} />
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>Limite já utilizado (R$)</Label>
-                  <Input inputMode="decimal" value={initialUsed} onChange={(e) => setInitialUsed(e.target.value)} placeholder="0,00" />
+                  <Label htmlFor="card-used">Limite já utilizado (R$)</Label>
+                  <Input id="card-used" inputMode="decimal" value={initialUsed} onChange={(e) => setInitialUsed(e.target.value)} placeholder="0,00" />
                   <p className="text-xs text-muted-foreground">Valor já gasto antes de começar a registrar aqui.</p>
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>Observações</Label>
-                  <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Bandeira, banco, etc." />
+                  <Label htmlFor="card-notes">Observações</Label>
+                  <Input id="card-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Bandeira, banco, etc." />
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : editing ? "Atualizar cartão" : "Salvar cartão"}</Button>
@@ -631,22 +631,22 @@ function CardsPage() {
           <DialogHeader><DialogTitle>{instEditing ? "Editar parcelamento" : "Adicionar parcelamento"}</DialogTitle></DialogHeader>
           <form onSubmit={submitInstallment} className="space-y-4">
             <div className="space-y-2">
-              <Label>Descrição</Label>
-              <Input value={instDesc} onChange={(e) => setInstDesc(e.target.value)} placeholder="Ex.: TV Samsung, Geladeira..." required />
+              <Label htmlFor="inst-desc">Descrição</Label>
+              <Input id="inst-desc" value={instDesc} onChange={(e) => setInstDesc(e.target.value)} placeholder="Ex.: TV Samsung, Geladeira..." required />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Valor da parcela (R$)</Label>
-                <Input inputMode="decimal" value={instValue} onChange={(e) => setInstValue(e.target.value)} placeholder="0,00" required />
+                <Label htmlFor="inst-value">Valor da parcela (R$)</Label>
+                <Input id="inst-value" inputMode="decimal" value={instValue} onChange={(e) => setInstValue(e.target.value)} placeholder="0,00" required />
               </div>
               <div className="space-y-2">
-                <Label>Parcelas restantes</Label>
-                <Input type="number" min={1} max={48} value={instCount} onChange={(e) => setInstCount(e.target.value)} required />
+                <Label htmlFor="inst-count">Parcelas restantes</Label>
+                <Input id="inst-count" type="number" min={1} max={48} value={instCount} onChange={(e) => setInstCount(e.target.value)} required />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Mês da primeira parcela restante</Label>
-              <Input type="month" value={instStart} onChange={(e) => setInstStart(e.target.value)} required />
+              <Label htmlFor="inst-start">Mês da primeira parcela restante</Label>
+              <Input id="inst-start" type="month" value={instStart} onChange={(e) => setInstStart(e.target.value)} required />
               <p className="text-xs text-muted-foreground">As parcelas serão exibidas no calendário a partir deste mês.</p>
             </div>
             {(() => {
