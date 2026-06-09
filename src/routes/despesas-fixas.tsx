@@ -111,9 +111,12 @@ function FixedExpensesPage() {
     if (error) toast.error(error.message); else load();
   };
 
-  const remove = async (id: string) => {
-    const { error } = await supabase.from("fixed_expenses").delete().eq("id", id);
-    if (error) toast.error(error.message); else { toast.success("Removida"); load(); }
+  const confirmRemove = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("fixed_expenses").delete().eq("id", deleteTarget.id);
+    if (error) toast.error(error.message);
+    else { toast.success("Removida"); load(); }
+    setDeleteTarget(null);
   };
 
   if (loading || !user) return <div className="flex h-[60vh] items-center justify-center text-muted-foreground">Carregando...</div>;
