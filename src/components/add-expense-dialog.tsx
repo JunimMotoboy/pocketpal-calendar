@@ -167,9 +167,9 @@ export function ExpenseDialog({
               <Input id="amt" inputMode="decimal" placeholder="0,00" value={amount} onChange={(e) => setAmount(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label>Categoria</Label>
+              <Label htmlFor="exp-cat">Categoria</Label>
               <Select value={category} onValueChange={(v) => setCategory(v as Category)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="exp-cat"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {CATEGORIES.map((c) => {
                     const Icon = c.icon;
@@ -186,9 +186,9 @@ export function ExpenseDialog({
               </Select>
             </div>
             <div className="col-span-2 space-y-2">
-              <Label>Forma de pagamento</Label>
+              <Label htmlFor="exp-pay">Forma de pagamento</Label>
               <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="exp-pay"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {PAYMENT_METHODS.map((p) => {
                     const Icon = p.icon;
@@ -206,9 +206,9 @@ export function ExpenseDialog({
             </div>
             {paymentMethod === "credito" && (
               <div className="col-span-2 space-y-2">
-                <Label>Cartão</Label>
+                <Label htmlFor="exp-card">Cartão</Label>
                 <Select value={cardId} onValueChange={(v) => setCardId(v as string)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione um cartão" /></SelectTrigger>
+                  <SelectTrigger id="exp-card"><SelectValue placeholder="Selecione um cartão" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Sem cartão vinculado</SelectItem>
                     {cards.map((c) => (
@@ -223,8 +223,8 @@ export function ExpenseDialog({
             )}
             {paymentMethod === "credito" && (
               <div className="col-span-2 space-y-2">
-                <Label>Parcelas</Label>
-                <Input type="number" min={1} max={48} value={installments} onChange={(e) => setInstallments(e.target.value)} />
+                <Label htmlFor="exp-inst">Parcelas</Label>
+                <Input id="exp-inst" type="number" min={1} max={48} value={installments} onChange={(e) => setInstallments(e.target.value)} />
                 {(() => {
                   const v = parseFloat(amount.replace(",", "."));
                   const n = Math.max(1, parseInt(installments, 10) || 1);
@@ -236,10 +236,10 @@ export function ExpenseDialog({
               </div>
             )}
             <div className="col-span-2 space-y-2">
-              <Label>Data</Label>
+              <Label htmlFor="exp-date">Data</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}>
+                  <Button id="exp-date" variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {date ? format(date, "dd/MM/yyyy") : "Selecione"}
                   </Button>
