@@ -492,6 +492,11 @@ function CardsPage() {
                   <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                     <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: danger ? "oklch(0.62 0.22 25)" : "oklch(0.62 0.18 260)" }} />
                   </div>
+                  {danger && (
+                    <p role="alert" className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive">
+                      <AlertTriangle className="h-3.5 w-3.5" aria-hidden /> Limite quase atingido ({Math.round(pct)}%)
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     {remaining >= 0 ? `Limite disponível no mês: ${formatBRL(remaining)}` : `Fatura do mês acima do limite em ${formatBRL(-remaining)}`}
                     {` · parcelas do mês: ${formatBRL(instMonth)} · compras do mês: ${formatBRL(spentInMonth)}`}
