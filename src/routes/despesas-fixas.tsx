@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIES, CAT_MAP, formatBRL, type Category } from "@/lib/categories";
 import { toast } from "sonner";
@@ -47,6 +51,7 @@ function FixedExpensesPage() {
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<FixedItem | null>(null);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
   useEffect(() => { if (user?.email && !notifyEmail) setNotifyEmail(user.email); }, [user, notifyEmail]);
@@ -135,33 +140,33 @@ function FixedExpensesPage() {
             <form onSubmit={submit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-2">
-                  <Label>Nome</Label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Aluguel, Internet, Netflix..." required />
+                  <Label htmlFor="fx-name">Nome</Label>
+                  <Input id="fx-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Aluguel, Internet, Netflix..." required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Valor (R$)</Label>
-                  <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" required />
+                  <Label htmlFor="fx-amount">Valor (R$)</Label>
+                  <Input id="fx-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Dia do vencimento</Label>
-                  <Input type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required />
+                  <Label htmlFor="fx-due">Dia do vencimento</Label>
+                  <Input id="fx-due" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required />
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>Categoria</Label>
+                  <Label htmlFor="fx-cat">Categoria</Label>
                   <Select value={category} onValueChange={(v) => setCategory(v as Category)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="fx-cat"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>E-mail para receber aviso</Label>
-                  <Input type="email" value={notifyEmail} onChange={(e) => setNotifyEmail(e.target.value)} placeholder="voce@exemplo.com" required />
+                  <Label htmlFor="fx-email">E-mail para receber aviso</Label>
+                  <Input id="fx-email" type="email" value={notifyEmail} onChange={(e) => setNotifyEmail(e.target.value)} placeholder="voce@exemplo.com" required />
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>Observações</Label>
-                  <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opcional" />
+                  <Label htmlFor="fx-notes">Observações</Label>
+                  <Input id="fx-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opcional" />
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : editing ? "Atualizar" : "Salvar"}</Button>
@@ -194,7 +199,7 @@ function FixedExpensesPage() {
                       {it.active ? <BellRing className="h-4 w-4 text-primary" /> : <BellOff className="h-4 w-4 text-muted-foreground" />}
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(it)} aria-label="Editar"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => remove(it.id)} aria-label="Remover"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(it)} aria-label="Remover"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -207,6 +212,23 @@ function FixedExpensesPage() {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover despesa fixa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Excluir <strong>{deleteTarget?.name}</strong>? Esta ação não pode ser desfeita e os lembretes por e-mail serão interrompidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
