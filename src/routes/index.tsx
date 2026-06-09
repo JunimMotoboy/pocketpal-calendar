@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CAT_MAP, formatBRL, type Category } from "@/lib/categories";
+import { CAT_MAP, PAY_MAP, formatBRL, type Category } from "@/lib/categories";
 import { AddExpenseDialog, ExpenseDialog } from "@/components/add-expense-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -530,7 +530,7 @@ function Dashboard() {
                         </div>
                         <p className={cn("font-semibold tabular-nums", paid && "text-success")}>{formatBRL(f.amount)}</p>
                         <Link to="/despesas-fixas" aria-label="Gerenciar despesas fixas">
-                          <Button variant="ghost" size="icon"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
+                          <Button variant="ghost" size="icon" aria-label="Editar despesa fixa"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
                         </Link>
                       </li>
                     );
@@ -550,7 +550,7 @@ function Dashboard() {
                       </div>
                       <p className="font-semibold tabular-nums text-amber-600">+{formatBRL(c.amount)}</p>
                       <Link to="/metas" aria-label="Ir para metas">
-                        <Button variant="ghost" size="icon"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
+                        <Button variant="ghost" size="icon" aria-label="Editar meta"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
                       </Link>
                     </li>
                   ))}
@@ -576,7 +576,7 @@ function Dashboard() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">{e.description}</p>
                       <p className="text-xs text-muted-foreground">
-                        {cat.label}{e.payment_method ? ` · ${e.payment_method}` : ""}{e.notes ? ` · ${e.notes}` : ""}
+                        {cat.label}{e.payment_method ? ` · ${PAY_MAP[e.payment_method as keyof typeof PAY_MAP]?.label ?? e.payment_method}` : ""}{e.notes ? ` · ${e.notes}` : ""}
                       </p>
                     </div>
                     <p className="font-semibold tabular-nums">{formatBRL(Number(e.amount))}</p>
@@ -669,7 +669,7 @@ function Dashboard() {
                     const paid = paidMap.has(f.id);
                     return (
                       <li key={`md-fx-${f.id}`} className={cn("flex items-center gap-3 px-3 py-2", paid ? "bg-success/10" : "bg-destructive/5")}>
-                        <Checkbox checked={paid} onCheckedChange={() => togglePaid(f)} />
+                        <Checkbox checked={paid} onCheckedChange={() => togglePaid(f)} aria-label={paid ? "Desmarcar pagamento" : "Marcar como paga"} />
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `color-mix(in oklab, ${cat.color} 15%, transparent)` }}>
                           <Icon className="h-4 w-4" style={{ color: cat.color }} />
                         </div>
@@ -699,7 +699,7 @@ function Dashboard() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{e.description}</p>
-                          <p className="text-xs text-muted-foreground">{cat.label}{e.payment_method ? ` · ${e.payment_method}` : ""}</p>
+                          <p className="text-xs text-muted-foreground">{cat.label}{e.payment_method ? ` · ${PAY_MAP[e.payment_method as keyof typeof PAY_MAP]?.label ?? e.payment_method}` : ""}</p>
                         </div>
                         <p className="text-sm font-semibold tabular-nums">{formatBRL(Number(e.amount))}</p>
                       </li>
