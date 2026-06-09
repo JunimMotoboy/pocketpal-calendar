@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { CAT_MAP, PAY_MAP, INC_MAP, formatBRL, CATEGORIES, PAYMENT_METHODS, INCOME_SOURCES } from "@/lib/categories";
+import { formatBRL, CATEGORIES, PAYMENT_METHODS, INCOME_SOURCES } from "@/lib/categories";
 
 export const Route = createFileRoute("/relatorios")({
   head: () => ({
@@ -69,9 +69,9 @@ function PieCard({ title, data, total }: { title: string; data: { name: string; 
                 stroke="var(--background)"
                 strokeWidth={2}
               >
-                {data.map((d, i) => (
-                  <Cell key={i} fill={d.color} />
-                ))}
+              {data.map((d) => (
+                <Cell key={d.name} fill={d.color} />
+              ))}
               </Pie>
               <Tooltip
                 contentStyle={{
@@ -99,6 +99,7 @@ function ReportsPage() {
   const [incomes, setIncomes] = useState<IncomeRow[]>([]);
   const [fixed, setFixed] = useState<{ amount: number; category: string }[]>([]);
   const [investTotal, setInvestTotal] = useState(0);
+  const [fetching, setFetching] = useState(false);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -108,6 +109,7 @@ function ReportsPage() {
     const to = format(endOfMonth(month), "yyyy-MM-dd");
 
     (async () => {
+      setFetching(true);
       const [e, i, f, inv] = await Promise.all([
         supabase.from("expenses").select("amount, category, payment_method").gte("spent_on", from).lte("spent_on", to),
         supabase.from("incomes").select("amount, source").gte("received_on", from).lte("received_on", to),
@@ -118,6 +120,7 @@ function ReportsPage() {
       setIncomes(((i.data ?? []) as IncomeRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setFixed(((f.data ?? []) as { amount: number; category: string }[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setInvestTotal(((inv.data ?? []) as { amount: number }[]).reduce((s, r) => s + Number(r.amount), 0));
+      setFetching(false);
     })();
   }, [user, month]);
 
@@ -155,8 +158,7 @@ function ReportsPage() {
   const totalInc = useMemo(() => incomes.reduce((s, i) => s + i.amount, 0), [incomes]);
   const saldo = totalInc - totalExp;
 
-  const catMeta = Object.fromEntries(CATEGORIES.map((c) => [c.value, { label: c.label, color: `oklch(var(--cat-${c.value}-fallback))` }])) as Record<string, { label: string; color: string }>;
-  // We need actual color values — read from CAT_MAP
+  const catMeta: Record<string, { label: string; color: string }> = {};
   for (const c of CATEGORIES) catMeta[c.value] = { label: c.label, color: c.color };
   catMeta["investimento"] = { label: "Investimentos", color: "oklch(0.6 0.18 260)" };
   const payMeta: Record<string, { label: string; color: string }> = {};
@@ -165,7 +167,6 @@ function ReportsPage() {
   payMeta["investimento"] = { label: "Investimento", color: "oklch(0.6 0.18 260)" };
   const incMeta: Record<string, { label: string; color: string }> = {};
   INCOME_SOURCES.forEach((s) => { incMeta[s.value] = { label: s.label, color: s.color }; });
-  void CAT_MAP; void PAY_MAP; void INC_MAP;
 
   const catData = buildPieData(catTotals, catMeta);
   const payData = buildPieData(payTotals, payMeta);
@@ -175,14 +176,16 @@ function ReportsPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
+      <h1 className="sr-only">Relatórios</h1>
       <section className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => setMonth((m) => subMonths(m, 1))}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button variant="outline" size="icon" onClick={() => setMonth((m) => subMonths(m, 1))} aria-label="Mês anterior"><ChevronLeft className="h-4 w-4" /></Button>
           <div className="min-w-[180px] rounded-lg border border-border bg-card px-4 py-2 text-center font-semibold capitalize">
             {format(month, "MMMM 'de' yyyy", { locale: ptBR })}
           </div>
-          <Button variant="outline" size="icon" onClick={() => setMonth((m) => addMonths(m, 1))}><ChevronRight className="h-4 w-4" /></Button>
+          <Button variant="outline" size="icon" onClick={() => setMonth((m) => addMonths(m, 1))} aria-label="Próximo mês"><ChevronRight className="h-4 w-4" /></Button>
         </div>
+        {fetching && <p className="text-xs text-muted-foreground" role="status">Atualizando...</p>}
       </section>
 
       <section className="mb-6 grid gap-3 sm:grid-cols-3">
@@ -202,16 +205,19 @@ function ReportsPage() {
 
       <Tabs defaultValue="categorias">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="categorias" aria-label="Gastos por categoria">
-            <Filter className="h-4 w-4 sm:hidden" />
+          <TabsTrigger value="categorias">
+            <Filter className="h-4 w-4 sm:hidden" aria-hidden />
+            <span className="sm:hidden sr-only">Gastos por categoria</span>
             <span className="hidden sm:inline">Gastos por categoria</span>
           </TabsTrigger>
-          <TabsTrigger value="pagamento" aria-label="Forma de pagamento">
-            <CreditCard className="h-4 w-4 sm:hidden" />
+          <TabsTrigger value="pagamento">
+            <CreditCard className="h-4 w-4 sm:hidden" aria-hidden />
+            <span className="sm:hidden sr-only">Forma de pagamento</span>
             <span className="hidden sm:inline">Forma de pagamento</span>
           </TabsTrigger>
-          <TabsTrigger value="entradas" aria-label="Entradas por fonte">
-            <TrendingUp className="h-4 w-4 sm:hidden" />
+          <TabsTrigger value="entradas">
+            <TrendingUp className="h-4 w-4 sm:hidden" aria-hidden />
+            <span className="sm:hidden sr-only">Entradas por fonte</span>
             <span className="hidden sm:inline">Entradas por fonte</span>
           </TabsTrigger>
         </TabsList>
