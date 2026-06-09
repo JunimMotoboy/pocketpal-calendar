@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Trophy, Plus, Trash2, CheckCircle2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +17,16 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -58,7 +68,8 @@ const FREQ_LABEL: Record<Frequency, string> = {
 const emptyForm = { name: "", target: "", frequency: "mensal" as Frequency };
 
 function MetasPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const nav = useNavigate();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -70,6 +81,13 @@ function MetasPage() {
   // contribute dialog
   const [contribGoal, setContribGoal] = useState<Goal | null>(null);
   const [contribValue, setContribValue] = useState("");
+
+  // delete confirmation
+  const [deleteTarget, setDeleteTarget] = useState<Goal | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) nav({ to: "/auth" });
+  }, [user, authLoading, nav]);
 
   const load = async () => {
     if (!user) return;
@@ -104,7 +122,8 @@ function MetasPage() {
     setFormOpen(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!user) return;
     const value = parseFloat(form.target.replace(",", "."));
     if (!form.name.trim()) return toast.error("Informe um nome para a meta");
@@ -140,7 +159,8 @@ function MetasPage() {
     load();
   };
 
-  const handleContribute = async () => {
+  const handleContribute = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!user || !contribGoal) return;
     const value = parseFloat(contribValue.replace(",", "."));
     if (!value || value <= 0) return toast.error("Informe um valor válido");
@@ -172,18 +192,26 @@ function MetasPage() {
     load();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Excluir esta meta e todos os seus aportes?")) return;
-    // delete contributions first (no cascade)
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget.id;
     await supabase.from("goal_contributions").delete().eq("goal_id", id);
     const { error } = await supabase.from("goals").delete().eq("id", id);
-    if (error) return toast.error("Erro ao excluir");
-    toast.success("Meta excluída");
-    load();
+    if (error) {
+      toast.error("Erro ao excluir");
+    } else {
+      toast.success("Meta excluída");
+      load();
+    }
+    setDeleteTarget(null);
   };
 
+  if (authLoading || !user) {
+    return <div className="flex h-[60vh] items-center justify-center text-muted-foreground">Carregando...</div>;
+  }
+
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 space-y-6">
+    <main className="mx-auto max-w-4xl px-4 py-6 space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Trophy className="h-6 w-6 text-primary" />
@@ -200,30 +228,34 @@ function MetasPage() {
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Meta" : "Nova Meta"}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3">
+            <form onSubmit={handleSave} className="space-y-3">
               <div className="space-y-1">
-                <Label>Nome da meta</Label>
+                <Label htmlFor="goal-name">Nome da meta</Label>
                 <Input
+                  id="goal-name"
                   placeholder="Ex: Reserva de Emergência"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
                 />
               </div>
               <div className="space-y-1">
-                <Label>Valor da meta (R$)</Label>
+                <Label htmlFor="goal-target">Valor da meta (R$)</Label>
                 <Input
+                  id="goal-target"
                   type="number"
                   inputMode="decimal"
                   step="0.01"
                   placeholder="100,00"
                   value={form.target}
                   onChange={(e) => setForm({ ...form, target: e.target.value })}
+                  required
                 />
               </div>
               <div className="space-y-1">
-                <Label>Frequência</Label>
+                <Label htmlFor="goal-frequency">Frequência</Label>
                 <Select value={form.frequency} onValueChange={(v) => setForm({ ...form, frequency: v as Frequency })}>
-                  <SelectTrigger>
+                  <SelectTrigger id="goal-frequency">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -234,13 +266,13 @@ function MetasPage() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setFormOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave}>Salvar</Button>
-            </DialogFooter>
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit">Salvar</Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
@@ -282,15 +314,15 @@ function MetasPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => openEdit(g)}
-                        aria-label="Editar"
+                        aria-label="Editar meta"
                       >
                         <Pencil className="h-4 w-4 text-muted-foreground" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(g.id)}
-                        aria-label="Excluir"
+                        onClick={() => setDeleteTarget(g)}
+                        aria-label="Excluir meta"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -332,9 +364,10 @@ function MetasPage() {
           <DialogHeader>
             <DialogTitle>Adicionar Valor — {contribGoal?.name}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-1">
-            <Label>Valor (R$)</Label>
+          <form onSubmit={handleContribute} className="space-y-1">
+            <Label htmlFor="contrib-value">Valor (R$)</Label>
             <Input
+              id="contrib-value"
               type="number"
               inputMode="decimal"
               step="0.01"
@@ -342,19 +375,37 @@ function MetasPage() {
               value={contribValue}
               onChange={(e) => setContribValue(e.target.value)}
               autoFocus
+              required
             />
             <p className="text-xs text-muted-foreground pt-1">
               O valor será registrado na data de hoje e aparecerá no calendário do painel.
             </p>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setContribGoal(null)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleContribute}>Salvar</Button>
-          </DialogFooter>
+            <DialogFooter className="pt-3">
+              <Button type="button" variant="ghost" onClick={() => setContribGoal(null)}>
+                Cancelar
+              </Button>
+              <Button type="submit">Salvar</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
-    </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir meta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Excluir a meta <strong>{deleteTarget?.name}</strong> e todos os seus aportes? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </main>
   );
 }

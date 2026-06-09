@@ -84,7 +84,7 @@ export function AppHeader() {
 
         {user && (
           <>
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav aria-label="Navegação principal" className="hidden lg:flex items-center gap-1">
               <NavLinks />
               <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label={theme === "dark" ? "Tema claro" : "Tema escuro"}>
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -101,7 +101,7 @@ export function AppHeader() {
               </Button>
               <Sheet open={open} onOpenChange={setOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" aria-label="Abrir menu de navegação">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>

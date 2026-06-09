@@ -11,6 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,6 +56,7 @@ function InvestmentsPage() {
   const [date, setDate] = useState<Date>(new Date());
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Investment | null>(null);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -138,10 +143,12 @@ function InvestmentsPage() {
     load();
   };
 
-  const remove = async (id: string) => {
-    const { error } = await supabase.from("investments").delete().eq("id", id);
+  const confirmRemove = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("investments").delete().eq("id", deleteTarget.id);
     if (error) toast.error(error.message);
     else { toast.success("Investimento removido"); load(); }
+    setDeleteTarget(null);
   };
 
   if (loading || !user) return <div className="flex h-[60vh] items-center justify-center text-muted-foreground">Carregando...</div>;
@@ -166,17 +173,17 @@ function InvestmentsPage() {
             <form onSubmit={submit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-2">
-                  <Label>Nome</Label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Tesouro Selic 2029" required />
+                  <Label htmlFor="inv-name">Nome</Label>
+                  <Input id="inv-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Tesouro Selic 2029" required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Valor (R$)</Label>
-                  <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" required />
+                  <Label htmlFor="inv-amount">Valor (R$)</Label>
+                  <Input id="inv-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Tipo</Label>
+                  <Label htmlFor="inv-type">Tipo</Label>
                   <Select value={type} onValueChange={(v) => setType(v as InvestmentType)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="inv-type"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {INVESTMENT_TYPES.map((t) => {
                         const Icon = t.icon;
@@ -190,14 +197,14 @@ function InvestmentsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Rendimento esperado (% a.a.)</Label>
-                  <Input inputMode="decimal" value={expected} onChange={(e) => setExpected(e.target.value)} placeholder="Ex.: 12,5" />
+                  <Label htmlFor="inv-expected">Rendimento esperado (% a.a.)</Label>
+                  <Input id="inv-expected" inputMode="decimal" value={expected} onChange={(e) => setExpected(e.target.value)} placeholder="Ex.: 12,5" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Data da aplicação</Label>
+                  <Label htmlFor="inv-date">Data da aplicação</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start font-normal">
+                      <Button id="inv-date" variant="outline" className="w-full justify-start font-normal">
                         <CalendarIcon className="mr-2 h-4 w-4" />{format(date, "dd/MM/yyyy")}
                       </Button>
                     </PopoverTrigger>
@@ -207,8 +214,8 @@ function InvestmentsPage() {
                   </Popover>
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>Observações</Label>
-                  <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+                  <Label htmlFor="inv-notes">Observações</Label>
+                  <Textarea id="inv-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : editing ? "Atualizar investimento" : "Salvar investimento"}</Button>
@@ -266,7 +273,7 @@ function InvestmentsPage() {
                       </div>
                       <p className="font-semibold tabular-nums">{formatBRL(Number(i.amount))}</p>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(i)} aria-label="Editar"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove(i.id)} aria-label="Remover"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(i)} aria-label="Remover"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                     </li>
                   );
                 })}
@@ -275,6 +282,23 @@ function InvestmentsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover investimento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Excluir <strong>{deleteTarget?.name}</strong> ({formatBRL(Number(deleteTarget?.amount ?? 0))})? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

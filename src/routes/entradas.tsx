@@ -11,6 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +46,7 @@ function IncomesPage() {
   const nav = useNavigate();
   const [items, setItems] = useState<Income[]>([]);
   const [open, setOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Income | null>(null);
 
   // form
   const [description, setDescription] = useState("");
@@ -96,10 +101,12 @@ function IncomesPage() {
     load();
   };
 
-  const remove = async (id: string) => {
-    const { error } = await supabase.from("incomes").delete().eq("id", id);
+  const confirmRemove = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("incomes").delete().eq("id", deleteTarget.id);
     if (error) toast.error(error.message);
     else { toast.success("Entrada removida"); load(); }
+    setDeleteTarget(null);
   };
 
   if (loading || !user) return <div className="flex h-[60vh] items-center justify-center text-muted-foreground">Carregando...</div>;
@@ -124,17 +131,17 @@ function IncomesPage() {
             <form onSubmit={submit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-2">
-                  <Label>Descrição</Label>
-                  <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex.: Salário maio" required />
+                  <Label htmlFor="inc-desc">Descrição</Label>
+                  <Input id="inc-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex.: Salário maio" required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Valor (R$)</Label>
-                  <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" required />
+                  <Label htmlFor="inc-amount">Valor (R$)</Label>
+                  <Input id="inc-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Fonte</Label>
+                  <Label htmlFor="inc-source">Fonte</Label>
                   <Select value={source} onValueChange={(v) => setSource(v as IncomeSource)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="inc-source"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {INCOME_SOURCES.map((s) => {
                         const Icon = s.icon;
@@ -148,10 +155,10 @@ function IncomesPage() {
                   </Select>
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>Data</Label>
+                  <Label htmlFor="inc-date">Data</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start font-normal">
+                      <Button id="inc-date" variant="outline" className="w-full justify-start font-normal">
                         <CalendarIcon className="mr-2 h-4 w-4" />{format(date, "dd/MM/yyyy")}
                       </Button>
                     </PopoverTrigger>
@@ -161,8 +168,8 @@ function IncomesPage() {
                   </Popover>
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <Label>Observações</Label>
-                  <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+                  <Label htmlFor="inc-notes">Observações</Label>
+                  <Textarea id="inc-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : "Salvar entrada"}</Button>
@@ -194,7 +201,7 @@ function IncomesPage() {
                       </p>
                     </div>
                     <p className="font-semibold tabular-nums text-emerald-600">+{formatBRL(Number(i.amount))}</p>
-                    <Button variant="ghost" size="icon" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(i)} aria-label="Remover entrada"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                   </li>
                 );
               })}
@@ -202,6 +209,23 @@ function IncomesPage() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover entrada?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Excluir a entrada <strong>{deleteTarget?.description}</strong> ({formatBRL(Number(deleteTarget?.amount ?? 0))})? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
