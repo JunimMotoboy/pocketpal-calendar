@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import DOMPurify from "dompurify";
 import { Sparkles, RefreshCw } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getFinancialTips } from "@/server/tips.functions";
 import { toast } from "sonner";
+
+const TIPS_STORAGE_KEY = "nixwallet:tips:v1";
+
+function sanitize(html: string) {
+  return DOMPurify.sanitize(html, { ALLOWED_TAGS: ["strong", "em", "code", "b", "i"], ALLOWED_ATTR: [] });
+}
 
 export const Route = createFileRoute("/dicas")({
   head: () => ({
@@ -28,7 +35,7 @@ function renderMarkdown(md: string) {
       out.push(
         <ul key={out.length} className="my-3 list-disc space-y-2 pl-6 marker:text-primary">
           {bullets.map((b, i) => (
-            <li key={i} dangerouslySetInnerHTML={{ __html: inline(b) }} />
+            <li key={i} dangerouslySetInnerHTML={{ __html: sanitize(inline(b)) }} />
           ))}
         </ul>
       );
@@ -45,7 +52,7 @@ function renderMarkdown(md: string) {
     const h = l.match(/^#{1,6}\s+(.*)$/);
     if (h) { flush(); out.push(<h3 key={out.length} className="mt-4 text-lg font-semibold">{h[1]}</h3>); continue; }
     flush();
-    out.push(<p key={out.length} className="my-2 leading-relaxed" dangerouslySetInnerHTML={{ __html: inline(l) }} />);
+    out.push(<p key={out.length} className="my-2 leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitize(inline(l)) }} />);
   }
   flush();
   return out;
@@ -60,6 +67,16 @@ function TipsPage() {
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
   }, [user, loading, nav]);
+
+  // Restore cached tips so navigating back doesn't waste an API call.
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem(TIPS_STORAGE_KEY);
+      if (cached) setTips(cached);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const generate = async () => {
     if (!user) return;
@@ -79,7 +96,10 @@ function TipsPage() {
     });
     setBusy(false);
     if (res.error) toast.error(res.error);
-    else setTips(res.tips);
+    else {
+      setTips(res.tips);
+      try { localStorage.setItem(TIPS_STORAGE_KEY, res.tips); } catch { /* ignore */ }
+    }
   };
 
   if (loading || !user) {
