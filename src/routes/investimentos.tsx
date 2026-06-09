@@ -11,6 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,6 +56,7 @@ function InvestmentsPage() {
   const [date, setDate] = useState<Date>(new Date());
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Investment | null>(null);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -138,10 +143,12 @@ function InvestmentsPage() {
     load();
   };
 
-  const remove = async (id: string) => {
-    const { error } = await supabase.from("investments").delete().eq("id", id);
+  const confirmRemove = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("investments").delete().eq("id", deleteTarget.id);
     if (error) toast.error(error.message);
     else { toast.success("Investimento removido"); load(); }
+    setDeleteTarget(null);
   };
 
   if (loading || !user) return <div className="flex h-[60vh] items-center justify-center text-muted-foreground">Carregando...</div>;
@@ -266,7 +273,7 @@ function InvestmentsPage() {
                       </div>
                       <p className="font-semibold tabular-nums">{formatBRL(Number(i.amount))}</p>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(i)} aria-label="Editar"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove(i.id)} aria-label="Remover"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(i)} aria-label="Remover"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
                     </li>
                   );
                 })}
@@ -275,6 +282,23 @@ function InvestmentsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover investimento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Excluir <strong>{deleteTarget?.name}</strong> ({formatBRL(Number(deleteTarget?.amount ?? 0))})? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
