@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { CreditCard, Plus, Pencil, Trash2, ListPlus, ChevronLeft, ChevronRight } from "lucide-react";
+import { CreditCard, Plus, Pencil, Trash2, ListPlus, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,7 @@ function CardsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CardItem | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<CardItem | null>(null);
+  const [confirmDeleteInst, setConfirmDeleteInst] = useState<Installment | null>(null);
 
   const [name, setName] = useState("");
   const [limitAmount, setLimitAmount] = useState("");
@@ -101,11 +102,17 @@ function CardsPage() {
     if (error) { toast.error(error.message); return; }
     setItems((data ?? []) as CardItem[]);
 
+    // Limit credit-card expense history to the last 24 months to avoid
+    // pulling a user's entire spend history into memory.
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - 24);
+    const cutoffISO = cutoff.toISOString().slice(0, 10);
     const { data: exp } = await supabase
       .from("expenses")
       .select("id, card_id, description, amount, spent_on")
       .eq("payment_method", "credito")
-      .not("card_id", "is", null);
+      .not("card_id", "is", null)
+      .gte("spent_on", cutoffISO);
     setAllExpenses(
       ((exp ?? []) as { id: string; card_id: string; description: string; amount: number; spent_on: string }[])
         .map((e) => ({ ...e, amount: Number(e.amount) })),
@@ -315,10 +322,12 @@ function CardsPage() {
     load();
   };
 
-  const removeInstallment = async (id: string) => {
-    const { error } = await supabase.from("card_installments").delete().eq("id", id);
+  const confirmRemoveInst = async () => {
+    if (!confirmDeleteInst) return;
+    const { error } = await supabase.from("card_installments").delete().eq("id", confirmDeleteInst.id);
     if (error) toast.error(error.message);
     else { toast.success("Parcelamento removido"); load(); }
+    setConfirmDeleteInst(null);
   };
 
   if (loading || !user) return <div className="flex h-[60vh] items-center justify-center text-muted-foreground">Carregando...</div>;
