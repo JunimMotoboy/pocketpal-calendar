@@ -549,7 +549,7 @@ function CardsPage() {
                               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openInstallmentEdit(i)} aria-label="Editar">
                                 <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeInstallment(i.id)} aria-label="Remover">
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setConfirmDeleteInst(i)} aria-label="Remover">
                                 <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                               </Button>
                             </li>
@@ -600,8 +600,8 @@ function CardsPage() {
                                   <span className="tabular-nums">{formatBRL(pending)}</span>
                                 </div>
                                 <ul className="mt-1 space-y-0.5 pl-3">
-                                  {list.map((p, idx) => (
-                                    <li key={`${mk}-${p.id}-${idx}`} className="flex items-center justify-between text-xs text-muted-foreground">
+                                  {list.map((p) => (
+                                    <li key={`${mk}-${p.id}`} className="flex items-center justify-between text-xs text-muted-foreground">
                                       <span className="truncate">• {p.description}</span>
                                       <span className="tabular-nums">{formatBRL(p.value)}</span>
                                     </li>
