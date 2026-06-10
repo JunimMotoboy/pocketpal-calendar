@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { format, startOfMonth, endOfMonth, isSameDay, parseISO, getDaysInMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Trash2, Pencil, CalendarClock, ChevronLeft, ChevronRight, Trophy } from "lucide-react";
+import { Trash2, Pencil, CalendarClock, ChevronLeft, ChevronRight, Trophy, TrendingUp, TrendingDown, Wallet, Gauge } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
@@ -76,6 +76,7 @@ function Dashboard() {
   const [cardInstallments, setCardInstallments] = useState<CardInstallment[]>([]);
   const [invoicePaidMap, setInvoicePaidMap] = useState<Map<string, string>>(new Map()); // card_id -> payment id (for current viewed month)
   const [goalContribs, setGoalContribs] = useState<GoalContribution[]>([]);
+  const [monthIncome, setMonthIncome] = useState(0);
   const [fetching, setFetching] = useState(false);
   const [dayDialogOpen, setDayDialogOpen] = useState(false);
 
@@ -92,7 +93,7 @@ function Dashboard() {
     const to = format(endOfMonth(month), "yyyy-MM-dd");
     const y = month.getFullYear();
     const mo = month.getMonth() + 1;
-    const [expRes, fixRes, payRes, cardsRes, gcRes, instRes, invPayRes] = await Promise.all([
+    const [expRes, fixRes, payRes, cardsRes, gcRes, instRes, invPayRes, incRes] = await Promise.all([
       supabase
         .from("expenses")
         .select("id, description, amount, category, payment_method, spent_on, notes, card_id, installments")
@@ -121,7 +122,15 @@ function Dashboard() {
         .from("card_invoice_payments")
         .select("id, card_id")
         .eq("month_key", `${y}-${String(mo).padStart(2, "0")}`),
+      supabase
+        .from("incomes")
+        .select("amount")
+        .gte("received_on", from)
+        .lte("received_on", to),
     ]);
+    if (incRes && !incRes.error) {
+      setMonthIncome(((incRes.data ?? []) as { amount: number }[]).reduce((s, i) => s + Number(i.amount), 0));
+    }
     setFetching(false);
     if (expRes.error) toast.error(expRes.error.message);
     else setExpenses((expRes.data ?? []) as Expense[]);
