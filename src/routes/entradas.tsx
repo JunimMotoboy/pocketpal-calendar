@@ -19,6 +19,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { INCOME_SOURCES, INC_MAP, formatBRL, type IncomeSource } from "@/lib/categories";
+import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -79,8 +80,8 @@ function IncomesPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const value = parseFloat(amount.replace(",", "."));
-    if (!description.trim() || isNaN(value) || value < 0) {
+    const value = parseBRLInput(amount);
+    if (!description.trim() || isNaN(value) || value <= 0) {
       toast.error("Preencha descrição e valor válidos.");
       return;
     }
@@ -136,7 +137,7 @@ function IncomesPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="inc-amount">Valor (R$)</Label>
-                  <Input id="inc-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" required />
+                  <Input id="inc-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(formatBRLInput(e.target.value))} placeholder="0,00" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="inc-source">Fonte</Label>
