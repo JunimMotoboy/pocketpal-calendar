@@ -412,6 +412,36 @@ function Dashboard() {
         </div>
       </section>
 
+      {/* KPI strip */}
+      <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Resumo do mês">
+        {(() => {
+          const balance = monthIncome - totals.total;
+          const committedPct = monthIncome > 0 ? Math.round((totals.total / monthIncome) * 100) : 0;
+          const items = [
+            { label: "Entradas", value: formatBRL(monthIncome), icon: TrendingUp, tone: "text-emerald-600", bg: "bg-emerald-500/10" },
+            { label: "Gastos", value: formatBRL(totals.total), icon: TrendingDown, tone: "text-rose-600", bg: "bg-rose-500/10" },
+            { label: "Saldo", value: formatBRL(balance), icon: Wallet, tone: balance >= 0 ? "text-emerald-600" : "text-rose-600", bg: balance >= 0 ? "bg-emerald-500/10" : "bg-rose-500/10" },
+            { label: "% Comprometido", value: monthIncome > 0 ? `${committedPct}%` : "—", icon: Gauge, tone: committedPct >= 90 ? "text-rose-600" : committedPct >= 70 ? "text-amber-600" : "text-emerald-600", bg: committedPct >= 90 ? "bg-rose-500/10" : committedPct >= 70 ? "bg-amber-500/10" : "bg-emerald-500/10" },
+          ];
+          return items.map((k) => {
+            const Icon = k.icon;
+            return (
+              <Card key={k.label} className="border-border/60">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", k.bg)}>
+                    <Icon className={cn("h-5 w-5", k.tone)} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">{k.label}</p>
+                    <p className={cn("truncate text-lg font-bold tabular-nums", k.tone)}>{k.value}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          });
+        })()}
+      </section>
+
       <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
         {/* Calendar */}
         <Card className="h-fit">
