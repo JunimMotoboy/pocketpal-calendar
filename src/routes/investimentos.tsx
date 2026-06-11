@@ -93,7 +93,7 @@ function InvestmentsPage() {
   const openEdit = (item: Investment) => {
     setEditing(item);
     setName(item.name);
-    setAmount(String(item.amount).replace(".", ","));
+    setAmount(formatBRLInput(String(Math.round(Number(item.amount) * 100))));
     setType(item.type);
     setExpected(item.expected_return ? String(item.expected_return).replace(".", ",") : "");
     setDate(parseISO(item.invested_on));
