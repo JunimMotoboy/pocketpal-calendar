@@ -103,7 +103,7 @@ function InvestmentsPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const value = parseFloat(amount.replace(",", "."));
+    const value = parseBRLInput(amount);
     if (!name.trim() || isNaN(value) || value < 0) {
       toast.error("Preencha nome e valor válidos.");
       return;
