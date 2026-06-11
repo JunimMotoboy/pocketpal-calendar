@@ -184,8 +184,32 @@ function FixedExpensesPage() {
       {items.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Nenhuma despesa fixa cadastrada. Adicione para receber lembretes por e-mail.</CardContent></Card>
       ) : (
+        <>
+          <div className="relative mb-4">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nome, categoria ou observações..."
+              className="pl-9"
+              aria-label="Buscar despesas fixas"
+            />
+          </div>
+          {(() => {
+            const q = search.trim().toLowerCase();
+            const filtered = q
+              ? items.filter((it) =>
+                  it.name.toLowerCase().includes(q) ||
+                  CAT_MAP[it.category]?.label.toLowerCase().includes(q) ||
+                  (it.notes ?? "").toLowerCase().includes(q),
+                )
+              : items;
+            if (filtered.length === 0) {
+              return <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">Nenhuma despesa encontrada para "{search}".</CardContent></Card>;
+            }
+            return (
         <div className="grid gap-4 md:grid-cols-2">
-          {items.map((it) => {
+          {filtered.map((it) => {
             const cat = CAT_MAP[it.category];
             const Icon = cat.icon;
             return (
