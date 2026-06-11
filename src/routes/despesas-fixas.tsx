@@ -241,6 +241,9 @@ function FixedExpensesPage() {
             );
           })}
         </div>
+            );
+          })()}
+        </>
       )}
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
