@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
+
 import { CATEGORIES, CAT_MAP, formatBRL, type Category } from "@/lib/categories";
 import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 import { toast } from "sonner";
@@ -147,7 +147,9 @@ function BudgetsPage() {
                     </div>
                     {limit > 0 && (
                       <>
-                        <Progress value={Math.min(100, pct)} className="h-2" indicatorClassName={barColor} />
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                          <div className={`h-full transition-all ${barColor}`} style={{ width: `${Math.min(100, pct)}%` }} />
+                        </div>
                         <div className="flex items-center justify-between text-xs">
                           <span className={status === "over" ? "font-semibold text-rose-600" : status === "warn" ? "font-semibold text-amber-600" : "text-muted-foreground"}>
                             {status === "over" && <><AlertTriangle className="mr-1 inline h-3 w-3" /> Limite excedido</>}
