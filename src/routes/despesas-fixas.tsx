@@ -45,6 +45,7 @@ function FixedExpensesPage() {
   const [items, setItems] = useState<FixedItem[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<FixedItem | null>(null);
+  const [search, setSearch] = useState("");
 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
