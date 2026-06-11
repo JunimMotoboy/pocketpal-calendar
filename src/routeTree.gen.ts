@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as MetasRouteImport } from './routes/metas'
 import { Route as InvestimentosRouteImport } from './routes/investimentos'
 import { Route as EntradasRouteImport } from './routes/entradas'
@@ -25,6 +26,11 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrcamentosRoute = OrcamentosRouteImport.update({
+  id: '/orcamentos',
+  path: '/orcamentos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MetasRoute = MetasRouteImport.update({
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/entradas': typeof EntradasRoute
   '/investimentos': typeof InvestimentosRoute
   '/metas': typeof MetasRoute
+  '/orcamentos': typeof OrcamentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/entradas': typeof EntradasRoute
   '/investimentos': typeof InvestimentosRoute
   '/metas': typeof MetasRoute
+  '/orcamentos': typeof OrcamentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/entradas': typeof EntradasRoute
   '/investimentos': typeof InvestimentosRoute
   '/metas': typeof MetasRoute
+  '/orcamentos': typeof OrcamentosRoute
   '/relatorios': typeof RelatoriosRoute
   '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/entradas'
     | '/investimentos'
     | '/metas'
+    | '/orcamentos'
     | '/relatorios'
     | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/entradas'
     | '/investimentos'
     | '/metas'
+    | '/orcamentos'
     | '/relatorios'
     | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/entradas'
     | '/investimentos'
     | '/metas'
+    | '/orcamentos'
     | '/relatorios'
     | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   EntradasRoute: typeof EntradasRoute
   InvestimentosRoute: typeof InvestimentosRoute
   MetasRoute: typeof MetasRoute
+  OrcamentosRoute: typeof OrcamentosRoute
   RelatoriosRoute: typeof RelatoriosRoute
   ApiPublicSendFixedExpenseRemindersRoute: typeof ApiPublicSendFixedExpenseRemindersRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -195,6 +208,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orcamentos': {
+      id: '/orcamentos'
+      path: '/orcamentos'
+      fullPath: '/orcamentos'
+      preLoaderRoute: typeof OrcamentosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/metas': {
@@ -287,6 +307,7 @@ const rootRouteChildren: RootRouteChildren = {
   EntradasRoute: EntradasRoute,
   InvestimentosRoute: InvestimentosRoute,
   MetasRoute: MetasRoute,
+  OrcamentosRoute: OrcamentosRoute,
   RelatoriosRoute: RelatoriosRoute,
   ApiPublicSendFixedExpenseRemindersRoute:
     ApiPublicSendFixedExpenseRemindersRoute,
