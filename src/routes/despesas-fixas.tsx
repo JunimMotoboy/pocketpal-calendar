@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CalendarClock, Plus, Pencil, Trash2, Mail, BellRing, BellOff } from "lucide-react";
+import { CalendarClock, Plus, Pencil, Trash2, Mail, BellRing, BellOff, Search } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIES, CAT_MAP, formatBRL, type Category } from "@/lib/categories";
+import { formatBRLInput, parseBRLInput } from "@/lib/currency";
+import { useMemo } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/despesas-fixas")({
