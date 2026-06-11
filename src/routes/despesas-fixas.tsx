@@ -77,7 +77,7 @@ function FixedExpensesPage() {
   const openEdit = (it: FixedItem) => {
     setEditing(it);
     setName(it.name);
-    setAmount(String(it.amount).replace(".", ","));
+    setAmount(formatBRLInput(String(Math.round(Number(it.amount) * 100))));
     setCategory(it.category);
     setDueDay(String(it.due_day));
     setNotifyEmail(it.notify_email);
@@ -87,7 +87,7 @@ function FixedExpensesPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const val = parseFloat(amount.replace(",", "."));
+    const val = parseBRLInput(amount);
     const dd = parseInt(dueDay, 10);
     if (!name.trim() || isNaN(val) || val <= 0 || isNaN(dd) || dd < 1 || dd > 31) {
       toast.error("Preencha nome, valor e dia válidos."); return;
