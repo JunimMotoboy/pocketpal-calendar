@@ -48,6 +48,7 @@ function IncomesPage() {
   const [items, setItems] = useState<Income[]>([]);
   const [open, setOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Income | null>(null);
+  const [search, setSearch] = useState("");
 
   // form
   const [description, setDescription] = useState("");
