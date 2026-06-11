@@ -15,7 +15,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIES, CAT_MAP, formatBRL, type Category } from "@/lib/categories";
 import { formatBRLInput, parseBRLInput } from "@/lib/currency";
-import { useMemo } from "react";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/despesas-fixas")({
