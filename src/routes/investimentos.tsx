@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Textarea } from "@/components/ui/textarea";
 import { INVESTMENT_TYPES, INV_MAP, formatBRL, type InvestmentType } from "@/lib/categories";
 import { cn } from "@/lib/utils";
+import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/investimentos")({
