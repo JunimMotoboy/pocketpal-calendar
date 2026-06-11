@@ -181,13 +181,39 @@ function IncomesPage() {
       </section>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Histórico de entradas</CardTitle></CardHeader>
+        <CardHeader className="space-y-3">
+          <CardTitle className="text-base">Histórico de entradas</CardTitle>
+          {items.length > 0 && (
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por descrição, fonte ou observação..."
+                className="pl-9"
+                aria-label="Buscar entradas"
+              />
+            </div>
+          )}
+        </CardHeader>
         <CardContent>
           {items.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Nenhuma entrada registrada ainda.</p>
-          ) : (
+          ) : (() => {
+            const q = search.trim().toLowerCase();
+            const filtered = q
+              ? items.filter((i) =>
+                  i.description.toLowerCase().includes(q) ||
+                  (INC_MAP[i.source]?.label ?? "").toLowerCase().includes(q) ||
+                  (i.notes ?? "").toLowerCase().includes(q),
+                )
+              : items;
+            if (filtered.length === 0) {
+              return <p className="py-10 text-center text-sm text-muted-foreground">Nenhuma entrada encontrada para "{search}".</p>;
+            }
+            return (
             <ul className="divide-y divide-border">
-              {items.map((i) => {
+              {filtered.map((i) => {
                 const src = INC_MAP[i.source];
                 const Icon = src.icon;
                 return (
@@ -208,7 +234,8 @@ function IncomesPage() {
                 );
               })}
             </ul>
-          )}
+            );
+          })()}
         </CardContent>
       </Card>
 
