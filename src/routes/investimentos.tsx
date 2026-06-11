@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Textarea } from "@/components/ui/textarea";
 import { INVESTMENT_TYPES, INV_MAP, formatBRL, type InvestmentType } from "@/lib/categories";
 import { cn } from "@/lib/utils";
+import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/investimentos")({
@@ -92,7 +93,7 @@ function InvestmentsPage() {
   const openEdit = (item: Investment) => {
     setEditing(item);
     setName(item.name);
-    setAmount(String(item.amount).replace(".", ","));
+    setAmount(formatBRLInput(String(Math.round(Number(item.amount) * 100))));
     setType(item.type);
     setExpected(item.expected_return ? String(item.expected_return).replace(".", ",") : "");
     setDate(parseISO(item.invested_on));
@@ -102,7 +103,7 @@ function InvestmentsPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const value = parseFloat(amount.replace(",", "."));
+    const value = parseBRLInput(amount);
     if (!name.trim() || isNaN(value) || value < 0) {
       toast.error("Preencha nome e valor válidos.");
       return;
@@ -178,7 +179,7 @@ function InvestmentsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="inv-amount">Valor (R$)</Label>
-                  <Input id="inv-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" required />
+                  <Input id="inv-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(formatBRLInput(e.target.value))} placeholder="0,00" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="inv-type">Tipo</Label>

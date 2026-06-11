@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CalendarClock, Plus, Pencil, Trash2, Mail, BellRing, BellOff } from "lucide-react";
+import { CalendarClock, Plus, Pencil, Trash2, Mail, BellRing, BellOff, Search } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIES, CAT_MAP, formatBRL, type Category } from "@/lib/categories";
+import { formatBRLInput, parseBRLInput } from "@/lib/currency";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/despesas-fixas")({
@@ -43,6 +45,7 @@ function FixedExpensesPage() {
   const [items, setItems] = useState<FixedItem[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<FixedItem | null>(null);
+  const [search, setSearch] = useState("");
 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
@@ -74,7 +77,7 @@ function FixedExpensesPage() {
   const openEdit = (it: FixedItem) => {
     setEditing(it);
     setName(it.name);
-    setAmount(String(it.amount).replace(".", ","));
+    setAmount(formatBRLInput(String(Math.round(Number(it.amount) * 100))));
     setCategory(it.category);
     setDueDay(String(it.due_day));
     setNotifyEmail(it.notify_email);
@@ -84,7 +87,7 @@ function FixedExpensesPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const val = parseFloat(amount.replace(",", "."));
+    const val = parseBRLInput(amount);
     const dd = parseInt(dueDay, 10);
     if (!name.trim() || isNaN(val) || val <= 0 || isNaN(dd) || dd < 1 || dd > 31) {
       toast.error("Preencha nome, valor e dia válidos."); return;
@@ -148,7 +151,7 @@ function FixedExpensesPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="fx-amount">Valor (R$)</Label>
-                  <Input id="fx-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" required />
+                  <Input id="fx-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(formatBRLInput(e.target.value))} placeholder="0,00" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="fx-due">Dia do vencimento</Label>
@@ -181,8 +184,32 @@ function FixedExpensesPage() {
       {items.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Nenhuma despesa fixa cadastrada. Adicione para receber lembretes por e-mail.</CardContent></Card>
       ) : (
+        <>
+          <div className="relative mb-4">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nome, categoria ou observações..."
+              className="pl-9"
+              aria-label="Buscar despesas fixas"
+            />
+          </div>
+          {(() => {
+            const q = search.trim().toLowerCase();
+            const filtered = q
+              ? items.filter((it) =>
+                  it.name.toLowerCase().includes(q) ||
+                  CAT_MAP[it.category]?.label.toLowerCase().includes(q) ||
+                  (it.notes ?? "").toLowerCase().includes(q),
+                )
+              : items;
+            if (filtered.length === 0) {
+              return <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">Nenhuma despesa encontrada para "{search}".</CardContent></Card>;
+            }
+            return (
         <div className="grid gap-4 md:grid-cols-2">
-          {items.map((it) => {
+          {filtered.map((it) => {
             const cat = CAT_MAP[it.category];
             const Icon = cat.icon;
             return (
@@ -214,6 +241,9 @@ function FixedExpensesPage() {
             );
           })}
         </div>
+            );
+          })()}
+        </>
       )}
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
