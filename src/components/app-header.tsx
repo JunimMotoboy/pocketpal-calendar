@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Wallet, Calendar as CalIcon, Sparkles, LogOut, TrendingUp, TrendingDown, PieChart, Menu, CreditCard, CalendarClock, Shield, Moon, Sun, Trophy } from "lucide-react";
+import { Wallet, Calendar as CalIcon, Sparkles, LogOut, TrendingUp, TrendingDown, PieChart, Menu, CreditCard, CalendarClock, Shield, Moon, Sun, Trophy, Target } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,6 +15,7 @@ const NAV = [
   { to: "/investimentos", label: "Investimentos", icon: TrendingDown },
   { to: "/cartoes", label: "Cartões", icon: CreditCard },
   { to: "/relatorios", label: "Relatórios", icon: PieChart },
+  { to: "/orcamentos", label: "Orçamentos", icon: Target },
   { to: "/metas", label: "Metas", icon: Trophy },
   { to: "/dicas", label: "Dicas IA", icon: Sparkles },
 ];
