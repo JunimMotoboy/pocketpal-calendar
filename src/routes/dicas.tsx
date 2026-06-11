@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getFinancialTips } from "@/server/tips.functions";
+import { getFinancialTips } from "@/lib/tips.functions";
 import { toast } from "sonner";
 
 const TIPS_STORAGE_KEY = "nixwallet:tips:v1";
