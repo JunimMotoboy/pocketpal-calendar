@@ -179,7 +179,7 @@ function InvestmentsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="inv-amount">Valor (R$)</Label>
-                  <Input id="inv-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" required />
+                  <Input id="inv-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(formatBRLInput(e.target.value))} placeholder="0,00" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="inv-type">Tipo</Label>
