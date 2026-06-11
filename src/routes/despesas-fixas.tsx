@@ -151,7 +151,7 @@ function FixedExpensesPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="fx-amount">Valor (R$)</Label>
-                  <Input id="fx-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" required />
+                  <Input id="fx-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(formatBRLInput(e.target.value))} placeholder="0,00" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="fx-due">Dia do vencimento</Label>
