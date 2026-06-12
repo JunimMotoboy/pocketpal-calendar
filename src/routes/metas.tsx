@@ -163,7 +163,7 @@ function MetasPage() {
   const handleContribute = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !contribGoal) return;
-    const value = parseFloat(contribValue.replace(",", "."));
+    const value = parseBRLInput(contribValue);
     if (!value || value <= 0) return toast.error("Informe um valor válido");
 
     const newAmount = Number(contribGoal.current_amount) + value;
