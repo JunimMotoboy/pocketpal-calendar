@@ -224,10 +224,10 @@ function CardsPage() {
   const openEdit = (c: CardItem) => {
     setEditing(c);
     setName(c.name);
-    setLimitAmount(String(c.limit_amount).replace(".", ","));
+    setLimitAmount(formatBRLInput(String(Math.round(Number(c.limit_amount) * 100))));
     setDueDay(String(c.due_day));
     setClosingDay(c.closing_day ? String(c.closing_day) : "");
-    setInitialUsed(c.initial_used ? String(c.initial_used).replace(".", ",") : "");
+    setInitialUsed(c.initial_used ? formatBRLInput(String(Math.round(Number(c.initial_used) * 100))) : "");
     setNotes(c.notes || "");
     setOpen(true);
   };
