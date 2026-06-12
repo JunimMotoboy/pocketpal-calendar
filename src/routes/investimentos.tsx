@@ -58,6 +58,16 @@ function InvestmentsPage() {
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Investment | null>(null);
+  const [search, setSearch] = useState("");
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((i) =>
+      i.name.toLowerCase().includes(q) ||
+      INV_MAP[i.type]?.label.toLowerCase().includes(q) ||
+      (i.notes ?? "").toLowerCase().includes(q),
+    );
+  }, [items, search]);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
