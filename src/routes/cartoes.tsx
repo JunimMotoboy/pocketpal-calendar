@@ -14,6 +14,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatBRL } from "@/lib/categories";
+import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/cartoes")({
