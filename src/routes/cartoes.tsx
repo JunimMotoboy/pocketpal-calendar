@@ -234,7 +234,7 @@ function CardsPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const lim = parseFloat(limitAmount.replace(",", "."));
+    const lim = parseBRLInput(limitAmount);
     const dd = parseInt(dueDay, 10);
     const cd = closingDay ? parseInt(closingDay, 10) : null;
     if (!name.trim() || isNaN(lim) || lim < 0 || isNaN(dd) || dd < 1 || dd > 31) {
@@ -242,7 +242,7 @@ function CardsPage() {
       return;
     }
     if (cd !== null && (cd < 1 || cd > 31)) { toast.error("Dia de fechamento inválido."); return; }
-    const iu = initialUsed ? parseFloat(initialUsed.replace(",", ".")) : 0;
+    const iu = initialUsed ? parseBRLInput(initialUsed) : 0;
     if (isNaN(iu) || iu < 0) { toast.error("Limite utilizado inválido."); return; }
     setBusy(true);
     if (editing) {
