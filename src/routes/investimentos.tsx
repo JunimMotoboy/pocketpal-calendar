@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Plus, Trash2, Pencil, TrendingDown } from "lucide-react";
+import { CalendarIcon, Plus, Trash2, Pencil, TrendingDown, Search } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,16 @@ function InvestmentsPage() {
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Investment | null>(null);
+  const [search, setSearch] = useState("");
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((i) =>
+      i.name.toLowerCase().includes(q) ||
+      INV_MAP[i.type]?.label.toLowerCase().includes(q) ||
+      (i.notes ?? "").toLowerCase().includes(q),
+    );
+  }, [items, search]);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -256,8 +266,16 @@ function InvestmentsPage() {
             {items.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">Adicione seu primeiro investimento.</p>
             ) : (
-              <ul className="divide-y divide-border">
-                {items.map((i) => {
+              <>
+                <div className="relative mb-3">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, tipo ou observação..." className="pl-9" />
+                </div>
+                {filtered.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">Nenhum resultado para "{search}".</p>
+                ) : (
+                <ul className="divide-y divide-border">
+                {filtered.map((i) => {
                   const t = INV_MAP[i.type];
                   const Icon = t.icon;
                   return (
@@ -279,6 +297,8 @@ function InvestmentsPage() {
                   );
                 })}
               </ul>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
