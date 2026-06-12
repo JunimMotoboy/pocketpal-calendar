@@ -117,7 +117,7 @@ function MetasPage() {
     setEditingId(g.id);
     setForm({
       name: g.name,
-      target: String(g.target_amount),
+      target: formatBRLInput(String(Math.round(Number(g.target_amount) * 100))),
       frequency: g.frequency,
     });
     setFormOpen(true);
