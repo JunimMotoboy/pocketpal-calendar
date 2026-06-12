@@ -651,7 +651,7 @@ function CardsPage() {
               <p className="text-xs text-muted-foreground">As parcelas serão exibidas no calendário a partir deste mês.</p>
             </div>
             {(() => {
-              const v = parseFloat(instValue.replace(",", "."));
+              const v = parseBRLInput(instValue);
               const c = parseInt(instCount, 10);
               if (!isNaN(v) && v > 0 && !isNaN(c) && c > 0) {
                 return <p className="text-xs text-muted-foreground">Total restante: {formatBRL(v * c)}</p>;
