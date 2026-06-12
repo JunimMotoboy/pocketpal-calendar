@@ -379,7 +379,7 @@ function CardsPage() {
                 </div>
                 <div className="col-span-2 space-y-2">
                   <Label htmlFor="card-used">Limite já utilizado (R$)</Label>
-                  <Input id="card-used" inputMode="decimal" value={initialUsed} onChange={(e) => setInitialUsed(e.target.value)} placeholder="0,00" />
+                  <Input id="card-used" inputMode="decimal" value={initialUsed} onChange={(e) => setInitialUsed(formatBRLInput(e.target.value))} placeholder="0,00" />
                   <p className="text-xs text-muted-foreground">Valor já gasto antes de começar a registrar aqui.</p>
                 </div>
                 <div className="col-span-2 space-y-2">
