@@ -283,7 +283,7 @@ function CardsPage() {
     setInstCardId(i.card_id);
     setInstEditing(i);
     setInstDesc(i.description);
-    setInstValue(String(i.installment_value).replace(".", ","));
+    setInstValue(formatBRLInput(String(Math.round(Number(i.installment_value) * 100))));
     setInstCount(String(i.remaining_count));
     setInstStart(i.start_month.slice(0, 7));
     setInstOpen(true);
