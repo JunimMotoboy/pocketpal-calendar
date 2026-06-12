@@ -297,6 +297,8 @@ function InvestmentsPage() {
                   );
                 })}
               </ul>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
