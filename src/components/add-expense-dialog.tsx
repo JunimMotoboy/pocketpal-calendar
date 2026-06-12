@@ -10,6 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CATEGORIES, PAYMENT_METHODS, type Category, type PaymentMethod } from "@/lib/categories";
+import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -66,7 +67,7 @@ export function ExpenseDialog({
   useEffect(() => {
     if (open && isEdit && expense) {
       setDescription(expense.description);
-      setAmount(String(expense.amount).replace(".", ","));
+      setAmount(formatBRLInput(String(Math.round(Number(expense.amount) * 100))));
       setCategory(expense.category);
       setPaymentMethod((expense.payment_method as PaymentMethod) || "pix");
       setCardId(expense.card_id ?? "none");
@@ -89,7 +90,7 @@ export function ExpenseDialog({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const value = parseFloat(amount.replace(",", "."));
+    const value = parseBRLInput(amount);
     if (!description.trim() || isNaN(value) || value < 0) {
       toast.error("Preencha descrição e valor válidos.");
       return;
@@ -164,7 +165,7 @@ export function ExpenseDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="amt">Valor (R$)</Label>
-              <Input id="amt" inputMode="decimal" placeholder="0,00" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+              <Input id="amt" inputMode="decimal" placeholder="0,00" value={amount} onChange={(e) => setAmount(formatBRLInput(e.target.value))} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="exp-cat">Categoria</Label>
@@ -226,7 +227,7 @@ export function ExpenseDialog({
                 <Label htmlFor="exp-inst">Parcelas</Label>
                 <Input id="exp-inst" type="number" min={1} max={48} value={installments} onChange={(e) => setInstallments(e.target.value)} />
                 {(() => {
-                  const v = parseFloat(amount.replace(",", "."));
+                  const v = parseBRLInput(amount);
                   const n = Math.max(1, parseInt(installments, 10) || 1);
                   if (!isNaN(v) && v > 0 && n > 1) {
                     return <p className="text-xs text-muted-foreground">{n}x de R$ {(v / n).toFixed(2).replace(".", ",")}</p>;
