@@ -367,12 +367,10 @@ function MetasPage() {
             <Label htmlFor="contrib-value">Valor (R$)</Label>
             <Input
               id="contrib-value"
-              type="number"
               inputMode="decimal"
-              step="0.01"
-              placeholder="15,00"
+              placeholder="0,00"
               value={contribValue}
-              onChange={(e) => setContribValue(e.target.value)}
+              onChange={(e) => setContribValue(formatBRLInput(e.target.value))}
               autoFocus
               required
             />
