@@ -367,7 +367,7 @@ function CardsPage() {
                 </div>
                 <div className="col-span-2 space-y-2">
                   <Label htmlFor="card-limit">Limite (R$)</Label>
-                  <Input id="card-limit" inputMode="decimal" value={limitAmount} onChange={(e) => setLimitAmount(e.target.value)} placeholder="0,00" required />
+                  <Input id="card-limit" inputMode="decimal" value={limitAmount} onChange={(e) => setLimitAmount(formatBRLInput(e.target.value))} placeholder="0,00" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="card-due">Dia do vencimento</Label>
