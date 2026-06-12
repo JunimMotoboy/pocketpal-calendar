@@ -81,6 +81,7 @@ function CardsPage() {
   const [initialUsed, setInitialUsed] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
 
   // Installment dialog state
   const [instOpen, setInstOpen] = useState(false);
