@@ -126,7 +126,7 @@ function MetasPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    const value = parseFloat(form.target.replace(",", "."));
+    const value = parseBRLInput(form.target);
     if (!form.name.trim()) return toast.error("Informe um nome para a meta");
     if (!value || value <= 0) return toast.error("Informe um valor válido");
 
