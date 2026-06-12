@@ -90,7 +90,7 @@ export function ExpenseDialog({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const value = parseFloat(amount.replace(",", "."));
+    const value = parseBRLInput(amount);
     if (!description.trim() || isNaN(value) || value < 0) {
       toast.error("Preencha descrição e valor válidos.");
       return;
