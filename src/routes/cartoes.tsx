@@ -640,6 +640,9 @@ function CardsPage() {
             );
           })}
         </div>
+            );
+          })()}
+        </>
       )}
 
       <Dialog open={instOpen} onOpenChange={setInstOpen}>
