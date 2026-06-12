@@ -227,7 +227,7 @@ export function ExpenseDialog({
                 <Label htmlFor="exp-inst">Parcelas</Label>
                 <Input id="exp-inst" type="number" min={1} max={48} value={installments} onChange={(e) => setInstallments(e.target.value)} />
                 {(() => {
-                  const v = parseFloat(amount.replace(",", "."));
+                  const v = parseBRLInput(amount);
                   const n = Math.max(1, parseInt(installments, 10) || 1);
                   if (!isNaN(v) && v > 0 && n > 1) {
                     return <p className="text-xs text-muted-foreground">{n}x de R$ {(v / n).toFixed(2).replace(".", ",")}</p>;
