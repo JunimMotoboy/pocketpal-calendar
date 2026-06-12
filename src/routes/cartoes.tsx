@@ -291,7 +291,7 @@ function CardsPage() {
 
   const submitInstallment = async (e: React.FormEvent) => {
     e.preventDefault();
-    const v = parseFloat(instValue.replace(",", "."));
+    const v = parseBRLInput(instValue);
     const c = parseInt(instCount, 10);
     if (!instDesc.trim() || isNaN(v) || v <= 0 || isNaN(c) || c < 1) {
       toast.error("Preencha descrição, valor e número de parcelas restantes.");
