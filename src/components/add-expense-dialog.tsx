@@ -165,7 +165,7 @@ export function ExpenseDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="amt">Valor (R$)</Label>
-              <Input id="amt" inputMode="decimal" placeholder="0,00" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+              <Input id="amt" inputMode="decimal" placeholder="0,00" value={amount} onChange={(e) => setAmount(formatBRLInput(e.target.value))} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="exp-cat">Categoria</Label>
