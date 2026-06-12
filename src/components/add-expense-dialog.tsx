@@ -67,7 +67,7 @@ export function ExpenseDialog({
   useEffect(() => {
     if (open && isEdit && expense) {
       setDescription(expense.description);
-      setAmount(String(expense.amount).replace(".", ","));
+      setAmount(formatBRLInput(String(Math.round(Number(expense.amount) * 100))));
       setCategory(expense.category);
       setPaymentMethod((expense.payment_method as PaymentMethod) || "pix");
       setCardId(expense.card_id ?? "none");
