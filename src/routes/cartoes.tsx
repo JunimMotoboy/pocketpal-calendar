@@ -14,6 +14,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatBRL } from "@/lib/categories";
+import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/cartoes")({
@@ -223,17 +224,17 @@ function CardsPage() {
   const openEdit = (c: CardItem) => {
     setEditing(c);
     setName(c.name);
-    setLimitAmount(String(c.limit_amount).replace(".", ","));
+    setLimitAmount(formatBRLInput(String(Math.round(Number(c.limit_amount) * 100))));
     setDueDay(String(c.due_day));
     setClosingDay(c.closing_day ? String(c.closing_day) : "");
-    setInitialUsed(c.initial_used ? String(c.initial_used).replace(".", ",") : "");
+    setInitialUsed(c.initial_used ? formatBRLInput(String(Math.round(Number(c.initial_used) * 100))) : "");
     setNotes(c.notes || "");
     setOpen(true);
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const lim = parseFloat(limitAmount.replace(",", "."));
+    const lim = parseBRLInput(limitAmount);
     const dd = parseInt(dueDay, 10);
     const cd = closingDay ? parseInt(closingDay, 10) : null;
     if (!name.trim() || isNaN(lim) || lim < 0 || isNaN(dd) || dd < 1 || dd > 31) {
@@ -241,7 +242,7 @@ function CardsPage() {
       return;
     }
     if (cd !== null && (cd < 1 || cd > 31)) { toast.error("Dia de fechamento inválido."); return; }
-    const iu = initialUsed ? parseFloat(initialUsed.replace(",", ".")) : 0;
+    const iu = initialUsed ? parseBRLInput(initialUsed) : 0;
     if (isNaN(iu) || iu < 0) { toast.error("Limite utilizado inválido."); return; }
     setBusy(true);
     if (editing) {
@@ -282,7 +283,7 @@ function CardsPage() {
     setInstCardId(i.card_id);
     setInstEditing(i);
     setInstDesc(i.description);
-    setInstValue(String(i.installment_value).replace(".", ","));
+    setInstValue(formatBRLInput(String(Math.round(Number(i.installment_value) * 100))));
     setInstCount(String(i.remaining_count));
     setInstStart(i.start_month.slice(0, 7));
     setInstOpen(true);
@@ -290,7 +291,7 @@ function CardsPage() {
 
   const submitInstallment = async (e: React.FormEvent) => {
     e.preventDefault();
-    const v = parseFloat(instValue.replace(",", "."));
+    const v = parseBRLInput(instValue);
     const c = parseInt(instCount, 10);
     if (!instDesc.trim() || isNaN(v) || v <= 0 || isNaN(c) || c < 1) {
       toast.error("Preencha descrição, valor e número de parcelas restantes.");
@@ -366,7 +367,7 @@ function CardsPage() {
                 </div>
                 <div className="col-span-2 space-y-2">
                   <Label htmlFor="card-limit">Limite (R$)</Label>
-                  <Input id="card-limit" inputMode="decimal" value={limitAmount} onChange={(e) => setLimitAmount(e.target.value)} placeholder="0,00" required />
+                  <Input id="card-limit" inputMode="decimal" value={limitAmount} onChange={(e) => setLimitAmount(formatBRLInput(e.target.value))} placeholder="0,00" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="card-due">Dia do vencimento</Label>
@@ -378,7 +379,7 @@ function CardsPage() {
                 </div>
                 <div className="col-span-2 space-y-2">
                   <Label htmlFor="card-used">Limite já utilizado (R$)</Label>
-                  <Input id="card-used" inputMode="decimal" value={initialUsed} onChange={(e) => setInitialUsed(e.target.value)} placeholder="0,00" />
+                  <Input id="card-used" inputMode="decimal" value={initialUsed} onChange={(e) => setInitialUsed(formatBRLInput(e.target.value))} placeholder="0,00" />
                   <p className="text-xs text-muted-foreground">Valor já gasto antes de começar a registrar aqui.</p>
                 </div>
                 <div className="col-span-2 space-y-2">
@@ -637,7 +638,7 @@ function CardsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="inst-value">Valor da parcela (R$)</Label>
-                <Input id="inst-value" inputMode="decimal" value={instValue} onChange={(e) => setInstValue(e.target.value)} placeholder="0,00" required />
+                <Input id="inst-value" inputMode="decimal" value={instValue} onChange={(e) => setInstValue(formatBRLInput(e.target.value))} placeholder="0,00" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inst-count">Parcelas restantes</Label>
@@ -650,7 +651,7 @@ function CardsPage() {
               <p className="text-xs text-muted-foreground">As parcelas serão exibidas no calendário a partir deste mês.</p>
             </div>
             {(() => {
-              const v = parseFloat(instValue.replace(",", "."));
+              const v = parseBRLInput(instValue);
               const c = parseInt(instCount, 10);
               if (!isNaN(v) && v > 0 && !isNaN(c) && c > 0) {
                 return <p className="text-xs text-muted-foreground">Total restante: {formatBRL(v * c)}</p>;

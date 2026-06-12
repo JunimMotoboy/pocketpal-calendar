@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatBRL } from "@/lib/categories";
+import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/metas")({
@@ -116,7 +117,7 @@ function MetasPage() {
     setEditingId(g.id);
     setForm({
       name: g.name,
-      target: String(g.target_amount),
+      target: formatBRLInput(String(Math.round(Number(g.target_amount) * 100))),
       frequency: g.frequency,
     });
     setFormOpen(true);
@@ -125,7 +126,7 @@ function MetasPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    const value = parseFloat(form.target.replace(",", "."));
+    const value = parseBRLInput(form.target);
     if (!form.name.trim()) return toast.error("Informe um nome para a meta");
     if (!value || value <= 0) return toast.error("Informe um valor válido");
 
@@ -162,7 +163,7 @@ function MetasPage() {
   const handleContribute = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !contribGoal) return;
-    const value = parseFloat(contribValue.replace(",", "."));
+    const value = parseBRLInput(contribValue);
     if (!value || value <= 0) return toast.error("Informe um valor válido");
 
     const newAmount = Number(contribGoal.current_amount) + value;
@@ -243,12 +244,10 @@ function MetasPage() {
                 <Label htmlFor="goal-target">Valor da meta (R$)</Label>
                 <Input
                   id="goal-target"
-                  type="number"
                   inputMode="decimal"
-                  step="0.01"
-                  placeholder="100,00"
+                  placeholder="0,00"
                   value={form.target}
-                  onChange={(e) => setForm({ ...form, target: e.target.value })}
+                  onChange={(e) => setForm({ ...form, target: formatBRLInput(e.target.value) })}
                   required
                 />
               </div>
@@ -368,12 +367,10 @@ function MetasPage() {
             <Label htmlFor="contrib-value">Valor (R$)</Label>
             <Input
               id="contrib-value"
-              type="number"
               inputMode="decimal"
-              step="0.01"
-              placeholder="15,00"
+              placeholder="0,00"
               value={contribValue}
-              onChange={(e) => setContribValue(e.target.value)}
+              onChange={(e) => setContribValue(formatBRLInput(e.target.value))}
               autoFocus
               required
             />
