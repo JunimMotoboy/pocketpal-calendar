@@ -454,8 +454,22 @@ function CardsPage() {
       {items.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Nenhum cartão cadastrado ainda. Adicione um para acompanhar a fatura.</CardContent></Card>
       ) : (
+        <>
+          <div className="relative mb-4">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar cartão por nome ou observação..." className="pl-9" />
+          </div>
+          {(() => {
+            const q = search.trim().toLowerCase();
+            const filteredCards = q
+              ? items.filter((c) => c.name.toLowerCase().includes(q) || (c.notes ?? "").toLowerCase().includes(q))
+              : items;
+            if (filteredCards.length === 0) {
+              return <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Nenhum cartão encontrado para "{search}".</CardContent></Card>;
+            }
+            return (
         <div className="grid gap-4 md:grid-cols-2">
-          {items.map((c) => {
+          {filteredCards.map((c) => {
             const instMonth = installmentMonthByCard[c.id] ?? 0;
             const spentInMonth = spentMonth[c.id] ?? 0;
             const invoice = spentInMonth + instMonth;
