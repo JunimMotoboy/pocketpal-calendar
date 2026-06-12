@@ -244,12 +244,10 @@ function MetasPage() {
                 <Label htmlFor="goal-target">Valor da meta (R$)</Label>
                 <Input
                   id="goal-target"
-                  type="number"
                   inputMode="decimal"
-                  step="0.01"
-                  placeholder="100,00"
+                  placeholder="0,00"
                   value={form.target}
-                  onChange={(e) => setForm({ ...form, target: e.target.value })}
+                  onChange={(e) => setForm({ ...form, target: formatBRLInput(e.target.value) })}
                   required
                 />
               </div>
