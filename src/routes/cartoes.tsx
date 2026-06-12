@@ -638,7 +638,7 @@ function CardsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="inst-value">Valor da parcela (R$)</Label>
-                <Input id="inst-value" inputMode="decimal" value={instValue} onChange={(e) => setInstValue(e.target.value)} placeholder="0,00" required />
+                <Input id="inst-value" inputMode="decimal" value={instValue} onChange={(e) => setInstValue(formatBRLInput(e.target.value))} placeholder="0,00" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inst-count">Parcelas restantes</Label>
