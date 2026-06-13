@@ -99,6 +99,7 @@ function ReportsPage() {
   const [incomes, setIncomes] = useState<IncomeRow[]>([]);
   const [fixed, setFixed] = useState<{ amount: number; category: string }[]>([]);
   const [investTotal, setInvestTotal] = useState(0);
+  const [budgets, setBudgets] = useState<Record<string, number>>({});
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
