@@ -306,7 +306,7 @@ function ReportsPage() {
       </section>
 
       <Tabs defaultValue="categorias">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="categorias">
             <Filter className="h-4 w-4 sm:hidden" aria-hidden />
             <span className="sm:hidden sr-only">Gastos por categoria</span>
@@ -322,6 +322,11 @@ function ReportsPage() {
             <span className="sm:hidden sr-only">Entradas por fonte</span>
             <span className="hidden sm:inline">Entradas por fonte</span>
           </TabsTrigger>
+          <TabsTrigger value="orcamentos">
+            <Target className="h-4 w-4 sm:hidden" aria-hidden />
+            <span className="sm:hidden sr-only">Orçamentos</span>
+            <span className="hidden sm:inline">Orçamentos</span>
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="categorias" className="mt-4">
           <PieCard title="Distribuição dos gastos por categoria" data={catData} total={totalExp} />
@@ -331,6 +336,9 @@ function ReportsPage() {
         </TabsContent>
         <TabsContent value="entradas" className="mt-4">
           <PieCard title="Entradas por fonte" data={incData} total={totalInc} />
+        </TabsContent>
+        <TabsContent value="orcamentos" className="mt-4">
+          <BudgetBars catTotals={catTotals} budgets={budgets} />
         </TabsContent>
       </Tabs>
     </main>
