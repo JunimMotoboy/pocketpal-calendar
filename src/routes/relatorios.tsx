@@ -111,16 +111,22 @@ function ReportsPage() {
 
     (async () => {
       setFetching(true);
-      const [e, i, f, inv] = await Promise.all([
+      const [e, i, f, inv, b] = await Promise.all([
         supabase.from("expenses").select("amount, category, payment_method").gte("spent_on", from).lte("spent_on", to),
         supabase.from("incomes").select("amount, source").gte("received_on", from).lte("received_on", to),
         supabase.from("fixed_expenses").select("amount, category").eq("active", true),
         supabase.from("investments").select("amount").gte("invested_on", from).lte("invested_on", to),
+        supabase.from("category_budgets").select("category, monthly_limit"),
       ]);
       setExpenses(((e.data ?? []) as ExpenseRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setIncomes(((i.data ?? []) as IncomeRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setFixed(((f.data ?? []) as { amount: number; category: string }[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setInvestTotal(((inv.data ?? []) as { amount: number }[]).reduce((s, r) => s + Number(r.amount), 0));
+      const bud: Record<string, number> = {};
+      for (const row of (b.data ?? []) as { category: string; monthly_limit: number }[]) {
+        bud[row.category] = Number(row.monthly_limit);
+      }
+      setBudgets(bud);
       setFetching(false);
     })();
   }, [user, month]);
