@@ -91,6 +91,101 @@ function PieCard({ title, data, total }: { title: string; data: { name: string; 
   );
 }
 
+function BudgetBars({
+  catTotals,
+  budgets,
+}: {
+  catTotals: Record<string, number>;
+  budgets: Record<string, number>;
+}) {
+  const rows = useMemo(() => {
+    const data = CATEGORIES.map((c) => {
+      const limit = budgets[c.value] ?? 0;
+      if (limit <= 0) return null;
+      const used = catTotals[c.value] ?? 0;
+      const pct = Math.min(200, (used / limit) * 100);
+      const status: "ok" | "warn" | "over" = pct >= 100 ? "over" : pct >= 80 ? "warn" : "ok";
+      return { cat: c, limit, used, pct, status };
+    }).filter(Boolean) as {
+      cat: (typeof CATEGORIES)[number];
+      limit: number;
+      used: number;
+      pct: number;
+      status: "ok" | "warn" | "over";
+    }[];
+    return data.sort((a, b) => b.pct - a.pct);
+  }, [catTotals, budgets]);
+
+  if (rows.length === 0) {
+    return (
+      <Card>
+        <CardHeader><CardTitle className="text-base">Orçamento por categoria</CardTitle></CardHeader>
+        <CardContent className="flex h-[220px] flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+          <Target className="h-10 w-10 opacity-30" />
+          Nenhum orçamento definido.
+          <br />
+          <span className="text-xs">Vá em Orçamentos para configurar limites mensais.</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const totalBudget = rows.reduce((s, r) => s + r.limit, 0);
+  const totalUsed = rows.reduce((s, r) => s + r.used, 0);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Orçamento por categoria</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Utilizado {formatBRL(totalUsed)} de {formatBRL(totalBudget)}
+        </p>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-4">
+          {rows.map(({ cat, limit, used, pct, status }) => {
+            const Icon = cat.icon;
+            const barColor =
+              status === "over" ? "bg-rose-500"
+                : status === "warn" ? "bg-amber-500"
+                : "bg-emerald-500";
+            return (
+              <li key={cat.value} className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Icon className="h-4 w-4 shrink-0" style={{ color: cat.color }} />
+                  <span className="text-sm font-medium">{cat.label}</span>
+                  <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+                    {formatBRL(used)} / {formatBRL(limit)}
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div className={`h-full transition-all ${barColor}`} style={{ width: `${Math.min(100, pct)}%` }} />
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span
+                    className={
+                      status === "over"
+                        ? "font-semibold text-rose-600"
+                        : status === "warn"
+                          ? "font-semibold text-amber-600"
+                          : "text-muted-foreground"
+                    }
+                  >
+                    {status === "over" && <><AlertTriangle className="mr-1 inline h-3 w-3" /> Excedido</>}
+                    {status === "warn" && <><AlertTriangle className="mr-1 inline h-3 w-3" /> Próximo do limite</>}
+                    {status === "ok" && "Dentro do orçamento"}
+                  </span>
+                  <span className="tabular-nums text-muted-foreground">{pct.toFixed(0)}%</span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ReportsPage() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
