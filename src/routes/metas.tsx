@@ -378,7 +378,11 @@ function MetasPage() {
             );
           })}
         </div>
-      )}
+          )}
+        </>
+        );
+      })()}
+
 
       <Dialog open={!!contribGoal} onOpenChange={(o) => !o && setContribGoal(null)}>
         <DialogContent>
