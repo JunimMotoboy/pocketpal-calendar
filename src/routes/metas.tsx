@@ -285,9 +285,30 @@ function MetasPage() {
             Nenhuma meta ainda. Clique em <b>+ Nova Meta</b> para começar.
           </CardContent>
         </Card>
-      ) : (
+      ) : (() => {
+        const q = search.trim().toLowerCase();
+        const filtered = q ? goals.filter((g) => g.name.toLowerCase().includes(q)) : goals;
+        return (
+        <>
+          <div className="relative mb-4">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar meta pelo nome..."
+              className="pl-9"
+              aria-label="Buscar metas"
+            />
+          </div>
+          {filtered.length === 0 ? (
+            <Card>
+              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                Nenhuma meta encontrada para "{search}".
+              </CardContent>
+            </Card>
+          ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {goals.map((g) => {
+          {filtered.map((g) => {
             const current = Number(g.current_amount);
             const target = Number(g.target_amount);
             const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
