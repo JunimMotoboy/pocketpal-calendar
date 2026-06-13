@@ -85,6 +85,7 @@ function MetasPage() {
 
   // delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<Goal | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) nav({ to: "/auth" });
