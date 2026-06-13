@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { startOfMonth, endOfMonth, format, subMonths, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, PieChart as PieIcon, Filter, CreditCard, TrendingUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, PieChart as PieIcon, Filter, CreditCard, TrendingUp, Target, AlertTriangle } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,6 +91,101 @@ function PieCard({ title, data, total }: { title: string; data: { name: string; 
   );
 }
 
+function BudgetBars({
+  catTotals,
+  budgets,
+}: {
+  catTotals: Record<string, number>;
+  budgets: Record<string, number>;
+}) {
+  const rows = useMemo(() => {
+    const data = CATEGORIES.map((c) => {
+      const limit = budgets[c.value] ?? 0;
+      if (limit <= 0) return null;
+      const used = catTotals[c.value] ?? 0;
+      const pct = Math.min(200, (used / limit) * 100);
+      const status: "ok" | "warn" | "over" = pct >= 100 ? "over" : pct >= 80 ? "warn" : "ok";
+      return { cat: c, limit, used, pct, status };
+    }).filter(Boolean) as {
+      cat: (typeof CATEGORIES)[number];
+      limit: number;
+      used: number;
+      pct: number;
+      status: "ok" | "warn" | "over";
+    }[];
+    return data.sort((a, b) => b.pct - a.pct);
+  }, [catTotals, budgets]);
+
+  if (rows.length === 0) {
+    return (
+      <Card>
+        <CardHeader><CardTitle className="text-base">Orçamento por categoria</CardTitle></CardHeader>
+        <CardContent className="flex h-[220px] flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+          <Target className="h-10 w-10 opacity-30" />
+          Nenhum orçamento definido.
+          <br />
+          <span className="text-xs">Vá em Orçamentos para configurar limites mensais.</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const totalBudget = rows.reduce((s, r) => s + r.limit, 0);
+  const totalUsed = rows.reduce((s, r) => s + r.used, 0);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Orçamento por categoria</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Utilizado {formatBRL(totalUsed)} de {formatBRL(totalBudget)}
+        </p>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-4">
+          {rows.map(({ cat, limit, used, pct, status }) => {
+            const Icon = cat.icon;
+            const barColor =
+              status === "over" ? "bg-rose-500"
+                : status === "warn" ? "bg-amber-500"
+                : "bg-emerald-500";
+            return (
+              <li key={cat.value} className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Icon className="h-4 w-4 shrink-0" style={{ color: cat.color }} />
+                  <span className="text-sm font-medium">{cat.label}</span>
+                  <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+                    {formatBRL(used)} / {formatBRL(limit)}
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div className={`h-full transition-all ${barColor}`} style={{ width: `${Math.min(100, pct)}%` }} />
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span
+                    className={
+                      status === "over"
+                        ? "font-semibold text-rose-600"
+                        : status === "warn"
+                          ? "font-semibold text-amber-600"
+                          : "text-muted-foreground"
+                    }
+                  >
+                    {status === "over" && <><AlertTriangle className="mr-1 inline h-3 w-3" /> Excedido</>}
+                    {status === "warn" && <><AlertTriangle className="mr-1 inline h-3 w-3" /> Próximo do limite</>}
+                    {status === "ok" && "Dentro do orçamento"}
+                  </span>
+                  <span className="tabular-nums text-muted-foreground">{pct.toFixed(0)}%</span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ReportsPage() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
@@ -99,6 +194,7 @@ function ReportsPage() {
   const [incomes, setIncomes] = useState<IncomeRow[]>([]);
   const [fixed, setFixed] = useState<{ amount: number; category: string }[]>([]);
   const [investTotal, setInvestTotal] = useState(0);
+  const [budgets, setBudgets] = useState<Record<string, number>>({});
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
@@ -110,16 +206,22 @@ function ReportsPage() {
 
     (async () => {
       setFetching(true);
-      const [e, i, f, inv] = await Promise.all([
+      const [e, i, f, inv, b] = await Promise.all([
         supabase.from("expenses").select("amount, category, payment_method").gte("spent_on", from).lte("spent_on", to),
         supabase.from("incomes").select("amount, source").gte("received_on", from).lte("received_on", to),
         supabase.from("fixed_expenses").select("amount, category").eq("active", true),
         supabase.from("investments").select("amount").gte("invested_on", from).lte("invested_on", to),
+        supabase.from("category_budgets").select("category, monthly_limit"),
       ]);
       setExpenses(((e.data ?? []) as ExpenseRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setIncomes(((i.data ?? []) as IncomeRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setFixed(((f.data ?? []) as { amount: number; category: string }[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setInvestTotal(((inv.data ?? []) as { amount: number }[]).reduce((s, r) => s + Number(r.amount), 0));
+      const bud: Record<string, number> = {};
+      for (const row of (b.data ?? []) as { category: string; monthly_limit: number }[]) {
+        bud[row.category] = Number(row.monthly_limit);
+      }
+      setBudgets(bud);
       setFetching(false);
     })();
   }, [user, month]);
@@ -204,7 +306,7 @@ function ReportsPage() {
       </section>
 
       <Tabs defaultValue="categorias">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="categorias">
             <Filter className="h-4 w-4 sm:hidden" aria-hidden />
             <span className="sm:hidden sr-only">Gastos por categoria</span>
@@ -220,6 +322,11 @@ function ReportsPage() {
             <span className="sm:hidden sr-only">Entradas por fonte</span>
             <span className="hidden sm:inline">Entradas por fonte</span>
           </TabsTrigger>
+          <TabsTrigger value="orcamentos">
+            <Target className="h-4 w-4 sm:hidden" aria-hidden />
+            <span className="sm:hidden sr-only">Orçamentos</span>
+            <span className="hidden sm:inline">Orçamentos</span>
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="categorias" className="mt-4">
           <PieCard title="Distribuição dos gastos por categoria" data={catData} total={totalExp} />
@@ -229,6 +336,9 @@ function ReportsPage() {
         </TabsContent>
         <TabsContent value="entradas" className="mt-4">
           <PieCard title="Entradas por fonte" data={incData} total={totalInc} />
+        </TabsContent>
+        <TabsContent value="orcamentos" className="mt-4">
+          <BudgetBars catTotals={catTotals} budgets={budgets} />
         </TabsContent>
       </Tabs>
     </main>
