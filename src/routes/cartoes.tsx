@@ -452,7 +452,12 @@ function CardsPage() {
       })()}
 
       {items.length === 0 ? (
-        <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Nenhum cartão cadastrado ainda. Adicione um para acompanhar a fatura.</CardContent></Card>
+        <EmptyState
+          icon={CreditCard}
+          title="Nenhum cartão cadastrado"
+          description="Adicione seu primeiro cartão para registrar compras parceladas e acompanhar a fatura mensal."
+          action={<Button onClick={() => { resetForm(); setOpen(true); }}><Plus className="mr-1 h-4 w-4" /> Adicionar cartão</Button>}
+        />
       ) : (
         <>
           <div className="relative mb-4">
