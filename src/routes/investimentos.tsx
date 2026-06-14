@@ -22,6 +22,7 @@ import { INVESTMENT_TYPES, INV_MAP, formatBRL, type InvestmentType } from "@/lib
 import { cn } from "@/lib/utils";
 import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/empty-state";
 
 export const Route = createFileRoute("/investimentos")({
   head: () => ({
