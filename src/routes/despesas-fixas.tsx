@@ -17,6 +17,7 @@ import { CATEGORIES, CAT_MAP, formatBRL, type Category } from "@/lib/categories"
 import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 
 import { toast } from "sonner";
+import { EmptyState } from "@/components/empty-state";
 
 export const Route = createFileRoute("/despesas-fixas")({
   head: () => ({
@@ -182,7 +183,12 @@ function FixedExpensesPage() {
       </section>
 
       {items.length === 0 ? (
-        <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Nenhuma despesa fixa cadastrada. Adicione para receber lembretes por e-mail.</CardContent></Card>
+        <EmptyState
+          icon={CalendarClock}
+          title="Sem despesas fixas"
+          description="Cadastre contas que se repetem todo mês (aluguel, streaming, internet) para receber lembretes e marcar como pagas no calendário."
+          action={<Button onClick={() => { resetForm(); setOpen(true); }}><Plus className="mr-1 h-4 w-4" /> Adicionar despesa fixa</Button>}
+        />
       ) : (
         <>
           <div className="relative mb-4">
