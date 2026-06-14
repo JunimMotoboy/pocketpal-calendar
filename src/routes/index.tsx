@@ -444,7 +444,7 @@ function Dashboard() {
 
       <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
         {/* Calendar */}
-        <Card className="h-fit">
+        <Card className="order-2 h-fit lg:order-1">
           <CardHeader className="px-3 sm:px-6">
             <CardTitle className="text-base">Calendário do mês</CardTitle>
           </CardHeader>
@@ -475,20 +475,23 @@ function Dashboard() {
                 hasGoal: "ring-2 ring-amber-500/60 rounded-md",
               }}
             />
-            <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent" />Gasto</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-destructive" />Conta a pagar</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-success" />Conta paga</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-warning/60" />Fatura cartão</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-success/40" />Fatura paga</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm ring-2 ring-amber-500/60" />Meta</span>
-            </div>
+            <details className="mt-3 group" >
+              <summary className="cursor-pointer list-none text-[11px] text-muted-foreground sm:hidden">+ Mostrar legenda</summary>
+              <div className="mt-2 hidden flex-wrap gap-3 text-[11px] text-muted-foreground group-open:flex sm:flex">
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent" />Gasto</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-destructive" />Conta a pagar</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-success" />Conta paga</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-warning/60" />Fatura cartão</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-success/40" />Fatura paga</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm ring-2 ring-amber-500/60" />Meta</span>
+              </div>
+            </details>
             {fetching && <p className="mt-2 text-xs text-muted-foreground">Atualizando...</p>}
           </CardContent>
         </Card>
 
         {/* Right column: day details + categories */}
-        <div className="space-y-6">
+        <div className="order-1 space-y-6 lg:order-2">
           <Card>
             <CardHeader className="flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base capitalize">
