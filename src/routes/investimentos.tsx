@@ -264,7 +264,13 @@ function InvestmentsPage() {
           <CardHeader><CardTitle className="text-base">Aplicações</CardTitle></CardHeader>
           <CardContent>
             {items.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">Adicione seu primeiro investimento.</p>
+              <EmptyState
+                icon={TrendingDown}
+                bordered={false}
+                title="Comece a investir"
+                description="Cadastre suas aplicações (renda fixa, ações, cripto) para visualizar a alocação e o total investido."
+                action={<Button onClick={() => { resetForm(); setOpen(true); }}><Plus className="mr-1 h-4 w-4" /> Adicionar investimento</Button>}
+              />
             ) : (
               <>
                 <div className="relative mb-3">
