@@ -22,6 +22,7 @@ import { INCOME_SOURCES, INC_MAP, formatBRL, type IncomeSource } from "@/lib/cat
 import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/empty-state";
 
 export const Route = createFileRoute("/entradas")({
   head: () => ({
