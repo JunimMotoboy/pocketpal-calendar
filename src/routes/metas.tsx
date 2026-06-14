@@ -280,11 +280,12 @@ function MetasPage() {
       {loading ? (
         <p className="text-muted-foreground text-sm">Carregando...</p>
       ) : goals.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-muted-foreground">
-            Nenhuma meta ainda. Clique em <b>+ Nova Meta</b> para começar.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Trophy}
+          title="Sem metas ainda"
+          description="Defina objetivos como viagem, reserva de emergência ou um curso, e acompanhe o progresso a cada aporte."
+          action={<Button onClick={() => { setEditingId(null); setForm(emptyForm); setFormOpen(true); }}><Plus className="mr-1 h-4 w-4" /> Criar primeira meta</Button>}
+        />
       ) : (() => {
         const q = search.trim().toLowerCase();
         const filtered = q ? goals.filter((g) => g.name.toLowerCase().includes(q)) : goals;
