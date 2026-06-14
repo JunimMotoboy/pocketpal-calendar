@@ -37,6 +37,7 @@ import {
 import { formatBRL } from "@/lib/categories";
 import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/empty-state";
 
 export const Route = createFileRoute("/metas")({
   head: () => ({
