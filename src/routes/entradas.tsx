@@ -198,7 +198,13 @@ function IncomesPage() {
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">Nenhuma entrada registrada ainda.</p>
+            <EmptyState
+              icon={TrendingUp}
+              bordered={false}
+              title="Sem entradas registradas"
+              description="Registre seu salário, freelas ou rendimentos para acompanhar saldo e percentual comprometido do mês."
+              action={<Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" /> Nova entrada</Button>}
+            />
           ) : (() => {
             const q = search.trim().toLowerCase();
             const filtered = q
