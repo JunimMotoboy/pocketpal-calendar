@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Trophy, Plus, Trash2, CheckCircle2, Pencil, Search } from "lucide-react";
+import { Trophy, Plus, Trash2, CheckCircle2, Pencil, Search, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,7 @@ function MetasPage() {
   const { user, loading: authLoading } = useAuth();
   const nav = useNavigate();
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [paceByGoal, setPaceByGoal] = useState<Record<string, { perDay: number; firstDate: string; count: number }>>({});
   const [loading, setLoading] = useState(true);
 
   // create/edit dialog
@@ -95,12 +96,27 @@ function MetasPage() {
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("goals")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const [{ data, error }, { data: contribs }] = await Promise.all([
+      supabase.from("goals").select("*").order("created_at", { ascending: false }),
+      supabase.from("goal_contributions").select("goal_id, amount, contributed_on"),
+    ]);
     if (error) toast.error("Erro ao carregar metas");
     else setGoals((data ?? []) as Goal[]);
+
+    const pace: Record<string, { perDay: number; firstDate: string; count: number }> = {};
+    const grouped: Record<string, { amount: number; date: string }[]> = {};
+    (contribs ?? []).forEach((c: any) => {
+      if (!grouped[c.goal_id]) grouped[c.goal_id] = [];
+      grouped[c.goal_id].push({ amount: Number(c.amount), date: c.contributed_on });
+    });
+    Object.entries(grouped).forEach(([gid, items]) => {
+      const sorted = items.slice().sort((a, b) => a.date.localeCompare(b.date));
+      const first = sorted[0].date;
+      const total = sorted.reduce((s, i) => s + i.amount, 0);
+      const days = Math.max(1, Math.ceil((Date.now() - new Date(first + "T00:00:00").getTime()) / 86400000));
+      pace[gid] = { perDay: total / days, firstDate: first, count: sorted.length };
+    });
+    setPaceByGoal(pace);
     setLoading(false);
   };
 
@@ -361,6 +377,36 @@ function MetasPage() {
                     <span className="text-sm font-semibold">{pct}%</span>
                   </div>
                   <Progress value={pct} />
+                  {(() => {
+                    if (g.completed) return null;
+                    const remaining = Math.max(0, target - current);
+                    const p = paceByGoal[g.id];
+                    if (!p || p.perDay <= 0 || p.count < 1) {
+                      return (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <CalendarClock className="h-3.5 w-3.5" />
+                          Adicione aportes para estimar a data de conclusão.
+                        </p>
+                      );
+                    }
+                    const daysLeft = Math.ceil(remaining / p.perDay);
+                    const eta = new Date();
+                    eta.setDate(eta.getDate() + daysLeft);
+                    const etaLabel = eta.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+                    const monthly = p.perDay * 30;
+                    return (
+                      <div className="rounded-md border border-dashed border-border bg-muted/30 p-2.5 space-y-0.5">
+                        <p className="text-xs flex items-center gap-1.5 text-foreground">
+                          <CalendarClock className="h-3.5 w-3.5 text-primary" />
+                          Previsão: <b>{etaLabel}</b>
+                          <span className="text-muted-foreground">({daysLeft} {daysLeft === 1 ? "dia" : "dias"})</span>
+                        </p>
+                        <p className="text-[11px] text-muted-foreground pl-5">
+                          Ritmo atual: {formatBRL(monthly)}/mês
+                        </p>
+                      </div>
+                    );
+                  })()}
                   {g.completed ? (
                     <p className="text-sm text-green-600 font-medium">
                       🎉 Parabéns! Você concluiu sua meta.
