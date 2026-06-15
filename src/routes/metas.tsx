@@ -73,6 +73,7 @@ function MetasPage() {
   const { user, loading: authLoading } = useAuth();
   const nav = useNavigate();
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [paceByGoal, setPaceByGoal] = useState<Record<string, { perDay: number; firstDate: string; count: number }>>({});
   const [loading, setLoading] = useState(true);
 
   // create/edit dialog
