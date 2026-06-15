@@ -96,12 +96,27 @@ function MetasPage() {
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("goals")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const [{ data, error }, { data: contribs }] = await Promise.all([
+      supabase.from("goals").select("*").order("created_at", { ascending: false }),
+      supabase.from("goal_contributions").select("goal_id, amount, contributed_on"),
+    ]);
     if (error) toast.error("Erro ao carregar metas");
     else setGoals((data ?? []) as Goal[]);
+
+    const pace: Record<string, { perDay: number; firstDate: string; count: number }> = {};
+    const grouped: Record<string, { amount: number; date: string }[]> = {};
+    (contribs ?? []).forEach((c: any) => {
+      if (!grouped[c.goal_id]) grouped[c.goal_id] = [];
+      grouped[c.goal_id].push({ amount: Number(c.amount), date: c.contributed_on });
+    });
+    Object.entries(grouped).forEach(([gid, items]) => {
+      const sorted = items.slice().sort((a, b) => a.date.localeCompare(b.date));
+      const first = sorted[0].date;
+      const total = sorted.reduce((s, i) => s + i.amount, 0);
+      const days = Math.max(1, Math.ceil((Date.now() - new Date(first + "T00:00:00").getTime()) / 86400000));
+      pace[gid] = { perDay: total / days, firstDate: first, count: sorted.length };
+    });
+    setPaceByGoal(pace);
     setLoading(false);
   };
 
