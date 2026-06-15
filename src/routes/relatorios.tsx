@@ -326,36 +326,69 @@ function ReportsPage() {
       </section>
 
       <section className="mb-6 grid gap-3 sm:grid-cols-3">
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">Entradas</p>
-          <p className="text-2xl font-bold text-emerald-600">{formatBRL(totalInc)}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">Gastos</p>
-          <p className="text-2xl font-bold text-rose-600">{formatBRL(totalExp)}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">Saldo</p>
-          <p className={`text-2xl font-bold ${saldo >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{formatBRL(saldo)}</p>
-        </CardContent></Card>
+        {(() => {
+          const prev = trend.length >= 2 ? trend[trend.length - 2] : null;
+          const curr = trend.length >= 1 ? trend[trend.length - 1] : null;
+          const delta = (now: number, before: number) => {
+            if (!before) return null;
+            return ((now - before) / before) * 100;
+          };
+          const dInc = prev && curr ? delta(curr.entradas, prev.entradas) : null;
+          const dExp = prev && curr ? delta(curr.gastos, prev.gastos) : null;
+          const Pill = ({ v, invert = false }: { v: number | null; invert?: boolean }) => {
+            if (v === null || !isFinite(v)) return null;
+            const up = v >= 0;
+            const good = invert ? !up : up;
+            const Icon = up ? ArrowUpRight : ArrowDownRight;
+            return (
+              <span className={`mt-1 inline-flex items-center gap-1 text-xs font-medium ${good ? "text-emerald-600" : "text-rose-600"}`}>
+                <Icon className="h-3 w-3" />
+                {Math.abs(v).toFixed(0)}% vs mês anterior
+              </span>
+            );
+          };
+          return (
+            <>
+              <Card><CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">Entradas</p>
+                <p className="text-2xl font-bold text-emerald-600">{formatBRL(totalInc)}</p>
+                <Pill v={dInc} />
+              </CardContent></Card>
+              <Card><CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">Gastos</p>
+                <p className="text-2xl font-bold text-rose-600">{formatBRL(totalExp)}</p>
+                <Pill v={dExp} invert />
+              </CardContent></Card>
+              <Card><CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">Saldo</p>
+                <p className={`text-2xl font-bold ${saldo >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{formatBRL(saldo)}</p>
+              </CardContent></Card>
+            </>
+          );
+        })()}
       </section>
 
       <Tabs defaultValue="categorias">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
           <TabsTrigger value="categorias">
             <Filter className="h-4 w-4 sm:hidden" aria-hidden />
             <span className="sm:hidden sr-only">Gastos por categoria</span>
-            <span className="hidden sm:inline">Gastos por categoria</span>
+            <span className="hidden sm:inline">Categorias</span>
           </TabsTrigger>
           <TabsTrigger value="pagamento">
             <CreditCard className="h-4 w-4 sm:hidden" aria-hidden />
             <span className="sm:hidden sr-only">Forma de pagamento</span>
-            <span className="hidden sm:inline">Forma de pagamento</span>
+            <span className="hidden sm:inline">Pagamento</span>
           </TabsTrigger>
           <TabsTrigger value="entradas">
             <TrendingUp className="h-4 w-4 sm:hidden" aria-hidden />
             <span className="sm:hidden sr-only">Entradas por fonte</span>
-            <span className="hidden sm:inline">Entradas por fonte</span>
+            <span className="hidden sm:inline">Entradas</span>
+          </TabsTrigger>
+          <TabsTrigger value="tendencia">
+            <LineIcon className="h-4 w-4 sm:hidden" aria-hidden />
+            <span className="sm:hidden sr-only">Tendência</span>
+            <span className="hidden sm:inline">Tendência</span>
           </TabsTrigger>
           <TabsTrigger value="orcamentos">
             <Target className="h-4 w-4 sm:hidden" aria-hidden />
@@ -372,10 +405,59 @@ function ReportsPage() {
         <TabsContent value="entradas" className="mt-4">
           <PieCard title="Entradas por fonte" data={incData} total={totalInc} />
         </TabsContent>
+        <TabsContent value="tendencia" className="mt-4">
+          <TrendCard data={trend} />
+        </TabsContent>
         <TabsContent value="orcamentos" className="mt-4">
           <BudgetBars catTotals={catTotals} budgets={budgets} />
         </TabsContent>
       </Tabs>
     </main>
+  );
+}
+
+function TrendCard({ data }: { data: { key: string; label: string; gastos: number; entradas: number }[] }) {
+  const hasData = data.some((d) => d.gastos > 0 || d.entradas > 0);
+  const avgExp = data.length ? data.reduce((s, d) => s + d.gastos, 0) / data.length : 0;
+  const avgInc = data.length ? data.reduce((s, d) => s + d.entradas, 0) / data.length : 0;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Tendência dos últimos 6 meses</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Média mensal: entradas {formatBRL(avgInc)} · gastos {formatBRL(avgExp)}
+        </p>
+      </CardHeader>
+      <CardContent>
+        {!hasData ? (
+          <div className="flex h-[320px] flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+            <LineIcon className="h-10 w-10 opacity-30" />
+            Sem histórico suficiente ainda.
+          </div>
+        ) : (
+          <div className="h-[320px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="label" stroke="var(--muted-foreground)" fontSize={12} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v) => `R$${Math.round(v / 1000)}k`} />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--popover)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 12,
+                    color: "var(--foreground)",
+                  }}
+                  formatter={(v: number, n) => [formatBRL(v), n as string]}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Line type="monotone" dataKey="entradas" name="Entradas" stroke="oklch(0.65 0.18 150)" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="gastos" name="Gastos" stroke="oklch(0.6 0.2 25)" strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
