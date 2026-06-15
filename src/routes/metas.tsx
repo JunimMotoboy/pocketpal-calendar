@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Trophy, Plus, Trash2, CheckCircle2, Pencil, Search } from "lucide-react";
+import { Trophy, Plus, Trash2, CheckCircle2, Pencil, Search, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
