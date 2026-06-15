@@ -196,6 +196,7 @@ function ReportsPage() {
   const [investTotal, setInvestTotal] = useState(0);
   const [budgets, setBudgets] = useState<Record<string, number>>({});
   const [fetching, setFetching] = useState(false);
+  const [trend, setTrend] = useState<{ key: string; label: string; gastos: number; entradas: number }[]>([]);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -203,25 +204,59 @@ function ReportsPage() {
     if (!user) return;
     const from = format(startOfMonth(month), "yyyy-MM-dd");
     const to = format(endOfMonth(month), "yyyy-MM-dd");
+    const trendStart = format(startOfMonth(subMonths(month, 5)), "yyyy-MM-dd");
+    const trendEnd = to;
 
     (async () => {
       setFetching(true);
-      const [e, i, f, inv, b] = await Promise.all([
+      const [e, i, f, inv, b, te, ti, tinv] = await Promise.all([
         supabase.from("expenses").select("amount, category, payment_method").gte("spent_on", from).lte("spent_on", to),
         supabase.from("incomes").select("amount, source").gte("received_on", from).lte("received_on", to),
         supabase.from("fixed_expenses").select("amount, category").eq("active", true),
         supabase.from("investments").select("amount").gte("invested_on", from).lte("invested_on", to),
         supabase.from("category_budgets").select("category, monthly_limit"),
+        supabase.from("expenses").select("amount, spent_on").gte("spent_on", trendStart).lte("spent_on", trendEnd),
+        supabase.from("incomes").select("amount, received_on").gte("received_on", trendStart).lte("received_on", trendEnd),
+        supabase.from("investments").select("amount, invested_on").gte("invested_on", trendStart).lte("invested_on", trendEnd),
       ]);
       setExpenses(((e.data ?? []) as ExpenseRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setIncomes(((i.data ?? []) as IncomeRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
-      setFixed(((f.data ?? []) as { amount: number; category: string }[]).map((r) => ({ ...r, amount: Number(r.amount) })));
+      const fixedRows = ((f.data ?? []) as { amount: number; category: string }[]).map((r) => ({ ...r, amount: Number(r.amount) }));
+      setFixed(fixedRows);
       setInvestTotal(((inv.data ?? []) as { amount: number }[]).reduce((s, r) => s + Number(r.amount), 0));
       const bud: Record<string, number> = {};
       for (const row of (b.data ?? []) as { category: string; monthly_limit: number }[]) {
         bud[row.category] = Number(row.monthly_limit);
       }
       setBudgets(bud);
+
+      // Build 6-month trend
+      const fixedSum = fixedRows.reduce((s, r) => s + r.amount, 0);
+      const months: { key: string; label: string; gastos: number; entradas: number }[] = [];
+      for (let k = 5; k >= 0; k--) {
+        const d = subMonths(month, k);
+        months.push({
+          key: format(d, "yyyy-MM"),
+          label: format(d, "MMM", { locale: ptBR }),
+          gastos: fixedSum,
+          entradas: 0,
+        });
+      }
+      const idx: Record<string, number> = {};
+      months.forEach((m, ix) => { idx[m.key] = ix; });
+      for (const r of (te.data ?? []) as { amount: number; spent_on: string }[]) {
+        const k = r.spent_on.slice(0, 7);
+        if (idx[k] !== undefined) months[idx[k]].gastos += Number(r.amount);
+      }
+      for (const r of (tinv.data ?? []) as { amount: number; invested_on: string }[]) {
+        const k = r.invested_on.slice(0, 7);
+        if (idx[k] !== undefined) months[idx[k]].gastos += Number(r.amount);
+      }
+      for (const r of (ti.data ?? []) as { amount: number; received_on: string }[]) {
+        const k = r.received_on.slice(0, 7);
+        if (idx[k] !== undefined) months[idx[k]].entradas += Number(r.amount);
+      }
+      setTrend(months);
       setFetching(false);
     })();
   }, [user, month]);
