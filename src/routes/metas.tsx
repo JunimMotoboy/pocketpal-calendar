@@ -377,6 +377,36 @@ function MetasPage() {
                     <span className="text-sm font-semibold">{pct}%</span>
                   </div>
                   <Progress value={pct} />
+                  {(() => {
+                    if (g.completed) return null;
+                    const remaining = Math.max(0, target - current);
+                    const p = paceByGoal[g.id];
+                    if (!p || p.perDay <= 0 || p.count < 1) {
+                      return (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <CalendarClock className="h-3.5 w-3.5" />
+                          Adicione aportes para estimar a data de conclusão.
+                        </p>
+                      );
+                    }
+                    const daysLeft = Math.ceil(remaining / p.perDay);
+                    const eta = new Date();
+                    eta.setDate(eta.getDate() + daysLeft);
+                    const etaLabel = eta.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+                    const monthly = p.perDay * 30;
+                    return (
+                      <div className="rounded-md border border-dashed border-border bg-muted/30 p-2.5 space-y-0.5">
+                        <p className="text-xs flex items-center gap-1.5 text-foreground">
+                          <CalendarClock className="h-3.5 w-3.5 text-primary" />
+                          Previsão: <b>{etaLabel}</b>
+                          <span className="text-muted-foreground">({daysLeft} {daysLeft === 1 ? "dia" : "dias"})</span>
+                        </p>
+                        <p className="text-[11px] text-muted-foreground pl-5">
+                          Ritmo atual: {formatBRL(monthly)}/mês
+                        </p>
+                      </div>
+                    );
+                  })()}
                   {g.completed ? (
                     <p className="text-sm text-green-600 font-medium">
                       🎉 Parabéns! Você concluiu sua meta.
