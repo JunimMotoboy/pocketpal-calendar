@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { AppHeader } from "@/components/app-header";
 import { useTheme } from "@/hooks/use-theme";
+import { usePersonalization } from "@/hooks/use-personalization";
 
 import appCss from "../styles.css?url";
 
@@ -54,8 +55,32 @@ export const Route = createRootRoute({
 
 const themeScript = `
   (function(){
-    var t = localStorage.getItem('nixwallet:theme');
-    if (t === 'dark') document.documentElement.classList.add('dark');
+    try {
+      var t = localStorage.getItem('nixwallet:theme');
+      if (t === 'dark') document.documentElement.classList.add('dark');
+      var p = localStorage.getItem('nixwallet:personalization');
+      if (p) {
+        var pj = JSON.parse(p);
+        var accents = {
+          teal:    { p:'oklch(0.5 0.12 195)',  g:'oklch(0.7 0.14 190)'  },
+          violet:  { p:'oklch(0.55 0.2 290)',  g:'oklch(0.72 0.18 295)' },
+          rose:    { p:'oklch(0.6 0.21 5)',    g:'oklch(0.75 0.18 10)'  },
+          emerald: { p:'oklch(0.58 0.16 155)', g:'oklch(0.74 0.16 150)' },
+          amber:   { p:'oklch(0.7 0.17 65)',   g:'oklch(0.82 0.15 70)'  },
+          blue:    { p:'oklch(0.55 0.18 255)', g:'oklch(0.72 0.16 250)' }
+        };
+        var a = accents[pj.accent];
+        if (a) {
+          document.documentElement.style.setProperty('--primary', a.p);
+          document.documentElement.style.setProperty('--primary-glow', a.g);
+          document.documentElement.style.setProperty('--ring', a.p);
+          document.documentElement.style.setProperty('--gradient-hero','linear-gradient(135deg,'+a.p+' 0%,'+a.g+' 100%)');
+        }
+        var sizes = { sm:14, md:16, lg:18, xl:20 };
+        var s = sizes[pj.fontSize];
+        if (s) document.documentElement.style.fontSize = s + 'px';
+      }
+    } catch(e) {}
   })();
 `;
 
@@ -77,6 +102,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const [queryClient] = useState(() => new QueryClient());
   useTheme();
+  usePersonalization();
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-dvh bg-background">

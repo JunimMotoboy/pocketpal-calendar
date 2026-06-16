@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as PersonalizarRouteImport } from './routes/personalizar'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as MetasRouteImport } from './routes/metas'
 import { Route as InvestimentosRouteImport } from './routes/investimentos'
@@ -26,6 +27,11 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonalizarRoute = PersonalizarRouteImport.update({
+  id: '/personalizar',
+  path: '/personalizar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrcamentosRoute = OrcamentosRouteImport.update({
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/investimentos': typeof InvestimentosRoute
   '/metas': typeof MetasRoute
   '/orcamentos': typeof OrcamentosRoute
+  '/personalizar': typeof PersonalizarRoute
   '/relatorios': typeof RelatoriosRoute
   '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/investimentos': typeof InvestimentosRoute
   '/metas': typeof MetasRoute
   '/orcamentos': typeof OrcamentosRoute
+  '/personalizar': typeof PersonalizarRoute
   '/relatorios': typeof RelatoriosRoute
   '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/investimentos': typeof InvestimentosRoute
   '/metas': typeof MetasRoute
   '/orcamentos': typeof OrcamentosRoute
+  '/personalizar': typeof PersonalizarRoute
   '/relatorios': typeof RelatoriosRoute
   '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/investimentos'
     | '/metas'
     | '/orcamentos'
+    | '/personalizar'
     | '/relatorios'
     | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/investimentos'
     | '/metas'
     | '/orcamentos'
+    | '/personalizar'
     | '/relatorios'
     | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/investimentos'
     | '/metas'
     | '/orcamentos'
+    | '/personalizar'
     | '/relatorios'
     | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
@@ -196,6 +208,7 @@ export interface RootRouteChildren {
   InvestimentosRoute: typeof InvestimentosRoute
   MetasRoute: typeof MetasRoute
   OrcamentosRoute: typeof OrcamentosRoute
+  PersonalizarRoute: typeof PersonalizarRoute
   RelatoriosRoute: typeof RelatoriosRoute
   ApiPublicSendFixedExpenseRemindersRoute: typeof ApiPublicSendFixedExpenseRemindersRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -208,6 +221,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personalizar': {
+      id: '/personalizar'
+      path: '/personalizar'
+      fullPath: '/personalizar'
+      preLoaderRoute: typeof PersonalizarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orcamentos': {
@@ -308,6 +328,7 @@ const rootRouteChildren: RootRouteChildren = {
   InvestimentosRoute: InvestimentosRoute,
   MetasRoute: MetasRoute,
   OrcamentosRoute: OrcamentosRoute,
+  PersonalizarRoute: PersonalizarRoute,
   RelatoriosRoute: RelatoriosRoute,
   ApiPublicSendFixedExpenseRemindersRoute:
     ApiPublicSendFixedExpenseRemindersRoute,
