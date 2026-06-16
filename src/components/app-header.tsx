@@ -1,10 +1,12 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Wallet, Calendar as CalIcon, Sparkles, LogOut, TrendingUp, TrendingDown, PieChart, Menu, CreditCard, CalendarClock, Shield, Moon, Sun, Trophy, Target } from "lucide-react";
+import { Wallet, Calendar as CalIcon, Sparkles, LogOut, TrendingUp, TrendingDown, PieChart, Menu, CreditCard, CalendarClock, Shield, Moon, Sun, Trophy, Target, Palette } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
+import { usePersonalization } from "@/hooks/use-personalization";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
@@ -23,10 +25,19 @@ const NAV = [
 export function AppHeader() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { pers } = usePersonalization();
   const loc = useLocation();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const initials = (pers.displayName || user?.email || "U")
+    .split(/[\s@]/)
+    .filter(Boolean)
+    .map((s) => s[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   // Close mobile sheet whenever the route changes
   useEffect(() => { setOpen(false); }, [loc.pathname]);
@@ -90,6 +101,17 @@ export function AppHeader() {
               <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label={theme === "dark" ? "Tema claro" : "Tema escuro"}>
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
+              <Link to="/personalizar" preload="intent" aria-label="Personalizar">
+                <Avatar className="h-8 w-8 ring-2 ring-primary/30 hover:ring-primary/60 transition">
+                  {pers.avatar ? <AvatarImage src={pers.avatar} alt="" /> : null}
+                  <AvatarFallback
+                    className="text-xs text-primary-foreground"
+                    style={{ backgroundImage: "var(--gradient-hero)" }}
+                  >
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
               <Button variant="ghost" size="sm" onClick={handleLogout} className="ml-1">
                 <LogOut className="h-4 w-4 mr-1" />
                 Sair
@@ -97,6 +119,17 @@ export function AppHeader() {
             </nav>
 
             <div className="flex items-center gap-1 lg:hidden">
+              <Link to="/personalizar" aria-label="Personalizar">
+                <Avatar className="h-8 w-8 ring-2 ring-primary/30">
+                  {pers.avatar ? <AvatarImage src={pers.avatar} alt="" /> : null}
+                  <AvatarFallback
+                    className="text-xs text-primary-foreground"
+                    style={{ backgroundImage: "var(--gradient-hero)" }}
+                  >
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
               <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label={theme === "dark" ? "Tema claro" : "Tema escuro"}>
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
@@ -109,6 +142,14 @@ export function AppHeader() {
               <SheetContent side="right" className="w-72">
                 <div className="mt-8 flex flex-col gap-1">
                   <NavLinks onClick={() => setOpen(false)} />
+                  <Link
+                    to="/personalizar"
+                    onClick={() => setOpen(false)}
+                    className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <Palette className="h-4 w-4" />
+                    <span>Personalizar</span>
+                  </Link>
                   <Button variant="ghost" onClick={() => { toggleTheme(); }} className="justify-start mt-2">
                     {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
                     {theme === "dark" ? "Tema claro" : "Tema escuro"}
