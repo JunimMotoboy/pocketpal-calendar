@@ -442,6 +442,71 @@ function Dashboard() {
         })()}
       </section>
 
+      {/* Upcoming reminders (next 7 days) */}
+      {(() => {
+        const today = startOfDay(new Date());
+        const horizon = 7;
+        type Reminder = { key: string; title: string; date: Date; amount: number; kind: "fixed" | "card"; onPay: () => void };
+        const items: Reminder[] = [];
+        for (const f of fixedDues) {
+          if (paidMap.has(f.id)) continue;
+          const diff = differenceInCalendarDays(f.date, today);
+          if (diff < 0 || diff > horizon) continue;
+          items.push({ key: `f-${f.id}`, title: f.name, date: f.date, amount: f.amount, kind: "fixed", onPay: () => togglePaid(f) });
+        }
+        const dim = getDaysInMonth(month);
+        const yy = month.getFullYear();
+        const mm = month.getMonth();
+        for (const c of cards) {
+          if (invoicePaidMap.has(c.id)) continue;
+          const d = new Date(yy, mm, Math.min(c.due_day, dim));
+          const diff = differenceInCalendarDays(d, today);
+          if (diff < 0 || diff > horizon) continue;
+          const parts = installmentsByCardThisMonth.get(c.id) ?? [];
+          const purchases = monthCardExpensesByCard.get(c.id) ?? [];
+          const total = parts.reduce((s, p) => s + p.value, 0) + purchases.reduce((s, e) => s + Number(e.amount), 0);
+          items.push({ key: `c-${c.id}`, title: `Fatura ${c.name}`, date: d, amount: total, kind: "card", onPay: () => toggleInvoicePaid(c.id, total) });
+        }
+        if (items.length === 0) return null;
+        items.sort((a, b) => a.date.getTime() - b.date.getTime());
+        const overdue = items.some((i) => differenceInCalendarDays(i.date, today) === 0);
+        return (
+          <section className="mb-6" aria-label="Lembretes próximos">
+            <Card className={cn("border-l-4", overdue ? "border-l-destructive bg-destructive/5" : "border-l-warning bg-warning/5")}>
+              <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  {overdue ? <AlertTriangle className="h-4 w-4 text-destructive" /> : <Bell className="h-4 w-4 text-warning-foreground" />}
+                  Vence nos próximos 7 dias
+                </CardTitle>
+                <Badge variant="secondary">{items.length}</Badge>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="divide-y divide-border/60">
+                  {items.slice(0, 6).map((i) => {
+                    const diff = differenceInCalendarDays(i.date, today);
+                    const when = diff === 0 ? "Hoje" : diff === 1 ? "Amanhã" : `Em ${diff} dias`;
+                    const tone = diff === 0 ? "text-destructive" : diff <= 2 ? "text-amber-600" : "text-muted-foreground";
+                    return (
+                      <li key={i.key} className="flex items-center gap-3 py-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{i.title}</p>
+                          <p className={cn("text-xs", tone)}>{when} · {format(i.date, "dd/MM")}</p>
+                        </div>
+                        <span className="text-sm font-semibold tabular-nums">{formatBRL(i.amount)}</span>
+                        <Button size="sm" variant="outline" className="h-8" onClick={i.onPay}>Paguei</Button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {items.length > 6 && (
+                  <p className="mt-2 text-xs text-muted-foreground">+ {items.length - 6} outros lembretes</p>
+                )}
+              </CardContent>
+            </Card>
+          </section>
+        );
+      })()}
+
       <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
         {/* Calendar */}
         <Card className="order-2 h-fit lg:order-1">
