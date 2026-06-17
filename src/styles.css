@@ -158,3 +158,11 @@
     scroll-behavior: auto !important;
   }
 }
+
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(30px, -20px) scale(1.08); }
+  66%      { transform: translate(-20px, 25px) scale(0.95); }
+}
+.animate-blob { animation: blob 14s ease-in-out infinite; }
+.animate-blob-delayed { animation: blob 16s ease-in-out -6s infinite; }
