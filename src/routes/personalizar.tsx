@@ -38,8 +38,8 @@ function PersonalizarPage() {
       toast.error("Selecione uma imagem.");
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Imagem muito grande (máx. 2MB).");
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx. 8MB).");
       return;
     }
     setUploading(true);
