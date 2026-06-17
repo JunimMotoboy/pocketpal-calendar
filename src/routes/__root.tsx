@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { AppHeader } from "@/components/app-header";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { useTheme } from "@/hooks/use-theme";
 import { usePersonalization } from "@/hooks/use-personalization";
 
@@ -113,9 +114,10 @@ function RootComponent() {
           Pular para o conteúdo
         </a>
         <AppHeader />
-        <div id="main-content">
+        <div id="main-content" className="pb-20 lg:pb-0">
           <Outlet />
         </div>
+        <MobileBottomNav />
         <Toaster richColors position="top-right" />
       </div>
     </QueryClientProvider>
