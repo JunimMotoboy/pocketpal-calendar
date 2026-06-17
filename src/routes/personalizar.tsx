@@ -15,6 +15,7 @@ import {
   type FontSize,
 } from "@/hooks/use-personalization";
 import { cn } from "@/lib/utils";
+import { compressAvatar, formatBytes } from "@/lib/image-compress";
 
 export const Route = createFileRoute("/personalizar")({
   head: () => ({ meta: [{ title: "Personalizar — Nix Wallet" }] }),
@@ -33,46 +34,29 @@ function PersonalizarPage() {
     .join("")
     .toUpperCase();
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("Selecione uma imagem.");
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error("Imagem muito grande (máx. 8MB).");
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx. 15MB).");
       return;
     }
     setUploading(true);
-    const reader = new FileReader();
-    reader.onload = () => {
-      // Downscale to ~512px square via canvas
-      const img = new Image();
-      img.onload = () => {
-        const size = 512;
-        const canvas = document.createElement("canvas");
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          update({ avatar: String(reader.result) });
-          setUploading(false);
-          return;
-        }
-        const ratio = Math.max(size / img.width, size / img.height);
-        const w = img.width * ratio;
-        const h = img.height * ratio;
-        ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
-        update({ avatar: canvas.toDataURL("image/jpeg", 0.85) });
-        setUploading(false);
-        toast.success("Foto atualizada!");
-      };
-      img.onerror = () => {
-        setUploading(false);
-        toast.error("Erro ao processar imagem.");
-      };
-      img.src = String(reader.result);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const original = file.size;
+      const result = await compressAvatar(file, { maxBytes: 120 * 1024, maxSize: 512 });
+      update({ avatar: result.dataUrl });
+      const saved = Math.max(0, Math.round((1 - result.bytes / original) * 100));
+      toast.success(
+        `Foto otimizada: ${formatBytes(original)} → ${formatBytes(result.bytes)} (-${saved}%)`
+      );
+    } catch {
+      toast.error("Erro ao processar imagem.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
