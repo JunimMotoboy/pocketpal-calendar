@@ -45,10 +45,10 @@ function PersonalizarPage() {
     setUploading(true);
     const reader = new FileReader();
     reader.onload = () => {
-      // Downscale to ~256px square via canvas
+      // Downscale to ~512px square via canvas
       const img = new Image();
       img.onload = () => {
-        const size = 256;
+        const size = 512;
         const canvas = document.createElement("canvas");
         canvas.width = size;
         canvas.height = size;
