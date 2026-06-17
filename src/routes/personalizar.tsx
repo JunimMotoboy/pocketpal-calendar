@@ -38,17 +38,17 @@ function PersonalizarPage() {
       toast.error("Selecione uma imagem.");
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Imagem muito grande (máx. 2MB).");
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx. 8MB).");
       return;
     }
     setUploading(true);
     const reader = new FileReader();
     reader.onload = () => {
-      // Downscale to ~256px square via canvas
+      // Downscale to ~512px square via canvas
       const img = new Image();
       img.onload = () => {
-        const size = 256;
+        const size = 512;
         const canvas = document.createElement("canvas");
         canvas.width = size;
         canvas.height = size;
