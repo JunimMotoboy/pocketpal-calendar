@@ -316,6 +316,8 @@ function AuthPage() {
                         invalid={emailInvalid}
                         autoComplete="email"
                         required
+                        shakeTick={shakeTick}
+                        error={fieldError === "li-email"}
                       />
                       <PasswordField
                         id="li-pass"
@@ -325,6 +327,8 @@ function AuthPage() {
                         show={showPw}
                         onToggle={() => setShowPw((s) => !s)}
                         autoComplete="current-password"
+                        shakeTick={shakeTick}
+                        error={fieldError === "li-pass"}
                       />
                       <SubmitButton busy={busy} label="Entrar" busyLabel="Entrando..." />
                     </form>
@@ -341,6 +345,8 @@ function AuthPage() {
                         valid={name.trim().length >= 2}
                         autoComplete="name"
                         required
+                        shakeTick={shakeTick}
+                        error={fieldError === "su-name"}
                       />
                       <FloatingField
                         id="su-email"
@@ -353,6 +359,8 @@ function AuthPage() {
                         invalid={emailInvalid}
                         autoComplete="email"
                         required
+                        shakeTick={shakeTick}
+                        error={fieldError === "su-email"}
                       />
                       <PasswordField
                         id="su-pass"
@@ -363,6 +371,8 @@ function AuthPage() {
                         onToggle={() => setShowPw((s) => !s)}
                         autoComplete="new-password"
                         minLength={8}
+                        shakeTick={shakeTick}
+                        error={fieldError === "su-pass"}
                       />
 
                       {password.length > 0 && (
