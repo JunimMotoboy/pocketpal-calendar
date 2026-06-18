@@ -441,6 +441,8 @@ function FloatingField({
   invalid,
   autoComplete,
   required,
+  shakeTick,
+  error,
 }: {
   id: string;
   label: string;
@@ -452,9 +454,20 @@ function FloatingField({
   invalid?: boolean;
   autoComplete?: string;
   required?: boolean;
+  shakeTick?: number;
+  error?: boolean;
 }) {
+  const [shaking, setShaking] = useState(false);
+  useEffect(() => {
+    if (error || (shakeTick && shakeTick > 0)) {
+      setShaking(false);
+      const t1 = setTimeout(() => setShaking(true), 10);
+      const t2 = setTimeout(() => setShaking(false), 500);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+  }, [shakeTick, error]);
   return (
-    <div className="space-y-1.5">
+    <div className={cn("space-y-1.5", shaking && "animate-shake")}>
       <Label htmlFor={id} className="text-xs font-medium text-muted-foreground">
         {label}
       </Label>
@@ -463,7 +476,8 @@ function FloatingField({
           "group relative flex items-center rounded-md border bg-background transition-all",
           "focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary",
           invalid && "border-destructive/60 focus-within:ring-destructive/30 focus-within:border-destructive",
-          valid && !invalid && "border-emerald-500/50"
+          error && "border-destructive animate-pulse-error",
+          valid && !invalid && !error && "border-emerald-500/50"
         )}
       >
         {Icon && (
