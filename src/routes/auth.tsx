@@ -515,6 +515,8 @@ function PasswordField({
   onToggle,
   autoComplete,
   minLength,
+  shakeTick,
+  error,
 }: {
   id: string;
   label: string;
@@ -524,13 +526,27 @@ function PasswordField({
   onToggle: () => void;
   autoComplete?: string;
   minLength?: number;
+  shakeTick?: number;
+  error?: boolean;
 }) {
+  const [shaking, setShaking] = useState(false);
+  useEffect(() => {
+    if (error || (shakeTick && shakeTick > 0)) {
+      setShaking(false);
+      const t1 = setTimeout(() => setShaking(true), 10);
+      const t2 = setTimeout(() => setShaking(false), 500);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+  }, [shakeTick, error]);
   return (
-    <div className="space-y-1.5">
+    <div className={cn("space-y-1.5", shaking && "animate-shake")}>
       <Label htmlFor={id} className="text-xs font-medium text-muted-foreground">
         {label}
       </Label>
-      <div className="group relative flex items-center rounded-md border bg-background transition-all focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary">
+      <div className={cn(
+        "group relative flex items-center rounded-md border bg-background transition-all focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary",
+        error && "border-destructive animate-pulse-error"
+      )}>
         <Lock className="ml-3 h-4 w-4 shrink-0 text-muted-foreground group-focus-within:text-primary transition-colors" />
         <Input
           id={id}
