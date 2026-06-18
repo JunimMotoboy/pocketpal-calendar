@@ -329,35 +329,101 @@ function AuthPage() {
                   </TabsList>
 
                   <TabsContent value="login" className="data-[state=active]:animate-fade-in">
-                    <form onSubmit={onLogin} className="mt-4 space-y-4">
-                      <FloatingField
-                        id="li-email"
-                        label="Email"
-                        type="email"
-                        icon={Mail}
-                        value={email}
-                        onChange={setEmail}
-                        valid={emailValid}
-                        invalid={emailInvalid}
-                        autoComplete="email"
-                        required
-                        shakeTick={shakeTick}
-                        error={fieldError === "li-email"}
-                      />
-                      <PasswordField
-                        id="li-pass"
-                        label="Senha"
-                        value={password}
-                        onChange={setPassword}
-                        show={showPw}
-                        onToggle={() => setShowPw((s) => !s)}
-                        autoComplete="current-password"
-                        shakeTick={shakeTick}
-                        error={fieldError === "li-pass"}
-                      />
-                      <SubmitButton busy={busy} label="Entrar" busyLabel="Entrando..." />
-                    </form>
+                    {forgotMode ? (
+                      forgotSent ? (
+                        <div className="mt-4 space-y-4 animate-fade-in">
+                          <div className="flex items-center justify-center py-4">
+                            <div className="relative">
+                              <div className="absolute inset-0 rounded-full opacity-40 blur-xl animate-pulse"
+                                style={{ backgroundImage: "var(--gradient-hero)" }} />
+                              <div className="relative flex h-14 w-14 items-center justify-center rounded-full text-primary-foreground"
+                                style={{ backgroundImage: "var(--gradient-hero)" }}>
+                                <Mail className="h-6 w-6" />
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-center text-sm text-muted-foreground">
+                            Enviamos um link de redefinição para <strong>{forgotEmail}</strong>.
+                            Verifique sua caixa de entrada e o spam.
+                          </p>
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => { setForgotMode(false); setForgotSent(false); setForgotEmail(""); }}
+                          >
+                            Voltar para o login
+                          </Button>
+                        </div>
+                      ) : (
+                        <form onSubmit={onForgot} className="mt-4 space-y-4 animate-fade-in">
+                          <p className="text-sm text-muted-foreground">
+                            Informe seu email e enviaremos um link para redefinir sua senha.
+                          </p>
+                          <FloatingField
+                            id="fg-email"
+                            label="Email"
+                            type="email"
+                            icon={Mail}
+                            value={forgotEmail}
+                            onChange={setForgotEmail}
+                            valid={forgotEmail.length > 0 && emailRegex.test(forgotEmail.trim())}
+                            invalid={forgotEmail.length > 3 && !emailRegex.test(forgotEmail.trim())}
+                            autoComplete="email"
+                            required
+                            shakeTick={shakeTick}
+                            error={fieldError === "fg-email"}
+                          />
+                          <SubmitButton busy={busy} label="Enviar link" busyLabel="Enviando..." />
+                          <button
+                            type="button"
+                            onClick={() => setForgotMode(false)}
+                            className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            Voltar para o login
+                          </button>
+                        </form>
+                      )
+                    ) : (
+                      <form onSubmit={onLogin} className="mt-4 space-y-4">
+                        <FloatingField
+                          id="li-email"
+                          label="Email"
+                          type="email"
+                          icon={Mail}
+                          value={email}
+                          onChange={setEmail}
+                          valid={emailValid}
+                          invalid={emailInvalid}
+                          autoComplete="email"
+                          required
+                          shakeTick={shakeTick}
+                          error={fieldError === "li-email"}
+                        />
+                        <PasswordField
+                          id="li-pass"
+                          label="Senha"
+                          value={password}
+                          onChange={setPassword}
+                          show={showPw}
+                          onToggle={() => setShowPw((s) => !s)}
+                          autoComplete="current-password"
+                          shakeTick={shakeTick}
+                          error={fieldError === "li-pass"}
+                        />
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setForgotMode(true)}
+                            className="text-xs font-medium text-primary hover:underline transition-colors"
+                          >
+                            Esqueci minha senha
+                          </button>
+                        </div>
+                        <SubmitButton busy={busy} label="Entrar" busyLabel="Entrando..." />
+                      </form>
+                    )}
                   </TabsContent>
+
 
                   <TabsContent value="signup" className="data-[state=active]:animate-fade-in">
                     <form onSubmit={onSignup} className="mt-4 space-y-4">
