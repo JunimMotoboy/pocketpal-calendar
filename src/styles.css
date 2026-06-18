@@ -166,3 +166,18 @@
 }
 .animate-blob { animation: blob 14s ease-in-out infinite; }
 .animate-blob-delayed { animation: blob 16s ease-in-out -6s infinite; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+.animate-shake { animation: shake 0.4s ease-in-out; }
+
+@keyframes pulse-error {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.6 0.22 27 / 0.4); }
+  50% { box-shadow: 0 0 0 4px oklch(0.6 0.22 27 / 0); }
+}
+.animate-pulse-error { animation: pulse-error 1.2s ease-in-out infinite; }
