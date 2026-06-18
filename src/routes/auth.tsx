@@ -422,6 +422,25 @@ function AuthPage() {
               </CardContent>
             </>
           )}
+          {busy && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-background/60 backdrop-blur-sm animate-fade-in">
+              <div className="relative">
+                <div
+                  className="absolute inset-0 rounded-full opacity-40 blur-xl animate-pulse"
+                  style={{ backgroundImage: "var(--gradient-hero)" }}
+                />
+                <div
+                  className="relative flex h-14 w-14 items-center justify-center rounded-full text-primary-foreground"
+                  style={{ backgroundImage: "var(--gradient-hero)" }}
+                >
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              </div>
+              <p className="text-sm font-medium text-muted-foreground animate-fade-in">
+                {tab === "login" ? "Entrando..." : "Criando conta..."}
+              </p>
+            </div>
+          )}
         </Card>
       </div>
     </div>
