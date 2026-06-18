@@ -86,6 +86,27 @@ function AuthPage() {
     else toast.success("Email de verificação reenviado. Confira sua caixa de entrada.");
   };
 
+  const onForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const value = forgotEmail.trim();
+    if (!emailRegex.test(value)) {
+      triggerShake("fg-email");
+      toast.error("Informe um email válido.");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(value, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(translateAuthError(error.message));
+      return;
+    }
+    setForgotSent(true);
+    toast.success("Email de redefinição enviado!");
+  };
+
   useEffect(() => {
     if (!loading && user) {
       if (pendingEmail) toast.success("Email confirmado! Redirecionando...");
