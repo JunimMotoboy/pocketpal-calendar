@@ -55,6 +55,10 @@ function AuthPage() {
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [shakeTick, setShakeTick] = useState(0);
   const [fieldError, setFieldError] = useState<string | null>(null);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
+
 
   const emailValid = email.length > 0 && emailRegex.test(email.trim());
   const emailInvalid = email.length > 3 && !emailValid;

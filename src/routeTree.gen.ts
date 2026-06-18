@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as PersonalizarRouteImport } from './routes/personalizar'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
@@ -24,6 +25,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicSendFixedExpenseRemindersRouteImport } from './routes/api/public/send-fixed-expense-reminders'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/orcamentos': typeof OrcamentosRoute
   '/personalizar': typeof PersonalizarRoute
   '/relatorios': typeof RelatoriosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/orcamentos': typeof OrcamentosRoute
   '/personalizar': typeof PersonalizarRoute
   '/relatorios': typeof RelatoriosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/orcamentos': typeof OrcamentosRoute
   '/personalizar': typeof PersonalizarRoute
   '/relatorios': typeof RelatoriosRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/orcamentos'
     | '/personalizar'
     | '/relatorios'
+    | '/reset-password'
     | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/orcamentos'
     | '/personalizar'
     | '/relatorios'
+    | '/reset-password'
     | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
   id:
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/orcamentos'
     | '/personalizar'
     | '/relatorios'
+    | '/reset-password'
     | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
@@ -210,12 +222,20 @@ export interface RootRouteChildren {
   OrcamentosRoute: typeof OrcamentosRoute
   PersonalizarRoute: typeof PersonalizarRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicSendFixedExpenseRemindersRoute: typeof ApiPublicSendFixedExpenseRemindersRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/relatorios': {
       id: '/relatorios'
       path: '/relatorios'
@@ -330,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrcamentosRoute: OrcamentosRoute,
   PersonalizarRoute: PersonalizarRoute,
   RelatoriosRoute: RelatoriosRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicSendFixedExpenseRemindersRoute:
     ApiPublicSendFixedExpenseRemindersRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
