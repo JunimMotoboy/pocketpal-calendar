@@ -53,10 +53,20 @@ function AuthPage() {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
   const [tab, setTab] = useState<"login" | "signup">("login");
+  const [shakeTick, setShakeTick] = useState(0);
+  const [fieldError, setFieldError] = useState<string | null>(null);
 
   const emailValid = email.length > 0 && emailRegex.test(email.trim());
   const emailInvalid = email.length > 3 && !emailValid;
   const strength = useMemo(() => passwordStrength(password), [password]);
+
+  const triggerShake = (field?: string) => {
+    setShakeTick((t) => t + 1);
+    if (field) {
+      setFieldError(field);
+      setTimeout(() => setFieldError((f) => (f === field ? null : f)), 600);
+    }
+  };
 
   const handleResend = async () => {
     if (!pendingEmail) return;
@@ -113,28 +123,41 @@ function AuthPage() {
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailValid) {
+      triggerShake("li-email");
       toast.error("Por favor, informe um email válido.");
+      return;
+    }
+    if (!password) {
+      triggerShake("li-pass");
+      toast.error("Por favor, informe sua senha.");
       return;
     }
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setBusy(false);
-    if (error) toast.error(translateAuthError(error.message));
-    else nav({ to: "/" });
+    if (error) {
+      triggerShake("login");
+      toast.error(translateAuthError(error.message));
+    } else {
+      nav({ to: "/" });
+    }
   };
 
   const onSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
+      triggerShake("su-name");
       toast.error("Por favor, informe seu nome.");
       return;
     }
     if (!emailValid) {
+      triggerShake("su-email");
       toast.error("Por favor, informe um email válido.");
       return;
     }
     const pwError = validatePassword(password);
     if (pwError) {
+      triggerShake("su-pass");
       toast.error(pwError);
       return;
     }
@@ -146,8 +169,10 @@ function AuthPage() {
       options: { emailRedirectTo: redirectUrl, data: { display_name: name.trim() } },
     });
     setBusy(false);
-    if (error) toast.error(translateAuthError(error.message));
-    else {
+    if (error) {
+      triggerShake("signup");
+      toast.error(translateAuthError(error.message));
+    } else {
       setPendingEmail(email.trim());
       toast.success("Conta criada! Verifique seu email para confirmar.");
     }
