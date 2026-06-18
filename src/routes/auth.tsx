@@ -53,10 +53,20 @@ function AuthPage() {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
   const [tab, setTab] = useState<"login" | "signup">("login");
+  const [shakeTick, setShakeTick] = useState(0);
+  const [fieldError, setFieldError] = useState<string | null>(null);
 
   const emailValid = email.length > 0 && emailRegex.test(email.trim());
   const emailInvalid = email.length > 3 && !emailValid;
   const strength = useMemo(() => passwordStrength(password), [password]);
+
+  const triggerShake = (field?: string) => {
+    setShakeTick((t) => t + 1);
+    if (field) {
+      setFieldError(field);
+      setTimeout(() => setFieldError((f) => (f === field ? null : f)), 600);
+    }
+  };
 
   const handleResend = async () => {
     if (!pendingEmail) return;
@@ -113,28 +123,41 @@ function AuthPage() {
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailValid) {
+      triggerShake("li-email");
       toast.error("Por favor, informe um email válido.");
+      return;
+    }
+    if (!password) {
+      triggerShake("li-pass");
+      toast.error("Por favor, informe sua senha.");
       return;
     }
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setBusy(false);
-    if (error) toast.error(translateAuthError(error.message));
-    else nav({ to: "/" });
+    if (error) {
+      triggerShake("login");
+      toast.error(translateAuthError(error.message));
+    } else {
+      nav({ to: "/" });
+    }
   };
 
   const onSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
+      triggerShake("su-name");
       toast.error("Por favor, informe seu nome.");
       return;
     }
     if (!emailValid) {
+      triggerShake("su-email");
       toast.error("Por favor, informe um email válido.");
       return;
     }
     const pwError = validatePassword(password);
     if (pwError) {
+      triggerShake("su-pass");
       toast.error(pwError);
       return;
     }
@@ -146,8 +169,10 @@ function AuthPage() {
       options: { emailRedirectTo: redirectUrl, data: { display_name: name.trim() } },
     });
     setBusy(false);
-    if (error) toast.error(translateAuthError(error.message));
-    else {
+    if (error) {
+      triggerShake("signup");
+      toast.error(translateAuthError(error.message));
+    } else {
       setPendingEmail(email.trim());
       toast.success("Conta criada! Verifique seu email para confirmar.");
     }
@@ -291,6 +316,8 @@ function AuthPage() {
                         invalid={emailInvalid}
                         autoComplete="email"
                         required
+                        shakeTick={shakeTick}
+                        error={fieldError === "li-email"}
                       />
                       <PasswordField
                         id="li-pass"
@@ -300,6 +327,8 @@ function AuthPage() {
                         show={showPw}
                         onToggle={() => setShowPw((s) => !s)}
                         autoComplete="current-password"
+                        shakeTick={shakeTick}
+                        error={fieldError === "li-pass"}
                       />
                       <SubmitButton busy={busy} label="Entrar" busyLabel="Entrando..." />
                     </form>
@@ -316,6 +345,8 @@ function AuthPage() {
                         valid={name.trim().length >= 2}
                         autoComplete="name"
                         required
+                        shakeTick={shakeTick}
+                        error={fieldError === "su-name"}
                       />
                       <FloatingField
                         id="su-email"
@@ -328,6 +359,8 @@ function AuthPage() {
                         invalid={emailInvalid}
                         autoComplete="email"
                         required
+                        shakeTick={shakeTick}
+                        error={fieldError === "su-email"}
                       />
                       <PasswordField
                         id="su-pass"
@@ -338,6 +371,8 @@ function AuthPage() {
                         onToggle={() => setShowPw((s) => !s)}
                         autoComplete="new-password"
                         minLength={8}
+                        shakeTick={shakeTick}
+                        error={fieldError === "su-pass"}
                       />
 
                       {password.length > 0 && (
@@ -387,6 +422,25 @@ function AuthPage() {
               </CardContent>
             </>
           )}
+          {busy && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-background/60 backdrop-blur-sm animate-fade-in">
+              <div className="relative">
+                <div
+                  className="absolute inset-0 rounded-full opacity-40 blur-xl animate-pulse"
+                  style={{ backgroundImage: "var(--gradient-hero)" }}
+                />
+                <div
+                  className="relative flex h-14 w-14 items-center justify-center rounded-full text-primary-foreground"
+                  style={{ backgroundImage: "var(--gradient-hero)" }}
+                >
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              </div>
+              <p className="text-sm font-medium text-muted-foreground animate-fade-in">
+                {tab === "login" ? "Entrando..." : "Criando conta..."}
+              </p>
+            </div>
+          )}
         </Card>
       </div>
     </div>
@@ -406,6 +460,8 @@ function FloatingField({
   invalid,
   autoComplete,
   required,
+  shakeTick,
+  error,
 }: {
   id: string;
   label: string;
@@ -417,9 +473,20 @@ function FloatingField({
   invalid?: boolean;
   autoComplete?: string;
   required?: boolean;
+  shakeTick?: number;
+  error?: boolean;
 }) {
+  const [shaking, setShaking] = useState(false);
+  useEffect(() => {
+    if (error || (shakeTick && shakeTick > 0)) {
+      setShaking(false);
+      const t1 = setTimeout(() => setShaking(true), 10);
+      const t2 = setTimeout(() => setShaking(false), 500);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+  }, [shakeTick, error]);
   return (
-    <div className="space-y-1.5">
+    <div className={cn("space-y-1.5", shaking && "animate-shake")}>
       <Label htmlFor={id} className="text-xs font-medium text-muted-foreground">
         {label}
       </Label>
@@ -428,7 +495,8 @@ function FloatingField({
           "group relative flex items-center rounded-md border bg-background transition-all",
           "focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary",
           invalid && "border-destructive/60 focus-within:ring-destructive/30 focus-within:border-destructive",
-          valid && !invalid && "border-emerald-500/50"
+          error && "border-destructive animate-pulse-error",
+          valid && !invalid && !error && "border-emerald-500/50"
         )}
       >
         {Icon && (
@@ -466,6 +534,8 @@ function PasswordField({
   onToggle,
   autoComplete,
   minLength,
+  shakeTick,
+  error,
 }: {
   id: string;
   label: string;
@@ -475,13 +545,27 @@ function PasswordField({
   onToggle: () => void;
   autoComplete?: string;
   minLength?: number;
+  shakeTick?: number;
+  error?: boolean;
 }) {
+  const [shaking, setShaking] = useState(false);
+  useEffect(() => {
+    if (error || (shakeTick && shakeTick > 0)) {
+      setShaking(false);
+      const t1 = setTimeout(() => setShaking(true), 10);
+      const t2 = setTimeout(() => setShaking(false), 500);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+  }, [shakeTick, error]);
   return (
-    <div className="space-y-1.5">
+    <div className={cn("space-y-1.5", shaking && "animate-shake")}>
       <Label htmlFor={id} className="text-xs font-medium text-muted-foreground">
         {label}
       </Label>
-      <div className="group relative flex items-center rounded-md border bg-background transition-all focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary">
+      <div className={cn(
+        "group relative flex items-center rounded-md border bg-background transition-all focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary",
+        error && "border-destructive animate-pulse-error"
+      )}>
         <Lock className="ml-3 h-4 w-4 shrink-0 text-muted-foreground group-focus-within:text-primary transition-colors" />
         <Input
           id={id}
