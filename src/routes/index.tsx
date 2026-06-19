@@ -533,8 +533,31 @@ function Dashboard() {
               locale={ptBR}
               className={cn("p-0 pointer-events-auto w-full [--cell-size:2.75rem] sm:[--cell-size:2.4rem]")}
               classNames={{ root: "w-full", months: "w-full", month: "w-full" }}
+              components={{
+                DayButton: (dprops) => {
+                  const key = format(dprops.day.date, "yyyy-MM-dd");
+                  const cats = dayCategories.get(key);
+                  const total = dayTotals.get(key);
+                  return (
+                    <CalendarDayButton {...dprops} aria-label={total ? `${format(dprops.day.date, "dd/MM")} — ${formatBRL(total)}` : undefined}>
+                      {dprops.children}
+                      {cats && cats.length > 0 && (
+                        <span className="pointer-events-none flex gap-[2px]">
+                          {cats.slice(0, 4).map((c) => (
+                            <span
+                              key={c}
+                              className="h-1 w-1 rounded-full"
+                              style={{ backgroundColor: CAT_MAP[c].color }}
+                              title={CAT_MAP[c].label}
+                            />
+                          ))}
+                        </span>
+                      )}
+                    </CalendarDayButton>
+                  );
+                },
+              }}
               modifiers={{
-                hasExpense: (d) => dayTotals.has(format(d, "yyyy-MM-dd")),
                 hasFixedPaid: (d) => paidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasFixedUnpaid: (d) => unpaidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasCardDue: (d) => cardDueDaysSet.has(format(d, "yyyy-MM-dd")),
@@ -542,7 +565,6 @@ function Dashboard() {
                 hasGoal: (d) => goalContribDaysSet.has(format(d, "yyyy-MM-dd")),
               }}
               modifiersClassNames={{
-                hasExpense: "relative font-semibold text-primary after:absolute after:bottom-1 after:left-1/2 after:h-1 after:w-1 after:-translate-x-1/2 after:rounded-full after:bg-accent",
                 hasFixedUnpaid: "relative font-semibold text-destructive before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-destructive",
                 hasFixedPaid: "relative font-semibold text-success before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-success",
                 hasCardDue: "relative font-semibold text-warning-foreground bg-warning/30 rounded-md",
