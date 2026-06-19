@@ -5,7 +5,7 @@ import { ptBR } from "date-fns/locale";
 import { Trash2, Pencil, CalendarClock, ChevronLeft, ChevronRight, Trophy, TrendingUp, TrendingDown, Wallet, Gauge, Bell, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
