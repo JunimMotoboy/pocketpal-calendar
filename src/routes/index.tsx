@@ -280,6 +280,16 @@ function Dashboard() {
     return m;
   }, [expenses]);
 
+  const dayCategories = useMemo(() => {
+    const m = new Map<string, Category[]>();
+    for (const e of expenses) {
+      const arr = m.get(e.spent_on) ?? [];
+      if (!arr.includes(e.category)) arr.push(e.category);
+      m.set(e.spent_on, arr);
+    }
+    return m;
+  }, [expenses]);
+
   // For each day with fixed dues, decide if ALL are paid (green) or any unpaid (red)
   const paidFixedDaysSet = useMemo(() => {
     const byDay = new Map<string, FixedDue[]>();
