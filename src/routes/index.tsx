@@ -575,7 +575,12 @@ function Dashboard() {
             <details className="mt-3 group" >
               <summary className="cursor-pointer list-none text-[11px] text-muted-foreground sm:hidden">+ Mostrar legenda</summary>
               <div className="mt-2 hidden flex-wrap gap-3 text-[11px] text-muted-foreground group-open:flex sm:flex">
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent" />Gasto</span>
+                {(["comida","contas","diversao","transporte","saude","educacao","compras","moradia","outros"] as Category[]).map((c) => (
+                  <span key={c} className="flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: CAT_MAP[c].color }} />
+                    {CAT_MAP[c].label}
+                  </span>
+                ))}
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-destructive" />Conta a pagar</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-success" />Conta paga</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-warning/60" />Fatura cartão</span>
