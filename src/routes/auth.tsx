@@ -219,8 +219,12 @@ function AuthPage() {
         <div className="space-y-4 text-center md:text-left animate-fade-in">
           <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
             Seu dinheiro,{" "}
-            <span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-hero)" }}>
-              sob controle
+            <span
+              className="bg-clip-text text-transparent inline-block min-w-[8ch]"
+              style={{ backgroundImage: "var(--gradient-hero)" }}
+            >
+              <TypewriterCycle words={["sob controle", "sem stress", "com clareza", "no azul"]} />
+              <span className="ml-0.5 inline-block w-[2px] h-[0.9em] align-[-0.1em] bg-primary animate-caret" aria-hidden />
             </span>
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -604,4 +608,32 @@ function SubmitButton({ busy, label, busyLabel }: { busy: boolean; label: string
       />
     </Button>
   );
+}
+
+function TypewriterCycle({ words, typeMs = 90, deleteMs = 50, holdMs = 1400 }: { words: string[]; typeMs?: number; deleteMs?: number; holdMs?: number }) {
+  const [index, setIndex] = useState(0);
+  const [text, setText] = useState("");
+  const [phase, setPhase] = useState<"typing" | "holding" | "deleting">("typing");
+
+  useEffect(() => {
+    const word = words[index % words.length];
+    let t: ReturnType<typeof setTimeout>;
+    if (phase === "typing") {
+      if (text.length < word.length) {
+        t = setTimeout(() => setText(word.slice(0, text.length + 1)), typeMs);
+      } else {
+        t = setTimeout(() => setPhase("deleting"), holdMs);
+      }
+    } else if (phase === "deleting") {
+      if (text.length > 0) {
+        t = setTimeout(() => setText(word.slice(0, text.length - 1)), deleteMs);
+      } else {
+        setIndex((i) => i + 1);
+        setPhase("typing");
+      }
+    }
+    return () => clearTimeout(t!);
+  }, [text, phase, index, words, typeMs, deleteMs, holdMs]);
+
+  return <span aria-live="polite">{text}</span>;
 }
