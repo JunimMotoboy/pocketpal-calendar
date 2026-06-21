@@ -268,6 +268,7 @@ export function AddExpenseDialog(props: {
   userId: string;
   defaultDate?: Date;
   onAdded: () => void;
+  trigger?: React.ReactNode;
 }) {
   return <ExpenseDialog {...props} onSaved={props.onAdded} />;
 }

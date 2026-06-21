@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { format, startOfMonth, endOfMonth, isSameDay, parseISO, getDaysInMonth, differenceInCalendarDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Trash2, Pencil, CalendarClock, ChevronLeft, ChevronRight, Trophy, TrendingUp, TrendingDown, Wallet, Gauge, Bell, AlertTriangle } from "lucide-react";
+import { Trash2, Pencil, CalendarClock, ChevronLeft, ChevronRight, Trophy, TrendingUp, TrendingDown, Wallet, Gauge, Bell, AlertTriangle, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
@@ -764,6 +764,16 @@ function Dashboard() {
           </DialogHeader>
 
           <div className="space-y-4">
+            <AddExpenseDialog
+              userId={user.id}
+              defaultDate={selected}
+              onAdded={() => { load(); }}
+              trigger={
+                <Button variant="outline" className="w-full gap-2">
+                  <Plus className="h-4 w-4" /> Novo gasto neste dia
+                </Button>
+              }
+            />
             {cardsDueOnSelected.length > 0 && (
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Vencimentos de cartão</p>
