@@ -846,6 +846,19 @@ function Dashboard() {
                           <p className="text-xs text-muted-foreground">{cat.label}{e.payment_method ? ` · ${PAY_MAP[e.payment_method as keyof typeof PAY_MAP]?.label ?? e.payment_method}` : ""}</p>
                         </div>
                         <p className="text-sm font-semibold tabular-nums">{formatBRL(Number(e.amount))}</p>
+                        <ExpenseDialog
+                          userId={user.id}
+                          expense={e}
+                          onSaved={load}
+                          trigger={
+                            <Button variant="ghost" size="icon" aria-label="Editar gasto">
+                              <Pencil className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          }
+                        />
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(e.id)} aria-label="Remover gasto">
+                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
                       </li>
                     );
                   })}
