@@ -764,6 +764,16 @@ function Dashboard() {
           </DialogHeader>
 
           <div className="space-y-4">
+            <AddExpenseDialog
+              userId={user.id}
+              defaultDate={selected}
+              onAdded={() => { load(); }}
+              trigger={
+                <Button variant="outline" className="w-full gap-2">
+                  <Plus className="h-4 w-4" /> Novo gasto neste dia
+                </Button>
+              }
+            />
             {cardsDueOnSelected.length > 0 && (
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Vencimentos de cartão</p>
