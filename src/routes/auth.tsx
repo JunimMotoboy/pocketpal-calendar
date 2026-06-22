@@ -217,7 +217,7 @@ function AuthPage() {
 
       <div className="relative grid w-full max-w-5xl gap-8 md:grid-cols-2 md:items-center">
         <div className="space-y-4 text-center md:text-left animate-fade-in">
-          <div className="text-sm font-bold tracking-widest uppercase text-primary">
+          <div className="text-5xl font-extrabold tracking-widest uppercase text-primary">
             NIX WALLET
           </div>
           <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
