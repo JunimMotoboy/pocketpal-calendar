@@ -38,9 +38,26 @@ export function MobileBottomNav() {
   const { user } = useAuth();
   const loc = useLocation();
   const [open, setOpen] = useState(false);
+  const { counts } = useNavCounts();
   if (!user) return null;
 
   const moreActive = MORE.some((m) => m.to === loc.pathname);
+
+  const badgeMap: Record<string, { value: number; tone: "default" | "warn" | "danger" }> = {
+    "/despesas-fixas": { value: counts.fixedDueSoon, tone: "warn" },
+    "/metas": { value: counts.goalsActive, tone: "default" },
+    "/orcamentos": { value: counts.budgetsExceeded, tone: "danger" },
+  };
+  const moreBadgeTotal = Object.values(badgeMap).reduce((s, b) => s + b.value, 0);
+
+  const toneDot = (tone: "default" | "warn" | "danger") =>
+    tone === "danger" ? "bg-destructive" : tone === "warn" ? "bg-amber-500" : "bg-primary";
+  const tonePill = (tone: "default" | "warn" | "danger") =>
+    tone === "danger"
+      ? "bg-destructive text-destructive-foreground"
+      : tone === "warn"
+      ? "bg-amber-500 text-white"
+      : "bg-primary text-primary-foreground";
 
   return (
     <nav
@@ -51,6 +68,7 @@ export function MobileBottomNav() {
         {PRIMARY.map((t) => {
           const active = loc.pathname === t.to;
           const Icon = t.icon;
+          const badge = badgeMap[t.to];
           return (
             <li key={t.to}>
               <Link
@@ -58,19 +76,32 @@ export function MobileBottomNav() {
                 preload="intent"
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  "relative flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
+                  active ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <span
                   className={cn(
-                    "flex h-8 w-12 items-center justify-center rounded-full transition-colors",
-                    active && "bg-primary/15"
+                    "relative flex h-8 w-12 items-center justify-center rounded-full transition-all",
+                    active && "bg-primary/15 scale-105"
                   )}
                 >
                   <Icon className="h-5 w-5" />
+                  {badge && badge.value > 0 && (
+                    <span
+                      className={cn(
+                        "absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold tabular-nums ring-2 ring-background",
+                        tonePill(badge.tone)
+                      )}
+                    >
+                      {badge.value > 9 ? "9+" : badge.value}
+                    </span>
+                  )}
                 </span>
                 <span>{t.label}</span>
+                {active && (
+                  <span className="absolute top-0 h-0.5 w-8 rounded-full bg-primary" />
+                )}
               </Link>
             </li>
           );
@@ -82,19 +113,27 @@ export function MobileBottomNav() {
                 type="button"
                 aria-label="Mais opções"
                 className={cn(
-                  "flex w-full flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
-                  moreActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  "relative flex w-full flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
+                  moreActive ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <span
                   className={cn(
-                    "flex h-8 w-12 items-center justify-center rounded-full transition-colors",
-                    moreActive && "bg-primary/15"
+                    "relative flex h-8 w-12 items-center justify-center rounded-full transition-all",
+                    moreActive && "bg-primary/15 scale-105"
                   )}
                 >
                   <LayoutGrid className="h-5 w-5" />
+                  {moreBadgeTotal > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground tabular-nums ring-2 ring-background">
+                      {moreBadgeTotal > 9 ? "9+" : moreBadgeTotal}
+                    </span>
+                  )}
                 </span>
                 <span>Mais</span>
+                {moreActive && (
+                  <span className="absolute top-0 h-0.5 w-8 rounded-full bg-primary" />
+                )}
               </button>
             </SheetTrigger>
             <SheetContent side="bottom" className="rounded-t-2xl pb-[calc(env(safe-area-inset-bottom)+1rem)]">
@@ -105,6 +144,7 @@ export function MobileBottomNav() {
                 {MORE.map((m) => {
                   const Icon = m.icon;
                   const active = loc.pathname === m.to;
+                  const badge = badgeMap[m.to];
                   return (
                     <Link
                       key={m.to}
@@ -112,21 +152,39 @@ export function MobileBottomNav() {
                       preload="intent"
                       onClick={() => setOpen(false)}
                       className={cn(
-                        "flex flex-col items-center justify-center gap-2 rounded-xl border border-border/60 p-3 text-center text-xs font-medium transition-colors",
+                        "relative flex flex-col items-center justify-center gap-2 rounded-xl border p-3 text-center text-xs font-medium transition-colors",
                         active
-                          ? "border-primary/40 bg-primary/10 text-primary"
-                          : "bg-card hover:bg-muted"
+                          ? "border-primary/50 bg-primary/10 text-primary shadow-sm"
+                          : "border-border/60 bg-card hover:bg-muted"
                       )}
                     >
                       <span
                         className={cn(
-                          "flex h-10 w-10 items-center justify-center rounded-xl",
+                          "relative flex h-10 w-10 items-center justify-center rounded-xl",
                           active ? "bg-primary/20 text-primary" : "bg-muted text-foreground/80"
                         )}
                       >
                         <Icon className="h-5 w-5" />
+                        {badge && badge.value > 0 && (
+                          <span
+                            className={cn(
+                              "absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full ring-2 ring-background",
+                              toneDot(badge.tone)
+                            )}
+                          />
+                        )}
                       </span>
                       <span className="leading-tight">{m.label}</span>
+                      {badge && badge.value > 0 && (
+                        <span
+                          className={cn(
+                            "absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[9px] font-bold tabular-nums",
+                            tonePill(badge.tone)
+                          )}
+                        >
+                          {badge.value > 99 ? "99+" : badge.value}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}
@@ -138,3 +196,4 @@ export function MobileBottomNav() {
     </nav>
   );
 }
+
