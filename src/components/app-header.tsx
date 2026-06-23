@@ -29,6 +29,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
+import { useNavCounts } from "@/hooks/use-nav-counts";
 import { cn } from "@/lib/utils";
 
 const FAVORITOS = [
