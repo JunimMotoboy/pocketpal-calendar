@@ -66,6 +66,13 @@ export function AppSidebar() {
   const loc = useLocation();
   const nav = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+  const { counts } = useNavCounts();
+
+  const badgeMap: Record<string, { value: number; tone: "default" | "warn" | "danger"; title: string }> = {
+    "/despesas-fixas": { value: counts.fixedDueSoon, tone: "warn", title: "Vencem em até 7 dias" },
+    "/metas": { value: counts.goalsActive, tone: "default", title: "Metas em andamento" },
+    "/orcamentos": { value: counts.budgetsExceeded, tone: "danger", title: "Orçamentos estourados" },
+  };
 
   useEffect(() => {
     if (!user) { setIsAdmin(false); return; }
@@ -87,6 +94,8 @@ export function AppSidebar() {
     items.map((it) => {
       const Icon = it.icon;
       const active = isActive(it.to);
+      const badge = badgeMap[it.to];
+      const showBadge = badge && badge.value > 0;
       return (
         <SidebarMenuItem key={it.to}>
           <SidebarMenuButton asChild isActive={active} tooltip={it.label}>
@@ -94,17 +103,44 @@ export function AppSidebar() {
               to={it.to}
               preload="intent"
               className={cn(
-                "flex items-center gap-2",
-                active && "bg-primary/10 text-primary font-medium"
+                "relative flex items-center gap-2 transition-colors",
+                active && "bg-primary/10 text-primary font-semibold",
+                active &&
+                  "before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:content-['']"
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span>{it.label}</span>
+              <Icon className={cn("h-4 w-4 shrink-0", active && "text-primary")} />
+              <span className="flex-1 truncate">{it.label}</span>
+              {showBadge && !collapsed && (
+                <Badge
+                  variant="secondary"
+                  title={badge.title}
+                  className={cn(
+                    "ml-auto h-5 min-w-5 justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums",
+                    badge.tone === "danger" && "bg-destructive/15 text-destructive",
+                    badge.tone === "warn" && "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+                    badge.tone === "default" && "bg-primary/15 text-primary"
+                  )}
+                >
+                  {badge.value > 99 ? "99+" : badge.value}
+                </Badge>
+              )}
+              {showBadge && collapsed && (
+                <span
+                  className={cn(
+                    "absolute right-1 top-1 h-2 w-2 rounded-full ring-2 ring-sidebar",
+                    badge.tone === "danger" && "bg-destructive",
+                    badge.tone === "warn" && "bg-amber-500",
+                    badge.tone === "default" && "bg-primary"
+                  )}
+                />
+              )}
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
       );
     });
+
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
