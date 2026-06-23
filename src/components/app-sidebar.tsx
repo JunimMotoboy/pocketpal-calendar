@@ -37,7 +37,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
 import { usePersonalization } from "@/hooks/use-personalization";
+import { useNavCounts } from "@/hooks/use-nav-counts";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+
 
 const FAVORITOS = [
   { to: "/", label: "Painel", icon: CalIcon },
