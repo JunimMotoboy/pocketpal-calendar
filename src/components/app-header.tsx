@@ -63,6 +63,13 @@ export function AppHeader() {
   const [open, setOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [query, setQuery] = useState("");
+  const { counts } = useNavCounts();
+
+  const badgeMap: Record<string, { value: number; tone: "default" | "warn" | "danger" }> = {
+    "/despesas-fixas": { value: counts.fixedDueSoon, tone: "warn" },
+    "/metas": { value: counts.goalsActive, tone: "default" },
+    "/orcamentos": { value: counts.budgetsExceeded, tone: "danger" },
+  };
 
   const initials = (pers.displayName || user?.email || "U")
     .split(/[\s@]/)
