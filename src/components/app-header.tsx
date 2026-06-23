@@ -221,6 +221,8 @@ export function AppHeader() {
                           {sec.items.map((it) => {
                             const active = loc.pathname === it.to;
                             const Icon = it.icon;
+                            const badge = badgeMap[it.to];
+                            const showBadge = badge && badge.value > 0;
                             return (
                               <Link
                                 key={it.to}
@@ -228,16 +230,30 @@ export function AppHeader() {
                                 onClick={() => setOpen(false)}
                                 preload="intent"
                                 className={cn(
-                                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                                  "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                                   active
-                                    ? "bg-primary/10 text-primary"
+                                    ? "bg-primary/10 text-primary font-semibold pl-4 before:absolute before:left-0 before:top-1/2 before:h-6 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-primary before:content-['']"
                                     : "text-foreground/80 hover:bg-muted hover:text-foreground"
                                 )}
                               >
                                 <Icon className="h-4 w-4 shrink-0" />
-                                <span className="truncate">{it.label}</span>
+                                <span className="flex-1 truncate">{it.label}</span>
+                                {showBadge && (
+                                  <Badge
+                                    variant="secondary"
+                                    className={cn(
+                                      "h-5 min-w-5 justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums",
+                                      badge.tone === "danger" && "bg-destructive/15 text-destructive",
+                                      badge.tone === "warn" && "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+                                      badge.tone === "default" && "bg-primary/15 text-primary"
+                                    )}
+                                  >
+                                    {badge.value > 99 ? "99+" : badge.value}
+                                  </Badge>
+                                )}
                               </Link>
                             );
+
                           })}
                         </div>
                       </div>
