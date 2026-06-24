@@ -336,63 +336,78 @@ function CardsPage() {
   if (loading || !user) return <div className="flex h-[60vh] items-center justify-center text-muted-foreground">Carregando...</div>;
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
+    <main className="mx-auto max-w-4xl px-4 py-6 sm:py-8">
+      {/* Hero header */}
       <section
-        className="mb-8 flex flex-wrap items-end justify-between gap-4 overflow-hidden rounded-2xl border border-border/60 p-6 text-primary-foreground shadow-[var(--shadow-elegant)]"
-        style={{ backgroundImage: "linear-gradient(135deg, oklch(0.35 0.12 260) 0%, oklch(0.5 0.18 300) 60%, oklch(0.7 0.16 20) 100%)" }}
+        className="relative mb-6 overflow-hidden rounded-3xl px-6 pt-8 pb-24 text-primary-foreground shadow-[var(--shadow-elegant)]"
+        style={{ backgroundImage: "var(--gradient-hero)" }}
       >
-        <div>
-          <p className="flex items-center gap-2 text-sm opacity-90"><CreditCard className="h-4 w-4" /> Fatura</p>
-          <div className="mt-1 flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setViewMonth((p) => new Date(p.getFullYear(), p.getMonth() - 1, 1))} aria-label="Mês anterior">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <p className="text-xs capitalize opacity-90 min-w-[8rem] text-center">{viewMonthLabel}</p>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setViewMonth((p) => new Date(p.getFullYear(), p.getMonth() + 1, 1))} aria-label="Próximo mês">
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary-foreground/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-accent/30 blur-3xl" />
+
+        <div className="relative z-10 flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] opacity-80">Total da Fatura</p>
+            <h1 className="text-4xl font-extrabold tracking-tight tabular-nums">{formatBRL(totalInvoice)}</h1>
+            <p className="pt-1 text-xs opacity-80">Limite total: <span className="font-semibold">{formatBRL(totalLimit)}</span></p>
           </div>
-          <p className="mt-1 text-4xl font-bold tracking-tight">{formatBRL(totalInvoice)}</p>
-          <p className="mt-1 text-sm opacity-80">Limite total: {formatBRL(totalLimit)}</p>
+          <div className="flex flex-col items-end gap-2">
+            <span className="rounded-2xl border border-primary-foreground/25 bg-primary-foreground/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
+              {items.length} {items.length === 1 ? "cartão" : "cartões"}
+            </span>
+            <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); setOpen(v); }}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="secondary" className="rounded-full shadow-md" onClick={() => resetForm()}>
+                  <Plus className="mr-1 h-4 w-4" /> Novo
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader><DialogTitle>{editing ? "Editar cartão" : "Cadastrar cartão"}</DialogTitle></DialogHeader>
+                <form onSubmit={submit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="card-name">Nome do cartão</Label>
+                      <Input id="card-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Nubank, Itaú Visa..." required />
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="card-limit">Limite (R$)</Label>
+                      <Input id="card-limit" inputMode="decimal" value={limitAmount} onChange={(e) => setLimitAmount(formatBRLInput(e.target.value))} placeholder="0,00" required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="card-due">Dia do vencimento</Label>
+                      <Input id="card-due" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="card-close">Dia do fechamento (opcional)</Label>
+                      <Input id="card-close" type="number" min={1} max={31} value={closingDay} onChange={(e) => setClosingDay(e.target.value)} />
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="card-used">Limite já utilizado (R$)</Label>
+                      <Input id="card-used" inputMode="decimal" value={initialUsed} onChange={(e) => setInitialUsed(formatBRLInput(e.target.value))} placeholder="0,00" />
+                      <p className="text-xs text-muted-foreground">Valor já gasto antes de começar a registrar aqui.</p>
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="card-notes">Observações</Label>
+                      <Input id="card-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Bandeira, banco, etc." />
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : editing ? "Atualizar cartão" : "Salvar cartão"}</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
-        <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); setOpen(v); }}>
-          <DialogTrigger asChild>
-            <Button size="lg" variant="secondary" onClick={() => resetForm()}><Plus className="mr-1 h-4 w-4" /> Novo cartão</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader><DialogTitle>{editing ? "Editar cartão" : "Cadastrar cartão"}</DialogTitle></DialogHeader>
-            <form onSubmit={submit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="card-name">Nome do cartão</Label>
-                  <Input id="card-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Nubank, Itaú Visa..." required />
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="card-limit">Limite (R$)</Label>
-                  <Input id="card-limit" inputMode="decimal" value={limitAmount} onChange={(e) => setLimitAmount(formatBRLInput(e.target.value))} placeholder="0,00" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="card-due">Dia do vencimento</Label>
-                  <Input id="card-due" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="card-close">Dia do fechamento (opcional)</Label>
-                  <Input id="card-close" type="number" min={1} max={31} value={closingDay} onChange={(e) => setClosingDay(e.target.value)} />
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="card-used">Limite já utilizado (R$)</Label>
-                  <Input id="card-used" inputMode="decimal" value={initialUsed} onChange={(e) => setInitialUsed(formatBRLInput(e.target.value))} placeholder="0,00" />
-                  <p className="text-xs text-muted-foreground">Valor já gasto antes de começar a registrar aqui.</p>
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="card-notes">Observações</Label>
-                  <Input id="card-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Bandeira, banco, etc." />
-                </div>
-              </div>
-              <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : editing ? "Atualizar cartão" : "Salvar cartão"}</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+
+        {/* Month selector pill */}
+        <div className="relative z-10 mt-5 inline-flex items-center gap-1 rounded-full border border-primary-foreground/25 bg-primary-foreground/15 p-1 backdrop-blur-md">
+          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-primary-foreground hover:bg-primary-foreground/25" onClick={() => setViewMonth((p) => new Date(p.getFullYear(), p.getMonth() - 1, 1))} aria-label="Mês anterior">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="min-w-[8.5rem] text-center text-xs font-semibold capitalize">{viewMonthLabel}</span>
+          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-primary-foreground hover:bg-primary-foreground/25" onClick={() => setViewMonth((p) => new Date(p.getFullYear(), p.getMonth() + 1, 1))} aria-label="Próximo mês">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </section>
 
       {(() => {
