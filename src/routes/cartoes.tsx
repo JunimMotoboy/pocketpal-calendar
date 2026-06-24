@@ -571,6 +571,60 @@ function CardsPage() {
                       <p className="mt-0.5 text-sm font-bold tabular-nums">{formatBRL(spentInMonth)}</p>
                     </div>
                   </div>
+
+                  {invoice > 0 && (() => {
+                    // Histórico: média da fatura dos últimos 3 meses (anteriores ao mês visualizado)
+                    let histSum = 0;
+                    let histN = 0;
+                    for (let k = 1; k <= 3; k++) {
+                      const d = new Date(viewMonth.getFullYear(), viewMonth.getMonth() - k, 1);
+                      const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+                      const s = allExpenses
+                        .filter((e) => e.card_id === c.id && e.spent_on.startsWith(mk))
+                        .reduce((a, e) => a + Number(e.amount), 0);
+                      const i = installments
+                        .filter((x) => x.card_id === c.id && installmentIncludesMonth(x, mk))
+                        .reduce((a, x) => a + Number(x.installment_value), 0);
+                      histSum += s + i;
+                      histN++;
+                    }
+                    const histAvg = histN > 0 ? histSum / histN : 0;
+                    // Mínimo: 15% da fatura (padrão regulatório no Brasil), nunca menor que parcelas pendentes não puláveis
+                    const minPay = Math.max(invoice * 0.15, 0);
+                    // Recomendado: pagar a fatura cheia para evitar rotativo; se a fatura está bem acima da média, reforçar isso.
+                    const recommended = invoice;
+                    const aboveAvg = histAvg > 0 && invoice > histAvg * 1.2;
+                    return (
+                      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3">
+                        <div className="mb-2 flex items-center justify-between">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Sugestão de pagamento</p>
+                          {aboveAvg && (
+                            <span className="rounded-md bg-accent/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-accent">
+                              Acima da média
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="rounded-xl bg-background/70 px-3 py-2">
+                            <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Mínimo (15%)</p>
+                            <p className="mt-0.5 text-sm font-bold tabular-nums text-foreground">{formatBRL(minPay)}</p>
+                            <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">Evita atraso, mas entra no rotativo.</p>
+                          </div>
+                          <div className="rounded-xl bg-primary/15 px-3 py-2 ring-1 ring-primary/30">
+                            <p className="text-[9px] font-bold uppercase tracking-wider text-primary">Recomendado</p>
+                            <p className="mt-0.5 text-sm font-bold tabular-nums text-primary">{formatBRL(recommended)}</p>
+                            <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">Quita a fatura e zera juros.</p>
+                          </div>
+                        </div>
+                        {histAvg > 0 && (
+                          <p className="mt-2 text-[10px] text-muted-foreground">
+                            Média dos últimos {histN} {histN === 1 ? "mês" : "meses"}: <span className="font-semibold tabular-nums">{formatBRL(histAvg)}</span>
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {c.notes && <p className="text-xs italic text-muted-foreground">{c.notes}</p>}
 
                   {(() => {
