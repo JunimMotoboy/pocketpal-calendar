@@ -336,63 +336,78 @@ function CardsPage() {
   if (loading || !user) return <div className="flex h-[60vh] items-center justify-center text-muted-foreground">Carregando...</div>;
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
+    <main className="mx-auto max-w-4xl px-4 py-6 sm:py-8">
+      {/* Hero header */}
       <section
-        className="mb-8 flex flex-wrap items-end justify-between gap-4 overflow-hidden rounded-2xl border border-border/60 p-6 text-primary-foreground shadow-[var(--shadow-elegant)]"
-        style={{ backgroundImage: "linear-gradient(135deg, oklch(0.35 0.12 260) 0%, oklch(0.5 0.18 300) 60%, oklch(0.7 0.16 20) 100%)" }}
+        className="relative mb-6 overflow-hidden rounded-3xl px-6 pt-8 pb-24 text-primary-foreground shadow-[var(--shadow-elegant)]"
+        style={{ backgroundImage: "var(--gradient-hero)" }}
       >
-        <div>
-          <p className="flex items-center gap-2 text-sm opacity-90"><CreditCard className="h-4 w-4" /> Fatura</p>
-          <div className="mt-1 flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setViewMonth((p) => new Date(p.getFullYear(), p.getMonth() - 1, 1))} aria-label="Mês anterior">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <p className="text-xs capitalize opacity-90 min-w-[8rem] text-center">{viewMonthLabel}</p>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setViewMonth((p) => new Date(p.getFullYear(), p.getMonth() + 1, 1))} aria-label="Próximo mês">
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary-foreground/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-accent/30 blur-3xl" />
+
+        <div className="relative z-10 flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] opacity-80">Total da Fatura</p>
+            <h1 className="text-4xl font-extrabold tracking-tight tabular-nums">{formatBRL(totalInvoice)}</h1>
+            <p className="pt-1 text-xs opacity-80">Limite total: <span className="font-semibold">{formatBRL(totalLimit)}</span></p>
           </div>
-          <p className="mt-1 text-4xl font-bold tracking-tight">{formatBRL(totalInvoice)}</p>
-          <p className="mt-1 text-sm opacity-80">Limite total: {formatBRL(totalLimit)}</p>
+          <div className="flex flex-col items-end gap-2">
+            <span className="rounded-2xl border border-primary-foreground/25 bg-primary-foreground/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
+              {items.length} {items.length === 1 ? "cartão" : "cartões"}
+            </span>
+            <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); setOpen(v); }}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="secondary" className="rounded-full shadow-md" onClick={() => resetForm()}>
+                  <Plus className="mr-1 h-4 w-4" /> Novo
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader><DialogTitle>{editing ? "Editar cartão" : "Cadastrar cartão"}</DialogTitle></DialogHeader>
+                <form onSubmit={submit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="card-name">Nome do cartão</Label>
+                      <Input id="card-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Nubank, Itaú Visa..." required />
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="card-limit">Limite (R$)</Label>
+                      <Input id="card-limit" inputMode="decimal" value={limitAmount} onChange={(e) => setLimitAmount(formatBRLInput(e.target.value))} placeholder="0,00" required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="card-due">Dia do vencimento</Label>
+                      <Input id="card-due" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="card-close">Dia do fechamento (opcional)</Label>
+                      <Input id="card-close" type="number" min={1} max={31} value={closingDay} onChange={(e) => setClosingDay(e.target.value)} />
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="card-used">Limite já utilizado (R$)</Label>
+                      <Input id="card-used" inputMode="decimal" value={initialUsed} onChange={(e) => setInitialUsed(formatBRLInput(e.target.value))} placeholder="0,00" />
+                      <p className="text-xs text-muted-foreground">Valor já gasto antes de começar a registrar aqui.</p>
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="card-notes">Observações</Label>
+                      <Input id="card-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Bandeira, banco, etc." />
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : editing ? "Atualizar cartão" : "Salvar cartão"}</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
-        <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); setOpen(v); }}>
-          <DialogTrigger asChild>
-            <Button size="lg" variant="secondary" onClick={() => resetForm()}><Plus className="mr-1 h-4 w-4" /> Novo cartão</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader><DialogTitle>{editing ? "Editar cartão" : "Cadastrar cartão"}</DialogTitle></DialogHeader>
-            <form onSubmit={submit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="card-name">Nome do cartão</Label>
-                  <Input id="card-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Nubank, Itaú Visa..." required />
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="card-limit">Limite (R$)</Label>
-                  <Input id="card-limit" inputMode="decimal" value={limitAmount} onChange={(e) => setLimitAmount(formatBRLInput(e.target.value))} placeholder="0,00" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="card-due">Dia do vencimento</Label>
-                  <Input id="card-due" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="card-close">Dia do fechamento (opcional)</Label>
-                  <Input id="card-close" type="number" min={1} max={31} value={closingDay} onChange={(e) => setClosingDay(e.target.value)} />
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="card-used">Limite já utilizado (R$)</Label>
-                  <Input id="card-used" inputMode="decimal" value={initialUsed} onChange={(e) => setInitialUsed(formatBRLInput(e.target.value))} placeholder="0,00" />
-                  <p className="text-xs text-muted-foreground">Valor já gasto antes de começar a registrar aqui.</p>
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label htmlFor="card-notes">Observações</Label>
-                  <Input id="card-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Bandeira, banco, etc." />
-                </div>
-              </div>
-              <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : editing ? "Atualizar cartão" : "Salvar cartão"}</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+
+        {/* Month selector pill */}
+        <div className="relative z-10 mt-5 inline-flex items-center gap-1 rounded-full border border-primary-foreground/25 bg-primary-foreground/15 p-1 backdrop-blur-md">
+          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-primary-foreground hover:bg-primary-foreground/25" onClick={() => setViewMonth((p) => new Date(p.getFullYear(), p.getMonth() - 1, 1))} aria-label="Mês anterior">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="min-w-[8.5rem] text-center text-xs font-semibold capitalize">{viewMonthLabel}</span>
+          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-primary-foreground hover:bg-primary-foreground/25" onClick={() => setViewMonth((p) => new Date(p.getFullYear(), p.getMonth() + 1, 1))} aria-label="Próximo mês">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </section>
 
       {(() => {
@@ -420,35 +435,46 @@ function CardsPage() {
         }
         if (activeThisMonth.length === 0) return null;
         activeThisMonth.sort((a, b) => a.dueDay - b.dueDay);
+        const pendingCount = activeThisMonth.filter((p) => !paidInstallments[`${p.instId}|${viewMonthKey}`]).length;
         return (
-          <Card className="mb-6 border border-border/60">
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold">Parcelas ativas · {viewMonthLabel}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
+          <section className="mb-6 -mt-16 relative z-10">
+            <div className="rounded-3xl border border-border/60 bg-card p-5 shadow-[var(--shadow-soft)]">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xs font-extrabold uppercase tracking-[0.14em]">Próximas parcelas</h2>
+                <span className="rounded-lg border border-primary/20 bg-primary/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+                  {pendingCount} pendente{pendingCount === 1 ? "" : "s"}
+                </span>
+              </div>
+              <ul className="space-y-2.5">
                 {activeThisMonth.map((p) => {
                   const paid = !!paidInstallments[`${p.instId}|${viewMonthKey}`];
                   return (
-                    <li key={p.instId} className="flex items-center justify-between gap-3 text-sm">
-                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <li
+                      key={p.instId}
+                      className="group flex items-center gap-3 rounded-2xl border border-border/60 bg-background p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-inner ${paid ? "bg-success/15 text-success" : "bg-primary/10 text-primary"}`}>
+                        <CreditCard className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`truncate text-sm font-bold leading-none ${paid ? "text-muted-foreground line-through" : "text-foreground"}`}>{p.description}</p>
+                        <p className="mt-1 text-[11px] font-medium text-muted-foreground">{p.cardName} · vence {p.dueDate}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className={`tabular-nums text-sm font-bold ${paid ? "text-muted-foreground line-through" : "text-foreground"}`}>{formatBRL(p.value)}</span>
                         <Checkbox
                           checked={paid}
                           onCheckedChange={() => toggleInstallmentPaid(p.instId, paid)}
                           aria-label={`Marcar ${p.description} como paga`}
+                          className="h-5 w-5 rounded-md"
                         />
-                        <div className="min-w-0 flex-1">
-                          <p className={`truncate font-medium ${paid ? "text-muted-foreground line-through" : ""}`}>{p.description}</p>
-                          <p className="text-xs text-muted-foreground">{p.cardName} · vence {p.dueDate}</p>
-                        </div>
                       </div>
-                      <span className={`tabular-nums font-semibold ${paid ? "text-muted-foreground line-through" : ""}`}>{formatBRL(p.value)}</span>
                     </li>
                   );
                 })}
               </ul>
-            </CardContent>
-          </Card>
+            </div>
+          </section>
         );
       })()}
 
@@ -484,46 +510,68 @@ function CardsPage() {
             const danger = pct >= 80;
             const cardInst = installments.filter((i) => i.card_id === c.id);
             return (
-              <Card key={c.id} className="overflow-hidden">
+              <Card key={c.id} className="group overflow-hidden rounded-3xl border-border/60 shadow-[var(--shadow-soft)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-elegant)]">
                 <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
-                  <div>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <CreditCard className="h-4 w-4 text-primary" />
-                      {c.name}
-                    </CardTitle>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Vence dia {c.due_day}{c.closing_day ? ` · fecha dia ${c.closing_day}` : ""}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex h-10 w-14 items-center justify-center overflow-hidden rounded-lg bg-foreground text-primary-foreground shadow-md">
+                      <span className="absolute inset-0" style={{ backgroundImage: "var(--gradient-hero)", opacity: 0.85 }} />
+                      <span className="relative -skew-x-12 text-[9px] font-black italic tracking-wider">NIX</span>
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold leading-none">{c.name}</CardTitle>
+                      <p className="mt-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                        Vence dia {c.due_day}{c.closing_day ? ` · fecha ${c.closing_day}` : ""}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(c)} aria-label="Editar"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => setConfirmDelete(c)} aria-label="Remover"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => openEdit(c)} aria-label="Editar"><Pencil className="h-3.5 w-3.5 text-muted-foreground" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setConfirmDelete(c)} aria-label="Remover"><Trash2 className="h-3.5 w-3.5 text-muted-foreground" /></Button>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4">
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className="text-xs text-muted-foreground capitalize">Fatura · {viewMonthLabel}</p>
-                      <p className="text-2xl font-bold tabular-nums">{formatBRL(invoice)}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Fatura · {viewMonth.toLocaleDateString("pt-BR", { month: "short" })}</p>
+                      <p className="mt-0.5 text-2xl font-extrabold tabular-nums tracking-tight">{formatBRL(invoice)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Limite</p>
-                      <p className="text-sm font-semibold tabular-nums">{formatBRL(Number(c.limit_amount))}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{remaining >= 0 ? "Disponível" : "Excedido"}</p>
+                      <p className={`text-base font-bold tabular-nums ${remaining >= 0 ? "text-success" : "text-destructive"}`}>{formatBRL(Math.abs(remaining))}</p>
                     </div>
                   </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: danger ? "oklch(0.62 0.22 25)" : "oklch(0.62 0.18 260)" }} />
+                  <div className="space-y-1.5">
+                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${danger ? "bg-destructive" : ""}`}
+                        style={{
+                          width: `${pct}%`,
+                          backgroundImage: danger ? undefined : "var(--gradient-hero)",
+                          boxShadow: danger ? undefined : "0 0 12px oklch(0.5 0.12 195 / 0.35)",
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+                      <span>{Math.round(pct)}% usado</span>
+                      <span>Limite {formatBRL(Number(c.limit_amount))}</span>
+                    </div>
                   </div>
                   {danger && (
-                    <p role="alert" className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive">
-                      <AlertTriangle className="h-3.5 w-3.5" aria-hidden /> Limite quase atingido ({Math.round(pct)}%)
+                    <p role="alert" className="flex items-center gap-1.5 rounded-xl bg-destructive/10 px-2.5 py-1.5 text-xs font-semibold text-destructive">
+                      <AlertTriangle className="h-3.5 w-3.5" aria-hidden /> Limite quase atingido
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    {remaining >= 0 ? `Limite disponível no mês: ${formatBRL(remaining)}` : `Fatura do mês acima do limite em ${formatBRL(-remaining)}`}
-                    {` · parcelas do mês: ${formatBRL(instMonth)} · compras do mês: ${formatBRL(spentInMonth)}`}
-                  </p>
-                  {c.notes && <p className="text-xs text-muted-foreground">{c.notes}</p>}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Parcelas</p>
+                      <p className="mt-0.5 text-sm font-bold tabular-nums">{formatBRL(instMonth)}</p>
+                    </div>
+                    <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Compras</p>
+                      <p className="mt-0.5 text-sm font-bold tabular-nums">{formatBRL(spentInMonth)}</p>
+                    </div>
+                  </div>
+                  {c.notes && <p className="text-xs italic text-muted-foreground">{c.notes}</p>}
 
                   {(() => {
                     const monthPurchases = expensesByCardThisMonth[c.id] ?? [];
