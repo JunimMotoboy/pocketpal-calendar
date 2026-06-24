@@ -510,46 +510,69 @@ function CardsPage() {
             const danger = pct >= 80;
             const cardInst = installments.filter((i) => i.card_id === c.id);
             return (
-              <Card key={c.id} className="overflow-hidden">
+              <Card key={c.id} className="group overflow-hidden rounded-3xl border-border/60 shadow-[var(--shadow-soft)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-elegant)]">
                 <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
-                  <div>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <CreditCard className="h-4 w-4 text-primary" />
-                      {c.name}
-                    </CardTitle>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Vence dia {c.due_day}{c.closing_day ? ` · fecha dia ${c.closing_day}` : ""}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex h-10 w-14 items-center justify-center overflow-hidden rounded-lg bg-foreground text-primary-foreground shadow-md">
+                      <span className="absolute inset-0" style={{ backgroundImage: "var(--gradient-hero)", opacity: 0.85 }} />
+                      <span className="relative -skew-x-12 text-[9px] font-black italic tracking-wider">NIX</span>
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold leading-none">{c.name}</CardTitle>
+                      <p className="mt-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                        Vence dia {c.due_day}{c.closing_day ? ` · fecha ${c.closing_day}` : ""}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(c)} aria-label="Editar"><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => setConfirmDelete(c)} aria-label="Remover"><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => openEdit(c)} aria-label="Editar"><Pencil className="h-3.5 w-3.5 text-muted-foreground" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setConfirmDelete(c)} aria-label="Remover"><Trash2 className="h-3.5 w-3.5 text-muted-foreground" /></Button>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4">
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className="text-xs text-muted-foreground capitalize">Fatura · {viewMonthLabel}</p>
-                      <p className="text-2xl font-bold tabular-nums">{formatBRL(invoice)}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Fatura · {viewMonth.toLocaleDateString("pt-BR", { month: "short" })}</p>
+                      <p className="mt-0.5 text-2xl font-extrabold tabular-nums tracking-tight">{formatBRL(invoice)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Limite</p>
-                      <p className="text-sm font-semibold tabular-nums">{formatBRL(Number(c.limit_amount))}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{remaining >= 0 ? "Disponível" : "Excedido"}</p>
+                      <p className={`text-base font-bold tabular-nums ${remaining >= 0 ? "text-success" : "text-destructive"}`}>{formatBRL(Math.abs(remaining))}</p>
                     </div>
                   </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: danger ? "oklch(0.62 0.22 25)" : "oklch(0.62 0.18 260)" }} />
+                  <div className="space-y-1.5">
+                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${pct}%`,
+                          backgroundImage: danger ? undefined : "var(--gradient-hero)",
+                          backgroundColor: danger ? "hsl(var(--destructive))" : undefined,
+                          boxShadow: "0 0 12px oklch(0.5 0.12 195 / 0.35)",
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+                      <span>{Math.round(pct)}% usado</span>
+                      <span>Limite {formatBRL(Number(c.limit_amount))}</span>
+                    </div>
                   </div>
                   {danger && (
-                    <p role="alert" className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive">
-                      <AlertTriangle className="h-3.5 w-3.5" aria-hidden /> Limite quase atingido ({Math.round(pct)}%)
+                    <p role="alert" className="flex items-center gap-1.5 rounded-xl bg-destructive/10 px-2.5 py-1.5 text-xs font-semibold text-destructive">
+                      <AlertTriangle className="h-3.5 w-3.5" aria-hidden /> Limite quase atingido
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    {remaining >= 0 ? `Limite disponível no mês: ${formatBRL(remaining)}` : `Fatura do mês acima do limite em ${formatBRL(-remaining)}`}
-                    {` · parcelas do mês: ${formatBRL(instMonth)} · compras do mês: ${formatBRL(spentInMonth)}`}
-                  </p>
-                  {c.notes && <p className="text-xs text-muted-foreground">{c.notes}</p>}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Parcelas</p>
+                      <p className="mt-0.5 text-sm font-bold tabular-nums">{formatBRL(instMonth)}</p>
+                    </div>
+                    <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Compras</p>
+                      <p className="mt-0.5 text-sm font-bold tabular-nums">{formatBRL(spentInMonth)}</p>
+                    </div>
+                  </div>
+                  {c.notes && <p className="text-xs italic text-muted-foreground">{c.notes}</p>}
 
                   {(() => {
                     const monthPurchases = expensesByCardThisMonth[c.id] ?? [];
