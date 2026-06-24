@@ -543,12 +543,11 @@ function CardsPage() {
                   <div className="space-y-1.5">
                     <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
                       <div
-                        className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
+                        className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${danger ? "bg-destructive" : ""}`}
                         style={{
                           width: `${pct}%`,
                           backgroundImage: danger ? undefined : "var(--gradient-hero)",
-                          backgroundColor: danger ? "hsl(var(--destructive))" : undefined,
-                          boxShadow: "0 0 12px oklch(0.5 0.12 195 / 0.35)",
+                          boxShadow: danger ? undefined : "0 0 12px oklch(0.5 0.12 195 / 0.35)",
                         }}
                       />
                     </div>
