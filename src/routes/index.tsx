@@ -820,9 +820,54 @@ function Dashboard() {
                 </Button>
               }
             />
-            {cardsDueOnSelected.length > 0 && (
+            {cardsDueOnSelected.length > 0 && (() => {
+              const dayInvoiceTotal = cardsDueOnSelected.reduce((s, c) => s + c.invoiceTotal, 0);
+              const catTotals = new Map<string, number>();
+              let parceladoTotal = 0;
+              for (const c of cardsDueOnSelected) {
+                for (const p of c.purchases) {
+                  const k = p.category as string;
+                  catTotals.set(k, (catTotals.get(k) ?? 0) + Number(p.amount));
+                }
+                for (const i of c.installments) parceladoTotal += i.value;
+              }
+              const catEntries = Array.from(catTotals.entries()).sort((a, b) => b[1] - a[1]);
+              return (
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Vencimentos de cartão</p>
+
+                <div className="mb-2 rounded-lg border border-warning/40 bg-warning/5 p-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Total das faturas do dia</span>
+                    <span className="font-bold tabular-nums">{formatBRL(dayInvoiceTotal)}</span>
+                  </div>
+                  {(catEntries.length > 0 || parceladoTotal > 0) && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {catEntries.map(([cat, val]) => {
+                        const c = CAT_MAP[cat as Category];
+                        return (
+                          <span
+                            key={`cat-${cat}`}
+                            className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs"
+                            style={{ borderColor: `color-mix(in oklab, ${c.color} 40%, transparent)`, backgroundColor: `color-mix(in oklab, ${c.color} 12%, transparent)` }}
+                          >
+                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color }} />
+                            {c.label}
+                            <span className="tabular-nums font-medium">{formatBRL(val)}</span>
+                          </span>
+                        );
+                      })}
+                      {parceladoTotal > 0 && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs">
+                          <span className="h-2 w-2 rounded-full bg-primary" />
+                          Parcelado
+                          <span className="tabular-nums font-medium">{formatBRL(parceladoTotal)}</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <ul className="space-y-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
                   {cardsDueOnSelected.map((c) => {
                     const paid = invoicePaidMap.has(c.id);
@@ -836,6 +881,11 @@ function Dashboard() {
                         </span>
                         <span className={cn("font-semibold tabular-nums", paid && "text-success")}>{formatBRL(c.invoiceTotal)}</span>
                       </div>
+                      <div className="ml-6 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                        <span>Parcelas: <span className="font-medium tabular-nums">{formatBRL(c.installmentsTotal)}</span></span>
+                        <span>·</span>
+                        <span>Compras: <span className="font-medium tabular-nums">{formatBRL(c.expensesTotal)}</span></span>
+                      </div>
                       {(c.installments.length > 0 || c.purchases.length > 0) && (
                         <ul className="ml-6 space-y-0.5 text-xs text-muted-foreground">
                           {c.installments.map((p) => (
@@ -844,12 +894,18 @@ function Dashboard() {
                               <span className="tabular-nums">{formatBRL(p.value)}</span>
                             </li>
                           ))}
-                          {c.purchases.map((e) => (
+                          {c.purchases.map((e) => {
+                            const ec = CAT_MAP[e.category];
+                            return (
                             <li key={`md-cd-e-${e.id}`} className="flex items-center justify-between gap-2">
-                              <span className="truncate">• {e.description}</span>
+                              <span className="flex min-w-0 items-center gap-1.5 truncate">
+                                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: ec.color }} />
+                                <span className="truncate">{e.description} <span className="opacity-60">· {ec.label}</span></span>
+                              </span>
                               <span className="tabular-nums">{formatBRL(Number(e.amount))}</span>
                             </li>
-                          ))}
+                            );
+                          })}
                         </ul>
                       )}
                     </li>
@@ -857,7 +913,8 @@ function Dashboard() {
                   })}
                 </ul>
               </div>
-            )}
+              );
+            })()}
 
             {dayFixed.length > 0 && (
               <div>
