@@ -387,6 +387,36 @@ function Dashboard() {
       });
   }, [cards, selected, month, installmentsByCardThisMonth, monthCardExpensesByCard]);
 
+  // Map: due-day key -> total invoice for cards due that day (displayed month)
+  const cardInvoiceTotalByDay = useMemo(() => {
+    const dim = getDaysInMonth(month);
+    const y = month.getFullYear();
+    const m = month.getMonth();
+    const map = new Map<string, number>();
+    for (const c of cards) {
+      const key = format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd");
+      const parts = installmentsByCardThisMonth.get(c.id) ?? [];
+      const instTotal = parts.reduce((s, p) => s + p.value, 0);
+      const purchases = monthCardExpensesByCard.get(c.id) ?? [];
+      const expTotal = purchases.reduce((s, e) => s + Number(e.amount), 0);
+      const t = instTotal + expTotal;
+      if (t <= 0) continue;
+      map.set(key, (map.get(key) ?? 0) + t);
+    }
+    return map;
+  }, [cards, month, installmentsByCardThisMonth, monthCardExpensesByCard]);
+
+  // Days where a credit-card purchase happened (the date the purchase was made)
+  const cardPurchaseDaysSet = useMemo(
+    () =>
+      new Set(
+        expenses
+          .filter((e) => e.payment_method === "credito" && e.card_id)
+          .map((e) => e.spent_on)
+      ),
+    [expenses]
+  );
+
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("expenses").delete().eq("id", id);
     if (error) toast.error(error.message);
@@ -538,8 +568,16 @@ function Dashboard() {
                   const key = format(dprops.day.date, "yyyy-MM-dd");
                   const cats = dayCategories.get(key);
                   const total = dayTotals.get(key);
+                  const invoiceTotal = cardInvoiceTotalByDay.get(key);
+                  const label =
+                    [
+                      total ? `${formatBRL(total)} em gastos` : null,
+                      invoiceTotal ? `Fatura cartão ${formatBRL(invoiceTotal)}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ");
                   return (
-                    <CalendarDayButton {...dprops} aria-label={total ? `${format(dprops.day.date, "dd/MM")} — ${formatBRL(total)}` : undefined}>
+                    <CalendarDayButton {...dprops} aria-label={label ? `${format(dprops.day.date, "dd/MM")} — ${label}` : undefined}>
                       {dprops.children}
                       {cats && cats.length > 0 && (
                         <span className="pointer-events-none flex gap-[2px]">
@@ -553,6 +591,11 @@ function Dashboard() {
                           ))}
                         </span>
                       )}
+                      {invoiceTotal ? (
+                        <span className="pointer-events-none mt-0.5 max-w-full truncate rounded-sm bg-warning/30 px-1 text-[9px] font-semibold leading-tight text-warning-foreground tabular-nums">
+                          {formatBRL(invoiceTotal)}
+                        </span>
+                      ) : null}
                     </CalendarDayButton>
                   );
                 },
@@ -562,6 +605,7 @@ function Dashboard() {
                 hasFixedUnpaid: (d) => unpaidFixedDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasCardDue: (d) => cardDueDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasCardPaid: (d) => cardPaidDaysSet.has(format(d, "yyyy-MM-dd")),
+                hasCardPurchase: (d) => cardPurchaseDaysSet.has(format(d, "yyyy-MM-dd")),
                 hasGoal: (d) => goalContribDaysSet.has(format(d, "yyyy-MM-dd")),
               }}
               modifiersClassNames={{
@@ -569,6 +613,7 @@ function Dashboard() {
                 hasFixedPaid: "relative font-semibold text-success before:absolute before:top-1 before:right-1 before:h-2 before:w-2 before:rounded-full before:bg-success",
                 hasCardDue: "relative font-semibold text-warning-foreground bg-warning/30 rounded-md",
                 hasCardPaid: "relative font-semibold text-success bg-success/15 rounded-md",
+                hasCardPurchase: "relative after:absolute after:bottom-0.5 after:left-1 after:h-1.5 after:w-1.5 after:rounded-full after:bg-orange-500",
                 hasGoal: "ring-2 ring-amber-500/60 rounded-md",
               }}
             />
@@ -585,6 +630,7 @@ function Dashboard() {
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-success" />Conta paga</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-warning/60" />Fatura cartão</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-success/40" />Fatura paga</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-orange-500" />Compra no cartão</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm ring-2 ring-amber-500/60" />Meta</span>
               </div>
             </details>
