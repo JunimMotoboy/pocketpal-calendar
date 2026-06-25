@@ -387,6 +387,36 @@ function Dashboard() {
       });
   }, [cards, selected, month, installmentsByCardThisMonth, monthCardExpensesByCard]);
 
+  // Map: due-day key -> total invoice for cards due that day (displayed month)
+  const cardInvoiceTotalByDay = useMemo(() => {
+    const dim = getDaysInMonth(month);
+    const y = month.getFullYear();
+    const m = month.getMonth();
+    const map = new Map<string, number>();
+    for (const c of cards) {
+      const key = format(new Date(y, m, Math.min(c.due_day, dim)), "yyyy-MM-dd");
+      const parts = installmentsByCardThisMonth.get(c.id) ?? [];
+      const instTotal = parts.reduce((s, p) => s + p.value, 0);
+      const purchases = monthCardExpensesByCard.get(c.id) ?? [];
+      const expTotal = purchases.reduce((s, e) => s + Number(e.amount), 0);
+      const t = instTotal + expTotal;
+      if (t <= 0) continue;
+      map.set(key, (map.get(key) ?? 0) + t);
+    }
+    return map;
+  }, [cards, month, installmentsByCardThisMonth, monthCardExpensesByCard]);
+
+  // Days where a credit-card purchase happened (the date the purchase was made)
+  const cardPurchaseDaysSet = useMemo(
+    () =>
+      new Set(
+        expenses
+          .filter((e) => e.payment_method === "credito" && e.card_id)
+          .map((e) => e.spent_on)
+      ),
+    [expenses]
+  );
+
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("expenses").delete().eq("id", id);
     if (error) toast.error(error.message);
