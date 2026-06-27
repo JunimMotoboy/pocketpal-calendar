@@ -477,3 +477,159 @@ function TrendCard({ data }: { data: { key: string; label: string; gastos: numbe
     </Card>
   );
 }
+
+function InsightsPanel({
+  totalInc,
+  totalExp,
+  catTotals,
+  payTotals,
+  budgets,
+  trend,
+}: {
+  totalInc: number;
+  totalExp: number;
+  catTotals: Record<string, number>;
+  payTotals: Record<string, number>;
+  budgets: Record<string, number>;
+  trend: { key: string; label: string; gastos: number; entradas: number }[];
+}) {
+  const saldo = totalInc - totalExp;
+  const savingsRate = totalInc > 0 ? (saldo / totalInc) * 100 : 0;
+  const topCats = Object.entries(catTotals)
+    .filter(([, v]) => v > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  const totalCats = topCats.reduce((s, [, v]) => s + v, 0);
+  const catMetaIdx: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {};
+  for (const c of CATEGORIES) catMetaIdx[c.value] = { label: c.label, color: c.color, icon: c.icon };
+  const topPay = Object.entries(payTotals).sort((a, b) => b[1] - a[1])[0];
+  const payLabel = topPay ? (PAYMENT_METHODS.find((p) => p.value === topPay[0])?.label ?? topPay[0]) : "—";
+
+  // 3-month average vs current
+  const last3 = trend.slice(-3);
+  const avg3 = last3.length ? last3.reduce((s, d) => s + d.gastos, 0) / last3.length : 0;
+  const curr = trend.length ? trend[trend.length - 1].gastos : totalExp;
+  const variation = avg3 > 0 ? ((curr - avg3) / avg3) * 100 : 0;
+
+  // budget alerts
+  const exceeded = Object.entries(budgets).filter(([cat, limit]) => limit > 0 && (catTotals[cat] ?? 0) > limit);
+
+  const rateColor = savingsRate >= 20 ? "text-emerald-600" : savingsRate >= 0 ? "text-amber-600" : "text-rose-600";
+  const rateLabel = savingsRate >= 20 ? "Ótima" : savingsRate >= 10 ? "Boa" : savingsRate >= 0 ? "Atenção" : "Negativa";
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <PiggyBank className="h-4 w-4 text-primary" /> Taxa de poupança
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-baseline gap-2">
+            <p className={`text-4xl font-bold tabular-nums ${rateColor}`}>{savingsRate.toFixed(1)}%</p>
+            <span className={`text-xs font-medium ${rateColor}`}>{rateLabel}</span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Você guardou {formatBRL(Math.max(0, saldo))} de {formatBRL(totalInc)} em entradas.
+          </p>
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className={`h-full transition-all ${savingsRate >= 20 ? "bg-emerald-500" : savingsRate >= 0 ? "bg-amber-500" : "bg-rose-500"}`}
+              style={{ width: `${Math.max(0, Math.min(100, savingsRate))}%` }}
+            />
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">Meta saudável: ≥ 20% das entradas.</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <LineIcon className="h-4 w-4 text-primary" /> Comparativo do mês
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          <p className="text-2xl font-bold tabular-nums">{formatBRL(curr)}</p>
+          <p className="text-xs text-muted-foreground">
+            Média dos últimos 3 meses: <span className="font-medium tabular-nums">{formatBRL(avg3)}</span>
+          </p>
+          {avg3 > 0 && (
+            <p className={`mt-1 inline-flex items-center gap-1 text-xs font-medium ${variation > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+              {variation > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+              {Math.abs(variation).toFixed(0)}% {variation > 0 ? "acima" : "abaixo"} da sua média
+            </p>
+          )}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Forma de pagamento mais usada: <span className="font-medium text-foreground">{payLabel}</span>
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-2">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Trophy className="h-4 w-4 text-primary" /> Top 5 categorias
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">Onde seu dinheiro foi no mês.</p>
+        </CardHeader>
+        <CardContent>
+          {topCats.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">Sem gastos para o período.</p>
+          ) : (
+            <ul className="space-y-3">
+              {topCats.map(([key, value]) => {
+                const meta = catMetaIdx[key] ?? { label: key, color: "var(--cat-outros)", icon: Filter };
+                const Icon = meta.icon;
+                const pct = totalCats > 0 ? (value / totalCats) * 100 : 0;
+                return (
+                  <li key={key} className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ backgroundColor: meta.color }}>
+                        <Icon className="h-3.5 w-3.5 text-white" />
+                      </span>
+                      <span className="text-sm font-medium">{meta.label}</span>
+                      <span className="ml-auto text-sm font-semibold tabular-nums">{formatBRL(value)}</span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div className="h-full transition-all" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground tabular-nums">{pct.toFixed(0)}% do total</p>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      {exceeded.length > 0 && (
+        <Card className="md:col-span-2 border-rose-300/60 bg-rose-50/40 dark:bg-rose-950/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base text-rose-600">
+              <AlertTriangle className="h-4 w-4" /> Orçamentos estourados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-1.5 text-sm">
+              {exceeded.map(([cat, limit]) => {
+                const meta = catMetaIdx[cat] ?? { label: cat, color: "var(--cat-outros)" };
+                const used = catTotals[cat] ?? 0;
+                const over = used - limit;
+                return (
+                  <li key={cat} className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: meta.color }} />
+                      {meta.label}
+                    </span>
+                    <span className="tabular-nums text-rose-600">+{formatBRL(over)} acima</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
