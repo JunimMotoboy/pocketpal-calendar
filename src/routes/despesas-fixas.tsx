@@ -161,12 +161,21 @@ function FixedExpensesPage() {
                   <Label htmlFor="fx-due">Dia do vencimento</Label>
                   <Input id="fx-due" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required />
                 </div>
-                <div className="col-span-2 space-y-2">
+                <div className="space-y-2">
                   <Label htmlFor="fx-cat">Categoria</Label>
                   <Select value={category} onValueChange={(v) => setCategory(v as Category)}>
                     <SelectTrigger id="fx-cat"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fx-pay">Forma de pagamento</Label>
+                  <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
+                    <SelectTrigger id="fx-pay"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
