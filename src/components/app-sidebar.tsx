@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import {
   Wallet,
   Calendar as CalIcon,
-  Sparkles,
   LogOut,
   TrendingUp,
   TrendingDown,
@@ -15,7 +14,6 @@ import {
   Sun,
   Trophy,
   Target,
-  Palette,
 } from "lucide-react";
 
 import {
@@ -54,7 +52,6 @@ const MAIS = [
   { to: "/investimentos", label: "Investimentos", icon: TrendingDown },
   { to: "/orcamentos", label: "Orçamentos", icon: Target },
   { to: "/metas", label: "Metas", icon: Trophy },
-  { to: "/dicas", label: "Dicas IA", icon: Sparkles },
 ] as const;
 
 export function AppSidebar() {

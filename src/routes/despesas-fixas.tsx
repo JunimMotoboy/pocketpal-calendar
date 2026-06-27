@@ -13,7 +13,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CATEGORIES, CAT_MAP, formatBRL, type Category } from "@/lib/categories";
+import { CATEGORIES, CAT_MAP, PAYMENT_METHODS, PAY_MAP, formatBRL, type Category, type PaymentMethod } from "@/lib/categories";
 import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 
 import { toast } from "sonner";
@@ -34,6 +34,7 @@ type FixedItem = {
   name: string;
   amount: number;
   category: Category;
+  payment_method: PaymentMethod;
   due_day: number;
   notify_email: string;
   active: boolean;
@@ -51,6 +52,7 @@ function FixedExpensesPage() {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<Category>("contas");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("boleto");
   const [dueDay, setDueDay] = useState("10");
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notes, setNotes] = useState("");
@@ -63,15 +65,15 @@ function FixedExpensesPage() {
   const load = async () => {
     const { data, error } = await supabase
       .from("fixed_expenses")
-      .select("id, name, amount, category, due_day, notify_email, active, notes")
+      .select("id, name, amount, category, payment_method, due_day, notify_email, active, notes")
       .order("due_day", { ascending: true });
     if (error) { toast.error(error.message); return; }
-    setItems((data ?? []) as FixedItem[]);
+    setItems((data ?? []) as unknown as FixedItem[]);
   };
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [user]);
 
   const resetForm = () => {
-    setName(""); setAmount(""); setCategory("contas"); setDueDay("10");
+    setName(""); setAmount(""); setCategory("contas"); setPaymentMethod("boleto"); setDueDay("10");
     setNotifyEmail(user?.email ?? ""); setNotes(""); setEditing(null);
   };
 
@@ -80,6 +82,7 @@ function FixedExpensesPage() {
     setName(it.name);
     setAmount(formatBRLInput(String(Math.round(Number(it.amount) * 100))));
     setCategory(it.category);
+    setPaymentMethod(it.payment_method ?? "boleto");
     setDueDay(String(it.due_day));
     setNotifyEmail(it.notify_email);
     setNotes(it.notes || "");
@@ -98,12 +101,12 @@ function FixedExpensesPage() {
     }
     setBusy(true);
     const payload = {
-      name: name.trim(), amount: val, category, due_day: dd,
+      name: name.trim(), amount: val, category, payment_method: paymentMethod, due_day: dd,
       notify_email: notifyEmail.trim(), notes: notes.trim() || null,
-    };
+    } as never;
     const { error } = editing
       ? await supabase.from("fixed_expenses").update(payload).eq("id", editing.id)
-      : await supabase.from("fixed_expenses").insert({ ...payload, user_id: user!.id });
+      : await supabase.from("fixed_expenses").insert({ ...(payload as object), user_id: user!.id } as never);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success(editing ? "Despesa atualizada!" : "Despesa fixa cadastrada!");
@@ -158,12 +161,21 @@ function FixedExpensesPage() {
                   <Label htmlFor="fx-due">Dia do vencimento</Label>
                   <Input id="fx-due" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required />
                 </div>
-                <div className="col-span-2 space-y-2">
+                <div className="space-y-2">
                   <Label htmlFor="fx-cat">Categoria</Label>
                   <Select value={category} onValueChange={(v) => setCategory(v as Category)}>
                     <SelectTrigger id="fx-cat"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fx-pay">Forma de pagamento</Label>
+                  <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
+                    <SelectTrigger id="fx-pay"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -240,6 +252,16 @@ function FixedExpensesPage() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <p className="text-2xl font-bold tabular-nums">{formatBRL(Number(it.amount))}</p>
+                  {(() => {
+                    const pm = PAY_MAP[it.payment_method ?? "boleto"];
+                    if (!pm) return null;
+                    const PIcon = pm.icon;
+                    return (
+                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <PIcon className="h-3.5 w-3.5" /> {pm.label}
+                      </p>
+                    );
+                  })()}
                   <p className="flex items-center gap-1 text-xs text-muted-foreground"><Mail className="h-3 w-3" /> {it.notify_email}</p>
                   {it.notes && <p className="text-xs text-muted-foreground">{it.notes}</p>}
                 </CardContent>
