@@ -52,6 +52,7 @@ function FixedExpensesPage() {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<Category>("contas");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("boleto");
   const [dueDay, setDueDay] = useState("10");
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notes, setNotes] = useState("");
@@ -64,15 +65,15 @@ function FixedExpensesPage() {
   const load = async () => {
     const { data, error } = await supabase
       .from("fixed_expenses")
-      .select("id, name, amount, category, due_day, notify_email, active, notes")
+      .select("id, name, amount, category, payment_method, due_day, notify_email, active, notes")
       .order("due_day", { ascending: true });
     if (error) { toast.error(error.message); return; }
-    setItems((data ?? []) as FixedItem[]);
+    setItems((data ?? []) as unknown as FixedItem[]);
   };
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [user]);
 
   const resetForm = () => {
-    setName(""); setAmount(""); setCategory("contas"); setDueDay("10");
+    setName(""); setAmount(""); setCategory("contas"); setPaymentMethod("boleto"); setDueDay("10");
     setNotifyEmail(user?.email ?? ""); setNotes(""); setEditing(null);
   };
 
@@ -81,6 +82,7 @@ function FixedExpensesPage() {
     setName(it.name);
     setAmount(formatBRLInput(String(Math.round(Number(it.amount) * 100))));
     setCategory(it.category);
+    setPaymentMethod(it.payment_method ?? "boleto");
     setDueDay(String(it.due_day));
     setNotifyEmail(it.notify_email);
     setNotes(it.notes || "");
@@ -99,12 +101,12 @@ function FixedExpensesPage() {
     }
     setBusy(true);
     const payload = {
-      name: name.trim(), amount: val, category, due_day: dd,
+      name: name.trim(), amount: val, category, payment_method: paymentMethod, due_day: dd,
       notify_email: notifyEmail.trim(), notes: notes.trim() || null,
-    };
+    } as never;
     const { error } = editing
       ? await supabase.from("fixed_expenses").update(payload).eq("id", editing.id)
-      : await supabase.from("fixed_expenses").insert({ ...payload, user_id: user!.id });
+      : await supabase.from("fixed_expenses").insert({ ...(payload as object), user_id: user!.id } as never);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success(editing ? "Despesa atualizada!" : "Despesa fixa cadastrada!");
