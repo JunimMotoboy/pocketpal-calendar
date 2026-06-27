@@ -9,7 +9,6 @@ import {
   CalendarClock,
   Target,
   Trophy,
-  Sparkles,
   Palette,
 } from "lucide-react";
 import { useState } from "react";
@@ -30,7 +29,6 @@ const MORE = [
   { to: "/investimentos", label: "Investimentos", icon: TrendingDown },
   { to: "/orcamentos", label: "Orçamentos", icon: Target },
   { to: "/metas", label: "Metas", icon: Trophy },
-  { to: "/dicas", label: "Dicas IA", icon: Sparkles },
   { to: "/personalizar", label: "Personalizar", icon: Palette },
 ] as const;
 
