@@ -13,7 +13,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CATEGORIES, CAT_MAP, formatBRL, type Category } from "@/lib/categories";
+import { CATEGORIES, CAT_MAP, PAYMENT_METHODS, PAY_MAP, formatBRL, type Category, type PaymentMethod } from "@/lib/categories";
 import { formatBRLInput, parseBRLInput } from "@/lib/currency";
 
 import { toast } from "sonner";
@@ -34,6 +34,7 @@ type FixedItem = {
   name: string;
   amount: number;
   category: Category;
+  payment_method: PaymentMethod;
   due_day: number;
   notify_email: string;
   active: boolean;
