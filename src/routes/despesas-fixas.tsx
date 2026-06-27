@@ -252,6 +252,16 @@ function FixedExpensesPage() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <p className="text-2xl font-bold tabular-nums">{formatBRL(Number(it.amount))}</p>
+                  {(() => {
+                    const pm = PAY_MAP[it.payment_method ?? "boleto"];
+                    if (!pm) return null;
+                    const PIcon = pm.icon;
+                    return (
+                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <PIcon className="h-3.5 w-3.5" /> {pm.label}
+                      </p>
+                    );
+                  })()}
                   <p className="flex items-center gap-1 text-xs text-muted-foreground"><Mail className="h-3 w-3" /> {it.notify_email}</p>
                   {it.notes && <p className="text-xs text-muted-foreground">{it.notes}</p>}
                 </CardContent>
