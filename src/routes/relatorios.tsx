@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { startOfMonth, endOfMonth, format, subMonths, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, PieChart as PieIcon, Filter, CreditCard, TrendingUp, Target, AlertTriangle, LineChart as LineIcon, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, PieChart as PieIcon, Filter, CreditCard, TrendingUp, Target, AlertTriangle, LineChart as LineIcon, ArrowUpRight, ArrowDownRight, Sparkles, PiggyBank, Trophy } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -369,8 +369,13 @@ function ReportsPage() {
         })()}
       </section>
 
-      <Tabs defaultValue="categorias">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
+      <Tabs defaultValue="resumo">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">
+          <TabsTrigger value="resumo">
+            <Sparkles className="h-4 w-4 sm:hidden" aria-hidden />
+            <span className="sm:hidden sr-only">Resumo</span>
+            <span className="hidden sm:inline">Resumo</span>
+          </TabsTrigger>
           <TabsTrigger value="categorias">
             <Filter className="h-4 w-4 sm:hidden" aria-hidden />
             <span className="sm:hidden sr-only">Gastos por categoria</span>
@@ -397,6 +402,16 @@ function ReportsPage() {
             <span className="hidden sm:inline">Orçamentos</span>
           </TabsTrigger>
         </TabsList>
+        <TabsContent value="resumo" className="mt-4">
+          <InsightsPanel
+            totalInc={totalInc}
+            totalExp={totalExp}
+            catTotals={catTotals}
+            payTotals={payTotals}
+            budgets={budgets}
+            trend={trend}
+          />
+        </TabsContent>
         <TabsContent value="categorias" className="mt-4">
           <PieCard title="Distribuição dos gastos por categoria" data={catData} total={totalExp} />
         </TabsContent>
