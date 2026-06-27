@@ -192,7 +192,7 @@ function ReportsPage() {
   const [month, setMonth] = useState<Date>(new Date());
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
   const [incomes, setIncomes] = useState<IncomeRow[]>([]);
-  const [fixed, setFixed] = useState<{ amount: number; category: string }[]>([]);
+  const [fixed, setFixed] = useState<{ amount: number; category: string; payment_method: string | null }[]>([]);
   const [investTotal, setInvestTotal] = useState(0);
   const [budgets, setBudgets] = useState<Record<string, number>>({});
   const [fetching, setFetching] = useState(false);
@@ -212,7 +212,7 @@ function ReportsPage() {
       const [e, i, f, inv, b, te, ti, tinv] = await Promise.all([
         supabase.from("expenses").select("amount, category, payment_method").gte("spent_on", from).lte("spent_on", to),
         supabase.from("incomes").select("amount, source").gte("received_on", from).lte("received_on", to),
-        supabase.from("fixed_expenses").select("amount, category").eq("active", true),
+        supabase.from("fixed_expenses").select("amount, category, payment_method").eq("active", true),
         supabase.from("investments").select("amount").gte("invested_on", from).lte("invested_on", to),
         supabase.from("category_budgets").select("category, monthly_limit"),
         supabase.from("expenses").select("amount, spent_on").gte("spent_on", trendStart).lte("spent_on", trendEnd),
@@ -221,7 +221,7 @@ function ReportsPage() {
       ]);
       setExpenses(((e.data ?? []) as ExpenseRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setIncomes(((i.data ?? []) as IncomeRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
-      const fixedRows = ((f.data ?? []) as { amount: number; category: string }[]).map((r) => ({ ...r, amount: Number(r.amount) }));
+      const fixedRows = ((f.data ?? []) as { amount: number; category: string; payment_method: string | null }[]).map((r) => ({ ...r, amount: Number(r.amount) }));
       setFixed(fixedRows);
       setInvestTotal(((inv.data ?? []) as { amount: number }[]).reduce((s, r) => s + Number(r.amount), 0));
       const bud: Record<string, number> = {};
@@ -276,7 +276,8 @@ function ReportsPage() {
       m[k] = (m[k] ?? 0) + e.amount;
     }
     for (const f of fixed) {
-      m["boleto"] = (m["boleto"] ?? 0) + f.amount;
+      const k = f.payment_method ?? "boleto";
+      m[k] = (m[k] ?? 0) + f.amount;
     }
     if (investTotal > 0) m["investimento"] = (m["investimento"] ?? 0) + investTotal;
     return m;
