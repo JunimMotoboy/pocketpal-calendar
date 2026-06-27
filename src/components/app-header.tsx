@@ -2,7 +2,6 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   Wallet,
   Calendar as CalIcon,
-  Sparkles,
   LogOut,
   TrendingUp,
   TrendingDown,
@@ -45,7 +44,6 @@ const MAIS = [
   { to: "/investimentos", label: "Investimentos", icon: TrendingDown },
   { to: "/orcamentos", label: "Orçamentos", icon: Target },
   { to: "/metas", label: "Metas", icon: Trophy },
-  { to: "/dicas", label: "Dicas IA", icon: Sparkles },
 ] as const;
 
 const CONFIG = [

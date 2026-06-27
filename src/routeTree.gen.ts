@@ -16,7 +16,6 @@ import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as MetasRouteImport } from './routes/metas'
 import { Route as InvestimentosRouteImport } from './routes/investimentos'
 import { Route as EntradasRouteImport } from './routes/entradas'
-import { Route as DicasRouteImport } from './routes/dicas'
 import { Route as DespesasFixasRouteImport } from './routes/despesas-fixas'
 import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -58,11 +57,6 @@ const InvestimentosRoute = InvestimentosRouteImport.update({
 const EntradasRoute = EntradasRouteImport.update({
   id: '/entradas',
   path: '/entradas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DicasRoute = DicasRouteImport.update({
-  id: '/dicas',
-  path: '/dicas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DespesasFixasRoute = DespesasFixasRouteImport.update({
@@ -109,7 +103,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/cartoes': typeof CartoesRoute
   '/despesas-fixas': typeof DespesasFixasRoute
-  '/dicas': typeof DicasRoute
   '/entradas': typeof EntradasRoute
   '/investimentos': typeof InvestimentosRoute
   '/metas': typeof MetasRoute
@@ -126,7 +119,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/cartoes': typeof CartoesRoute
   '/despesas-fixas': typeof DespesasFixasRoute
-  '/dicas': typeof DicasRoute
   '/entradas': typeof EntradasRoute
   '/investimentos': typeof InvestimentosRoute
   '/metas': typeof MetasRoute
@@ -144,7 +136,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/cartoes': typeof CartoesRoute
   '/despesas-fixas': typeof DespesasFixasRoute
-  '/dicas': typeof DicasRoute
   '/entradas': typeof EntradasRoute
   '/investimentos': typeof InvestimentosRoute
   '/metas': typeof MetasRoute
@@ -163,7 +154,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cartoes'
     | '/despesas-fixas'
-    | '/dicas'
     | '/entradas'
     | '/investimentos'
     | '/metas'
@@ -180,7 +170,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cartoes'
     | '/despesas-fixas'
-    | '/dicas'
     | '/entradas'
     | '/investimentos'
     | '/metas'
@@ -197,7 +186,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cartoes'
     | '/despesas-fixas'
-    | '/dicas'
     | '/entradas'
     | '/investimentos'
     | '/metas'
@@ -215,7 +203,6 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CartoesRoute: typeof CartoesRoute
   DespesasFixasRoute: typeof DespesasFixasRoute
-  DicasRoute: typeof DicasRoute
   EntradasRoute: typeof EntradasRoute
   InvestimentosRoute: typeof InvestimentosRoute
   MetasRoute: typeof MetasRoute
@@ -278,13 +265,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntradasRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dicas': {
-      id: '/dicas'
-      path: '/dicas'
-      fullPath: '/dicas'
-      preLoaderRoute: typeof DicasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/despesas-fixas': {
       id: '/despesas-fixas'
       path: '/despesas-fixas'
@@ -343,7 +323,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CartoesRoute: CartoesRoute,
   DespesasFixasRoute: DespesasFixasRoute,
-  DicasRoute: DicasRoute,
   EntradasRoute: EntradasRoute,
   InvestimentosRoute: InvestimentosRoute,
   MetasRoute: MetasRoute,
