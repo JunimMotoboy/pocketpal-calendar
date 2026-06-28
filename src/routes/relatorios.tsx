@@ -189,7 +189,10 @@ function BudgetBars({
 function ReportsPage() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
+  const [mode, setMode] = useState<"month" | "range">("month");
   const [month, setMonth] = useState<Date>(new Date());
+  const [rangeFrom, setRangeFrom] = useState<Date>(startOfMonth(subMonths(new Date(), 2)));
+  const [rangeTo, setRangeTo] = useState<Date>(new Date());
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
   const [incomes, setIncomes] = useState<IncomeRow[]>([]);
   const [fixed, setFixed] = useState<{ amount: number; category: string; payment_method: string | null }[]>([]);
@@ -200,12 +203,25 @@ function ReportsPage() {
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
+  // Período efetivo do filtro
+  const period = useMemo(() => {
+    if (mode === "month") {
+      return { from: startOfMonth(month), to: endOfMonth(month), monthsSpan: 1, anchor: month };
+    }
+    const a = rangeFrom <= rangeTo ? rangeFrom : rangeTo;
+    const b = rangeFrom <= rangeTo ? rangeTo : rangeFrom;
+    const from = startOfMonth(a);
+    const to = endOfMonth(b);
+    const monthsSpan = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth()) + 1;
+    return { from, to, monthsSpan, anchor: b };
+  }, [mode, month, rangeFrom, rangeTo]);
+
   useEffect(() => {
     if (!user) return;
-    const from = format(startOfMonth(month), "yyyy-MM-dd");
-    const to = format(endOfMonth(month), "yyyy-MM-dd");
-    const trendStart = format(startOfMonth(subMonths(month, 5)), "yyyy-MM-dd");
-    const trendEnd = to;
+    const from = format(period.from, "yyyy-MM-dd");
+    const to = format(period.to, "yyyy-MM-dd");
+    const trendStart = format(startOfMonth(subMonths(period.anchor, 5)), "yyyy-MM-dd");
+    const trendEnd = format(endOfMonth(period.anchor), "yyyy-MM-dd");
 
     (async () => {
       setFetching(true);
@@ -221,24 +237,26 @@ function ReportsPage() {
       ]);
       setExpenses(((e.data ?? []) as ExpenseRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
       setIncomes(((i.data ?? []) as IncomeRow[]).map((r) => ({ ...r, amount: Number(r.amount) })));
-      const fixedRows = ((f.data ?? []) as { amount: number; category: string; payment_method: string | null }[]).map((r) => ({ ...r, amount: Number(r.amount) }));
+      const fixedRowsRaw = ((f.data ?? []) as { amount: number; category: string; payment_method: string | null }[]).map((r) => ({ ...r, amount: Number(r.amount) }));
+      // Despesas fixas multiplicam pelo número de meses no período
+      const fixedRows = fixedRowsRaw.map((r) => ({ ...r, amount: r.amount * period.monthsSpan }));
       setFixed(fixedRows);
       setInvestTotal(((inv.data ?? []) as { amount: number }[]).reduce((s, r) => s + Number(r.amount), 0));
       const bud: Record<string, number> = {};
       for (const row of (b.data ?? []) as { category: string; monthly_limit: number }[]) {
-        bud[row.category] = Number(row.monthly_limit);
+        bud[row.category] = Number(row.monthly_limit) * period.monthsSpan;
       }
       setBudgets(bud);
 
-      // Build 6-month trend
-      const fixedSum = fixedRows.reduce((s, r) => s + r.amount, 0);
+      // Build 6-month trend ending at the period anchor
+      const fixedSumMonthly = fixedRowsRaw.reduce((s, r) => s + r.amount, 0);
       const months: { key: string; label: string; gastos: number; entradas: number }[] = [];
       for (let k = 5; k >= 0; k--) {
-        const d = subMonths(month, k);
+        const d = subMonths(period.anchor, k);
         months.push({
           key: format(d, "yyyy-MM"),
           label: format(d, "MMM", { locale: ptBR }),
-          gastos: fixedSum,
+          gastos: fixedSumMonthly,
           entradas: 0,
         });
       }
@@ -259,7 +277,7 @@ function ReportsPage() {
       setTrend(months);
       setFetching(false);
     })();
-  }, [user, month]);
+  }, [user, period]);
 
   const catTotals = useMemo(() => {
     const m: Record<string, number> = {};
@@ -316,12 +334,62 @@ function ReportsPage() {
     <main className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="sr-only">Relatórios</h1>
       <section className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => setMonth((m) => subMonths(m, 1))} aria-label="Mês anterior"><ChevronLeft className="h-4 w-4" /></Button>
-          <div className="min-w-[180px] rounded-lg border border-border bg-card px-4 py-2 text-center font-semibold capitalize">
-            {format(month, "MMMM 'de' yyyy", { locale: ptBR })}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-lg border border-border bg-card p-0.5 text-xs">
+            <button
+              type="button"
+              onClick={() => setMode("month")}
+              className={`rounded-md px-3 py-1.5 font-medium transition ${mode === "month" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              aria-pressed={mode === "month"}
+            >
+              Mês
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("range")}
+              className={`rounded-md px-3 py-1.5 font-medium transition ${mode === "range" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              aria-pressed={mode === "range"}
+            >
+              Intervalo
+            </button>
           </div>
-          <Button variant="outline" size="icon" onClick={() => setMonth((m) => addMonths(m, 1))} aria-label="Próximo mês"><ChevronRight className="h-4 w-4" /></Button>
+
+          {mode === "month" ? (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" onClick={() => setMonth((m) => subMonths(m, 1))} aria-label="Mês anterior"><ChevronLeft className="h-4 w-4" /></Button>
+              <div className="min-w-[180px] rounded-lg border border-border bg-card px-4 py-2 text-center font-semibold capitalize">
+                {format(month, "MMMM 'de' yyyy", { locale: ptBR })}
+              </div>
+              <Button variant="outline" size="icon" onClick={() => setMonth((m) => addMonths(m, 1))} aria-label="Próximo mês"><ChevronRight className="h-4 w-4" /></Button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="month"
+                value={format(rangeFrom, "yyyy-MM")}
+                onChange={(e) => {
+                  const [y, m] = e.target.value.split("-").map(Number);
+                  if (y && m) setRangeFrom(new Date(y, m - 1, 1));
+                }}
+                className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium"
+                aria-label="Mês inicial"
+              />
+              <span className="text-xs text-muted-foreground">até</span>
+              <input
+                type="month"
+                value={format(rangeTo, "yyyy-MM")}
+                onChange={(e) => {
+                  const [y, m] = e.target.value.split("-").map(Number);
+                  if (y && m) setRangeTo(new Date(y, m - 1, 1));
+                }}
+                className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium"
+                aria-label="Mês final"
+              />
+              <span className="rounded-full bg-muted px-2 py-1 text-[11px] text-muted-foreground">
+                {period.monthsSpan} {period.monthsSpan === 1 ? "mês" : "meses"}
+              </span>
+            </div>
+          )}
         </div>
         {fetching && <p className="text-xs text-muted-foreground" role="status">Atualizando...</p>}
       </section>

@@ -15,9 +15,34 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIES, CAT_MAP, PAYMENT_METHODS, PAY_MAP, formatBRL, type Category, type PaymentMethod } from "@/lib/categories";
 import { formatBRLInput, parseBRLInput } from "@/lib/currency";
+import { z } from "zod";
 
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
+
+// Sugestão de forma de pagamento baseada na categoria
+const SUGGESTED_PAYMENT: Record<Category, PaymentMethod> = {
+  contas: "boleto",
+  moradia: "boleto",
+  educacao: "boleto",
+  comida: "credito",
+  transporte: "credito",
+  diversao: "credito",
+  compras: "credito",
+  saude: "pix",
+  outros: "pix",
+};
+
+const LAST_PAY_KEY = "nix:lastFixedPayment";
+
+const fixedSchema = z.object({
+  name: z.string().trim().min(2, "Mínimo 2 caracteres").max(80, "Máximo 80 caracteres"),
+  amountCents: z.number().int().positive("Informe um valor maior que zero").max(99_999_999, "Valor muito alto"),
+  dueDay: z.number().int().min(1, "Dia entre 1 e 31").max(31, "Dia entre 1 e 31"),
+  notifyEmail: z.string().trim().email("E-mail inválido").max(255),
+  notes: z.string().max(300, "Máximo 300 caracteres").optional(),
+});
+type FieldErrors = Partial<Record<"name" | "amount" | "dueDay" | "notifyEmail" | "notes", string>>
 
 export const Route = createFileRoute("/despesas-fixas")({
   head: () => ({
@@ -53,10 +78,12 @@ function FixedExpensesPage() {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<Category>("contas");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("boleto");
+  const [paymentTouched, setPaymentTouched] = useState(false);
   const [dueDay, setDueDay] = useState("10");
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [deleteTarget, setDeleteTarget] = useState<FixedItem | null>(null);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
@@ -73,8 +100,23 @@ function FixedExpensesPage() {
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [user]);
 
   const resetForm = () => {
-    setName(""); setAmount(""); setCategory("contas"); setPaymentMethod("boleto"); setDueDay("10");
+    const lastPay = (typeof window !== "undefined" ? localStorage.getItem(LAST_PAY_KEY) : null) as PaymentMethod | null;
+    setName(""); setAmount(""); setCategory("contas");
+    setPaymentMethod(lastPay && PAY_MAP[lastPay] ? lastPay : SUGGESTED_PAYMENT.contas);
+    setPaymentTouched(false);
+    setDueDay("10");
     setNotifyEmail(user?.email ?? ""); setNotes(""); setEditing(null);
+    setErrors({});
+  };
+
+  // Auto-sugerir forma de pagamento ao trocar categoria (apenas se usuário não escolheu manualmente)
+  const onCategoryChange = (v: Category) => {
+    setCategory(v);
+    if (!editing && !paymentTouched) setPaymentMethod(SUGGESTED_PAYMENT[v]);
+  };
+  const onPaymentChange = (v: PaymentMethod) => {
+    setPaymentMethod(v);
+    setPaymentTouched(true);
   };
 
   const openEdit = (it: FixedItem) => {
@@ -83,9 +125,11 @@ function FixedExpensesPage() {
     setAmount(formatBRLInput(String(Math.round(Number(it.amount) * 100))));
     setCategory(it.category);
     setPaymentMethod(it.payment_method ?? "boleto");
+    setPaymentTouched(true);
     setDueDay(String(it.due_day));
     setNotifyEmail(it.notify_email);
     setNotes(it.notes || "");
+    setErrors({});
     setOpen(true);
   };
 
@@ -93,12 +137,25 @@ function FixedExpensesPage() {
     e.preventDefault();
     const val = parseBRLInput(amount);
     const dd = parseInt(dueDay, 10);
-    if (!name.trim() || isNaN(val) || val <= 0 || isNaN(dd) || dd < 1 || dd > 31) {
-      toast.error("Preencha nome, valor e dia válidos."); return;
+    const parsed = fixedSchema.safeParse({
+      name,
+      amountCents: isNaN(val) ? 0 : Math.round(val * 100),
+      dueDay: isNaN(dd) ? 0 : dd,
+      notifyEmail,
+      notes: notes || undefined,
+    });
+    if (!parsed.success) {
+      const fe: FieldErrors = {};
+      for (const issue of parsed.error.issues) {
+        const k = issue.path[0];
+        if (k === "amountCents") fe.amount = issue.message;
+        else if (k === "name" || k === "dueDay" || k === "notifyEmail" || k === "notes") fe[k as keyof FieldErrors] = issue.message;
+      }
+      setErrors(fe);
+      toast.error("Revise os campos destacados.");
+      return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notifyEmail.trim())) {
-      toast.error("E-mail inválido."); return;
-    }
+    setErrors({});
     setBusy(true);
     const payload = {
       name: name.trim(), amount: val, category, payment_method: paymentMethod, due_day: dd,
@@ -109,6 +166,7 @@ function FixedExpensesPage() {
       : await supabase.from("fixed_expenses").insert({ ...(payload as object), user_id: user!.id } as never);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
+    try { localStorage.setItem(LAST_PAY_KEY, paymentMethod); } catch { /* ignore */ }
     toast.success(editing ? "Despesa atualizada!" : "Despesa fixa cadastrada!");
     resetForm(); setOpen(false); load();
   };
@@ -149,43 +207,51 @@ function FixedExpensesPage() {
             <DialogHeader><DialogTitle>{editing ? "Editar despesa fixa" : "Cadastrar despesa fixa"}</DialogTitle></DialogHeader>
             <form onSubmit={submit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 space-y-2">
+                <div className="col-span-2 space-y-1.5">
                   <Label htmlFor="fx-name">Nome</Label>
-                  <Input id="fx-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Aluguel, Internet, Netflix..." required />
+                  <Input id="fx-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Aluguel, Internet, Netflix..." maxLength={80} aria-invalid={!!errors.name} required />
+                  {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="fx-amount">Valor (R$)</Label>
-                  <Input id="fx-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(formatBRLInput(e.target.value))} placeholder="0,00" required />
+                  <Input id="fx-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(formatBRLInput(e.target.value))} placeholder="0,00" aria-invalid={!!errors.amount} required />
+                  {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="fx-due">Dia do vencimento</Label>
-                  <Input id="fx-due" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required />
+                  <Input id="fx-due" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} aria-invalid={!!errors.dueDay} required />
+                  {errors.dueDay && <p className="text-xs text-destructive">{errors.dueDay}</p>}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="fx-cat">Categoria</Label>
-                  <Select value={category} onValueChange={(v) => setCategory(v as Category)}>
+                  <Select value={category} onValueChange={(v) => onCategoryChange(v as Category)}>
                     <SelectTrigger id="fx-cat"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="fx-pay">Forma de pagamento</Label>
-                  <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
+                  <Select value={paymentMethod} onValueChange={(v) => onPaymentChange(v as PaymentMethod)}>
                     <SelectTrigger id="fx-pay"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {PAYMENT_METHODS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                  {!editing && !paymentTouched && (
+                    <p className="text-[11px] text-muted-foreground">Sugerido para {CAT_MAP[category]?.label}</p>
+                  )}
                 </div>
-                <div className="col-span-2 space-y-2">
+                <div className="col-span-2 space-y-1.5">
                   <Label htmlFor="fx-email">E-mail para receber aviso</Label>
-                  <Input id="fx-email" type="email" value={notifyEmail} onChange={(e) => setNotifyEmail(e.target.value)} placeholder="voce@exemplo.com" required />
+                  <Input id="fx-email" type="email" value={notifyEmail} onChange={(e) => setNotifyEmail(e.target.value)} placeholder="voce@exemplo.com" aria-invalid={!!errors.notifyEmail} required />
+                  {errors.notifyEmail && <p className="text-xs text-destructive">{errors.notifyEmail}</p>}
                 </div>
-                <div className="col-span-2 space-y-2">
+                <div className="col-span-2 space-y-1.5">
                   <Label htmlFor="fx-notes">Observações</Label>
-                  <Input id="fx-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opcional" />
+                  <Input id="fx-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opcional" maxLength={300} aria-invalid={!!errors.notes} />
+                  {errors.notes && <p className="text-xs text-destructive">{errors.notes}</p>}
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : editing ? "Atualizar" : "Salvar"}</Button>
