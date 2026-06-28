@@ -334,12 +334,62 @@ function ReportsPage() {
     <main className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="sr-only">Relatórios</h1>
       <section className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => setMonth((m) => subMonths(m, 1))} aria-label="Mês anterior"><ChevronLeft className="h-4 w-4" /></Button>
-          <div className="min-w-[180px] rounded-lg border border-border bg-card px-4 py-2 text-center font-semibold capitalize">
-            {format(month, "MMMM 'de' yyyy", { locale: ptBR })}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-lg border border-border bg-card p-0.5 text-xs">
+            <button
+              type="button"
+              onClick={() => setMode("month")}
+              className={`rounded-md px-3 py-1.5 font-medium transition ${mode === "month" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              aria-pressed={mode === "month"}
+            >
+              Mês
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("range")}
+              className={`rounded-md px-3 py-1.5 font-medium transition ${mode === "range" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              aria-pressed={mode === "range"}
+            >
+              Intervalo
+            </button>
           </div>
-          <Button variant="outline" size="icon" onClick={() => setMonth((m) => addMonths(m, 1))} aria-label="Próximo mês"><ChevronRight className="h-4 w-4" /></Button>
+
+          {mode === "month" ? (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" onClick={() => setMonth((m) => subMonths(m, 1))} aria-label="Mês anterior"><ChevronLeft className="h-4 w-4" /></Button>
+              <div className="min-w-[180px] rounded-lg border border-border bg-card px-4 py-2 text-center font-semibold capitalize">
+                {format(month, "MMMM 'de' yyyy", { locale: ptBR })}
+              </div>
+              <Button variant="outline" size="icon" onClick={() => setMonth((m) => addMonths(m, 1))} aria-label="Próximo mês"><ChevronRight className="h-4 w-4" /></Button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="month"
+                value={format(rangeFrom, "yyyy-MM")}
+                onChange={(e) => {
+                  const [y, m] = e.target.value.split("-").map(Number);
+                  if (y && m) setRangeFrom(new Date(y, m - 1, 1));
+                }}
+                className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium"
+                aria-label="Mês inicial"
+              />
+              <span className="text-xs text-muted-foreground">até</span>
+              <input
+                type="month"
+                value={format(rangeTo, "yyyy-MM")}
+                onChange={(e) => {
+                  const [y, m] = e.target.value.split("-").map(Number);
+                  if (y && m) setRangeTo(new Date(y, m - 1, 1));
+                }}
+                className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium"
+                aria-label="Mês final"
+              />
+              <span className="rounded-full bg-muted px-2 py-1 text-[11px] text-muted-foreground">
+                {period.monthsSpan} {period.monthsSpan === 1 ? "mês" : "meses"}
+              </span>
+            </div>
+          )}
         </div>
         {fetching && <p className="text-xs text-muted-foreground" role="status">Atualizando...</p>}
       </section>
