@@ -15,9 +15,34 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIES, CAT_MAP, PAYMENT_METHODS, PAY_MAP, formatBRL, type Category, type PaymentMethod } from "@/lib/categories";
 import { formatBRLInput, parseBRLInput } from "@/lib/currency";
+import { z } from "zod";
 
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
+
+// Sugestão de forma de pagamento baseada na categoria
+const SUGGESTED_PAYMENT: Record<Category, PaymentMethod> = {
+  contas: "boleto",
+  moradia: "boleto",
+  educacao: "boleto",
+  comida: "credito",
+  transporte: "credito",
+  diversao: "credito",
+  compras: "credito",
+  saude: "pix",
+  outros: "pix",
+};
+
+const LAST_PAY_KEY = "nix:lastFixedPayment";
+
+const fixedSchema = z.object({
+  name: z.string().trim().min(2, "Mínimo 2 caracteres").max(80, "Máximo 80 caracteres"),
+  amountCents: z.number().int().positive("Informe um valor maior que zero").max(99_999_999, "Valor muito alto"),
+  dueDay: z.number().int().min(1, "Dia entre 1 e 31").max(31, "Dia entre 1 e 31"),
+  notifyEmail: z.string().trim().email("E-mail inválido").max(255),
+  notes: z.string().max(300, "Máximo 300 caracteres").optional(),
+});
+type FieldErrors = Partial<Record<"name" | "amount" | "dueDay" | "notifyEmail" | "notes", string>>
 
 export const Route = createFileRoute("/despesas-fixas")({
   head: () => ({
