@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CalendarClock, Plus, Pencil, Trash2, Mail, BellRing, BellOff, Search } from "lucide-react";
+import { CalendarClock, Plus, Pencil, Trash2, Mail, BellRing, BellOff, Search, Check } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -239,8 +239,15 @@ function FixedExpensesPage() {
                       {PAYMENT_METHODS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  {!editing && !paymentTouched && (
-                    <p className="text-[11px] text-muted-foreground">Sugerido para {CAT_MAP[category]?.label}</p>
+                  {paymentMethod !== SUGGESTED_PAYMENT[category] && (
+                    <button
+                      type="button"
+                      onClick={() => { setPaymentMethod(SUGGESTED_PAYMENT[category]); setPaymentTouched(true); }}
+                      className="mt-1 inline-flex items-center gap-1 rounded-md border border-primary/20 bg-primary/5 px-2 py-1 text-[11px] font-medium text-primary transition hover:bg-primary/10"
+                    >
+                      <Check className="h-3 w-3" />
+                      Aceitar sugestão: {PAY_MAP[SUGGESTED_PAYMENT[category]]?.label}
+                    </button>
                   )}
                 </div>
                 <div className="col-span-2 space-y-1.5">
