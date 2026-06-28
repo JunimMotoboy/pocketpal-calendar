@@ -207,43 +207,51 @@ function FixedExpensesPage() {
             <DialogHeader><DialogTitle>{editing ? "Editar despesa fixa" : "Cadastrar despesa fixa"}</DialogTitle></DialogHeader>
             <form onSubmit={submit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 space-y-2">
+                <div className="col-span-2 space-y-1.5">
                   <Label htmlFor="fx-name">Nome</Label>
-                  <Input id="fx-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Aluguel, Internet, Netflix..." required />
+                  <Input id="fx-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Aluguel, Internet, Netflix..." maxLength={80} aria-invalid={!!errors.name} required />
+                  {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="fx-amount">Valor (R$)</Label>
-                  <Input id="fx-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(formatBRLInput(e.target.value))} placeholder="0,00" required />
+                  <Input id="fx-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(formatBRLInput(e.target.value))} placeholder="0,00" aria-invalid={!!errors.amount} required />
+                  {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="fx-due">Dia do vencimento</Label>
-                  <Input id="fx-due" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required />
+                  <Input id="fx-due" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} aria-invalid={!!errors.dueDay} required />
+                  {errors.dueDay && <p className="text-xs text-destructive">{errors.dueDay}</p>}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="fx-cat">Categoria</Label>
-                  <Select value={category} onValueChange={(v) => setCategory(v as Category)}>
+                  <Select value={category} onValueChange={(v) => onCategoryChange(v as Category)}>
                     <SelectTrigger id="fx-cat"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="fx-pay">Forma de pagamento</Label>
-                  <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
+                  <Select value={paymentMethod} onValueChange={(v) => onPaymentChange(v as PaymentMethod)}>
                     <SelectTrigger id="fx-pay"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {PAYMENT_METHODS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                  {!editing && !paymentTouched && (
+                    <p className="text-[11px] text-muted-foreground">Sugerido para {CAT_MAP[category]?.label}</p>
+                  )}
                 </div>
-                <div className="col-span-2 space-y-2">
+                <div className="col-span-2 space-y-1.5">
                   <Label htmlFor="fx-email">E-mail para receber aviso</Label>
-                  <Input id="fx-email" type="email" value={notifyEmail} onChange={(e) => setNotifyEmail(e.target.value)} placeholder="voce@exemplo.com" required />
+                  <Input id="fx-email" type="email" value={notifyEmail} onChange={(e) => setNotifyEmail(e.target.value)} placeholder="voce@exemplo.com" aria-invalid={!!errors.notifyEmail} required />
+                  {errors.notifyEmail && <p className="text-xs text-destructive">{errors.notifyEmail}</p>}
                 </div>
-                <div className="col-span-2 space-y-2">
+                <div className="col-span-2 space-y-1.5">
                   <Label htmlFor="fx-notes">Observações</Label>
-                  <Input id="fx-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opcional" />
+                  <Input id="fx-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opcional" maxLength={300} aria-invalid={!!errors.notes} />
+                  {errors.notes && <p className="text-xs text-destructive">{errors.notes}</p>}
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={busy}>{busy ? "Salvando..." : editing ? "Atualizar" : "Salvar"}</Button>
