@@ -78,10 +78,12 @@ function FixedExpensesPage() {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<Category>("contas");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("boleto");
+  const [paymentTouched, setPaymentTouched] = useState(false);
   const [dueDay, setDueDay] = useState("10");
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [deleteTarget, setDeleteTarget] = useState<FixedItem | null>(null);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
@@ -98,8 +100,23 @@ function FixedExpensesPage() {
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [user]);
 
   const resetForm = () => {
-    setName(""); setAmount(""); setCategory("contas"); setPaymentMethod("boleto"); setDueDay("10");
+    const lastPay = (typeof window !== "undefined" ? localStorage.getItem(LAST_PAY_KEY) : null) as PaymentMethod | null;
+    setName(""); setAmount(""); setCategory("contas");
+    setPaymentMethod(lastPay && PAY_MAP[lastPay] ? lastPay : SUGGESTED_PAYMENT.contas);
+    setPaymentTouched(false);
+    setDueDay("10");
     setNotifyEmail(user?.email ?? ""); setNotes(""); setEditing(null);
+    setErrors({});
+  };
+
+  // Auto-sugerir forma de pagamento ao trocar categoria (apenas se usuário não escolheu manualmente)
+  const onCategoryChange = (v: Category) => {
+    setCategory(v);
+    if (!editing && !paymentTouched) setPaymentMethod(SUGGESTED_PAYMENT[v]);
+  };
+  const onPaymentChange = (v: PaymentMethod) => {
+    setPaymentMethod(v);
+    setPaymentTouched(true);
   };
 
   const openEdit = (it: FixedItem) => {
@@ -108,9 +125,11 @@ function FixedExpensesPage() {
     setAmount(formatBRLInput(String(Math.round(Number(it.amount) * 100))));
     setCategory(it.category);
     setPaymentMethod(it.payment_method ?? "boleto");
+    setPaymentTouched(true);
     setDueDay(String(it.due_day));
     setNotifyEmail(it.notify_email);
     setNotes(it.notes || "");
+    setErrors({});
     setOpen(true);
   };
 
@@ -118,12 +137,25 @@ function FixedExpensesPage() {
     e.preventDefault();
     const val = parseBRLInput(amount);
     const dd = parseInt(dueDay, 10);
-    if (!name.trim() || isNaN(val) || val <= 0 || isNaN(dd) || dd < 1 || dd > 31) {
-      toast.error("Preencha nome, valor e dia válidos."); return;
+    const parsed = fixedSchema.safeParse({
+      name,
+      amountCents: isNaN(val) ? 0 : Math.round(val * 100),
+      dueDay: isNaN(dd) ? 0 : dd,
+      notifyEmail,
+      notes: notes || undefined,
+    });
+    if (!parsed.success) {
+      const fe: FieldErrors = {};
+      for (const issue of parsed.error.issues) {
+        const k = issue.path[0];
+        if (k === "amountCents") fe.amount = issue.message;
+        else if (k === "name" || k === "dueDay" || k === "notifyEmail" || k === "notes") fe[k as keyof FieldErrors] = issue.message;
+      }
+      setErrors(fe);
+      toast.error("Revise os campos destacados.");
+      return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notifyEmail.trim())) {
-      toast.error("E-mail inválido."); return;
-    }
+    setErrors({});
     setBusy(true);
     const payload = {
       name: name.trim(), amount: val, category, payment_method: paymentMethod, due_day: dd,
@@ -134,6 +166,7 @@ function FixedExpensesPage() {
       : await supabase.from("fixed_expenses").insert({ ...(payload as object), user_id: user!.id } as never);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
+    try { localStorage.setItem(LAST_PAY_KEY, paymentMethod); } catch { /* ignore */ }
     toast.success(editing ? "Despesa atualizada!" : "Despesa fixa cadastrada!");
     resetForm(); setOpen(false); load();
   };
