@@ -4,8 +4,10 @@ import { addMonths, endOfMonth, format, isSameMonth, startOfMonth, subMonths } f
 import { ptBR } from "date-fns/locale";
 import {
   CalendarIcon, Plus, Trash2, TrendingUp, Search, ChevronLeft, ChevronRight,
-  Pencil, ArrowUp, ArrowDown, Minus, Filter,
+  Pencil, ArrowUp, ArrowDown, Minus, Filter, Download, FileText, FileSpreadsheet,
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { downloadIncomesCsv, downloadIncomesPdf } from "@/lib/export-incomes";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
