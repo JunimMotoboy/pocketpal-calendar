@@ -187,6 +187,28 @@ function IncomesPage() {
     setDeleteTarget(null);
   };
 
+  const handleExport = (kind: "csv" | "pdf") => {
+    if (filteredList.length === 0) return;
+    const periodLabel = format(anchor, "MMMM 'de' yyyy", { locale: ptBR });
+    const sourceLabel = sourceFilter === "all" ? "Todas as fontes" : INC_MAP[sourceFilter].label;
+    const total = filteredList.reduce((s, i) => s + Number(i.amount), 0);
+    const payload = {
+      items: filteredList.map((i) => ({
+        description: i.description,
+        amount: Number(i.amount),
+        source: i.source,
+        received_on: i.received_on,
+        notes: i.notes,
+      })),
+      periodLabel,
+      sourceLabel,
+      total,
+    };
+    if (kind === "csv") downloadIncomesCsv(payload);
+    else downloadIncomesPdf(payload);
+    toast.success(`Exportado ${filteredList.length} registro(s) em ${kind.toUpperCase()}`);
+  };
+
   if (loading || !user) return <div className="flex h-[60vh] items-center justify-center text-muted-foreground">Carregando...</div>;
 
   const monthLabel = format(anchor, "MMMM 'de' yyyy", { locale: ptBR });
