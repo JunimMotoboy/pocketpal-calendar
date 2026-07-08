@@ -4,8 +4,10 @@ import { addMonths, endOfMonth, format, isSameMonth, startOfMonth, subMonths } f
 import { ptBR } from "date-fns/locale";
 import {
   CalendarIcon, Plus, Trash2, TrendingUp, Search, ChevronLeft, ChevronRight,
-  Pencil, ArrowUp, ArrowDown, Minus, Filter,
+  Pencil, ArrowUp, ArrowDown, Minus, Filter, Download, FileText, FileSpreadsheet,
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { downloadIncomesCsv, downloadIncomesPdf } from "@/lib/export-incomes";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -183,6 +185,28 @@ function IncomesPage() {
     if (error) toast.error(error.message);
     else { toast.success("Entrada removida"); load(); }
     setDeleteTarget(null);
+  };
+
+  const handleExport = (kind: "csv" | "pdf") => {
+    if (filteredList.length === 0) return;
+    const periodLabel = format(anchor, "MMMM 'de' yyyy", { locale: ptBR });
+    const sourceLabel = sourceFilter === "all" ? "Todas as fontes" : INC_MAP[sourceFilter].label;
+    const total = filteredList.reduce((s, i) => s + Number(i.amount), 0);
+    const payload = {
+      items: filteredList.map((i) => ({
+        description: i.description,
+        amount: Number(i.amount),
+        source: i.source,
+        received_on: i.received_on,
+        notes: i.notes,
+      })),
+      periodLabel,
+      sourceLabel,
+      total,
+    };
+    if (kind === "csv") downloadIncomesCsv(payload);
+    else downloadIncomesPdf(payload);
+    toast.success(`Exportado ${filteredList.length} registro(s) em ${kind.toUpperCase()}`);
   };
 
   if (loading || !user) return <div className="flex h-[60vh] items-center justify-center text-muted-foreground">Carregando...</div>;
@@ -373,13 +397,30 @@ function IncomesPage() {
         <CardHeader className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-base capitalize">Entradas de {format(anchor, "MMMM", { locale: ptBR })}</CardTitle>
-            {sourceFilter !== "all" && (
-              <Badge variant="secondary" className="gap-1">
-                <Filter className="h-3 w-3" />
-                {INC_MAP[sourceFilter].label}
-                <button onClick={() => setSourceFilter("all")} className="ml-1 opacity-70 hover:opacity-100" aria-label="Limpar filtro">×</button>
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {sourceFilter !== "all" && (
+                <Badge variant="secondary" className="gap-1">
+                  <Filter className="h-3 w-3" />
+                  {INC_MAP[sourceFilter].label}
+                  <button onClick={() => setSourceFilter("all")} className="ml-1 opacity-70 hover:opacity-100" aria-label="Limpar filtro">×</button>
+                </Badge>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={filteredList.length === 0} className="gap-1">
+                    <Download className="h-4 w-4" /> Exportar
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleExport("csv")}>
+                    <FileSpreadsheet className="mr-2 h-4 w-4" /> Baixar CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("pdf")}>
+                    <FileText className="mr-2 h-4 w-4" /> Baixar PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
           {monthItems.length > 0 && (
             <div className="flex flex-wrap gap-2">
