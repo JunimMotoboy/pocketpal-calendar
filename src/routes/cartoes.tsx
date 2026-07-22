@@ -101,38 +101,43 @@ function CardsPage() {
 
   const load = async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from("cards")
-      .select("id, name, limit_amount, due_day, closing_day, notes, initial_used")
-      .order("created_at", { ascending: false });
-    if (error) { toast.error(error.message); return; }
-    setItems((data ?? []) as CardItem[]);
-
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - 24);
     const cutoffISO = cutoff.toISOString().slice(0, 10);
-    const { data: exp } = await supabase
-      .from("expenses")
-      .select("id, card_id, description, amount, spent_on")
-      .eq("payment_method", "credito")
-      .not("card_id", "is", null)
-      .gte("spent_on", cutoffISO);
+
+    // Paraleliza todas as leituras — antes eram 4 requests em série.
+    const [cardsRes, expRes, instRes, paidRes] = await Promise.all([
+      supabase
+        .from("cards")
+        .select("id, name, limit_amount, due_day, closing_day, notes, initial_used")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("expenses")
+        .select("id, card_id, description, amount, spent_on")
+        .eq("payment_method", "credito")
+        .not("card_id", "is", null)
+        .gte("spent_on", cutoffISO),
+      supabase
+        .from("card_installments")
+        .select("id, card_id, description, installment_value, remaining_count, start_month")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("card_installment_payments")
+        .select("id, installment_id, month_key"),
+    ]);
+
+    if (cardsRes.error) { toast.error(cardsRes.error.message); return; }
+    setItems((cardsRes.data ?? []) as CardItem[]);
+
     setAllExpenses(
-      ((exp ?? []) as { id: string; card_id: string; description: string; amount: number; spent_on: string }[])
+      ((expRes.data ?? []) as { id: string; card_id: string; description: string; amount: number; spent_on: string }[])
         .map((e) => ({ ...e, amount: Number(e.amount) })),
     );
 
-    const { data: inst } = await supabase
-      .from("card_installments")
-      .select("id, card_id, description, installment_value, remaining_count, start_month")
-      .order("created_at", { ascending: false });
-    setInstallments((inst ?? []) as Installment[]);
+    setInstallments((instRes.data ?? []) as Installment[]);
 
-    const { data: paid } = await supabase
-      .from("card_installment_payments")
-      .select("id, installment_id, month_key");
     const map: Record<string, string> = {};
-    for (const p of (paid ?? []) as { id: string; installment_id: string; month_key: string }[]) {
+    for (const p of (paidRes.data ?? []) as { id: string; installment_id: string; month_key: string }[]) {
       map[`${p.installment_id}|${p.month_key}`] = p.id;
     }
     setPaidInstallments(map);
