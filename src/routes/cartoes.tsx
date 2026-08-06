@@ -44,10 +44,11 @@ function CardsPage() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
   const [viewMonth, setViewMonth] = useState<Date>(new Date());
-  const viewMonthKey = `${viewMonth.getFullYear()}-${String(viewMonth.getMonth() + 1).padStart(2, "0")}`;
+  const viewMonthKey = monthKeyOf(viewMonth);
   const viewMonthLabel = viewMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
   const [items, setItems] = useState<CardItem[]>([]);
-  const [allExpenses, setAllExpenses] = useState<{ id: string; card_id: string; description: string; amount: number; spent_on: string }[]>([]);
+  const [allExpenses, setAllExpenses] = useState<CardExpense[]>([]);
+
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [paidInstallments, setPaidInstallments] = useState<Record<string, string>>({});
   const [open, setOpen] = useState(false);
