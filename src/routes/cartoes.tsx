@@ -1,17 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  CreditCard, Plus, Pencil, Trash2, ListPlus, ChevronLeft, ChevronRight,
-  AlertTriangle, Search, Download, CheckCircle2, Clock, TrendingUp,
+  CreditCard, Plus, ChevronLeft, ChevronRight, Search, TrendingUp,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -19,10 +16,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { formatBRL } from "@/lib/categories";
 import { formatBRLInput, parseBRLInput } from "@/lib/currency";
-import { detectCardBrand, BRAND_LABEL, BRAND_GRADIENT } from "@/lib/card-brand";
+import { detectCardBrand, BRAND_GRADIENT } from "@/lib/card-brand";
 import { downloadInvoiceCsv } from "@/lib/export-invoice";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
+import { CardPanel } from "@/components/cards/card-panel";
+import {
+  installmentIncludesMonth, monthKeyOf,
+  type CardExpense, type CardItem, type Installment,
+} from "@/components/cards/types";
 
 export const Route = createFileRoute("/cartoes")({
   head: () => ({
@@ -34,34 +36,9 @@ export const Route = createFileRoute("/cartoes")({
   component: CardsPage,
 });
 
-type CardItem = {
-  id: string;
-  name: string;
-  limit_amount: number;
-  due_day: number;
-  closing_day: number | null;
-  notes: string | null;
-  initial_used: number;
-};
-
-type Installment = {
-  id: string;
-  card_id: string;
-  description: string;
-  installment_value: number;
-  remaining_count: number;
-  start_month: string;
-};
-
 const today = new Date();
-const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+const currentMonthKey = monthKeyOf(today);
 
-function installmentIncludesMonth(inst: Installment, monthKey: string): boolean {
-  const [sy, sm] = inst.start_month.split("-").map(Number);
-  const [ty, tm] = monthKey.split("-").map(Number);
-  const diff = (ty - sy) * 12 + (tm - sm);
-  return diff >= 0 && diff < inst.remaining_count;
-}
 
 function CardsPage() {
   const { user, loading } = useAuth();
