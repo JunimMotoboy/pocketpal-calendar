@@ -62,25 +62,52 @@ export function CardPanel({
   const pct = c.limit_amount > 0 ? Math.min(100, (invoice / Number(c.limit_amount)) * 100) : 0;
   const remaining = Number(c.limit_amount) - invoice;
   const danger = pct >= 80;
-  const pendingCount = monthInstallments.filter((i) => !paidInstallments[`${i.id}|${viewMonthKey}`]).length;
+  const pendingCount = monthInstallments.filter(
+    (i) => !paidInstallments[`${i.id}|${viewMonthKey}`],
+  ).length;
 
   return (
     <Card className="group min-w-[88vw] shrink-0 snap-center overflow-hidden rounded-3xl border-border/60 shadow-[var(--shadow-soft)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-elegant)] sm:min-w-0 sm:shrink">
-      <CreditCardVisual name={c.name} dueDay={c.due_day} brand={brand} daysUntilDue={daysUntilDue} />
+      <CreditCardVisual
+        name={c.name}
+        dueDay={c.due_day}
+        brand={brand}
+        daysUntilDue={daysUntilDue}
+      />
 
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pt-4">
         <CardTitle className="text-sm font-bold leading-none">
           Fatura ·{" "}
-          <span className="capitalize">{viewMonth.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")}</span>
+          <span className="capitalize">
+            {viewMonth.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")}
+          </span>
         </CardTitle>
         <div className="flex">
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => onExportCsv(c)} aria-label="Exportar CSV">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full"
+            onClick={() => onExportCsv(c)}
+            aria-label="Exportar CSV"
+          >
             <Download className="h-3.5 w-3.5 text-muted-foreground" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => onEditCard(c)} aria-label="Editar">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full"
+            onClick={() => onEditCard(c)}
+            aria-label="Editar"
+          >
             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => onDeleteCard(c)} aria-label="Remover">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full"
+            onClick={() => onDeleteCard(c)}
+            aria-label="Remover"
+          >
             <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
           </Button>
         </div>
@@ -89,11 +116,17 @@ export function CardPanel({
       <CardContent className="space-y-4">
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-2xl font-extrabold tabular-nums tracking-tight">{formatBRL(invoice)}</p>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total do mês</p>
+            <p className="text-2xl font-extrabold tabular-nums tracking-tight">
+              {formatBRL(invoice)}
+            </p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Total do mês
+            </p>
           </div>
           <div className="text-right">
-            <p className={`text-base font-bold tabular-nums ${remaining >= 0 ? "text-success" : "text-destructive"}`}>
+            <p
+              className={`text-base font-bold tabular-nums ${remaining >= 0 ? "text-success" : "text-destructive"}`}
+            >
               {formatBRL(Math.abs(remaining))}
             </p>
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -105,7 +138,10 @@ export function CardPanel({
           <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
             <div
               className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${danger ? "bg-destructive" : ""}`}
-              style={{ width: `${pct}%`, backgroundImage: danger ? undefined : BRAND_GRADIENT[brand] }}
+              style={{
+                width: `${pct}%`,
+                backgroundImage: danger ? undefined : BRAND_GRADIENT[brand],
+              }}
             />
           </div>
           <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground">
@@ -114,7 +150,10 @@ export function CardPanel({
           </div>
         </div>
         {danger && (
-          <p role="alert" className="flex items-center gap-1.5 rounded-xl bg-destructive/10 px-2.5 py-1.5 text-xs font-semibold text-destructive">
+          <p
+            role="alert"
+            className="flex items-center gap-1.5 rounded-xl bg-destructive/10 px-2.5 py-1.5 text-xs font-semibold text-destructive"
+          >
             <AlertTriangle className="h-3.5 w-3.5" aria-hidden /> Limite quase atingido
           </p>
         )}
@@ -125,7 +164,9 @@ export function CardPanel({
             <TabsTrigger value="parcelas">
               Parcelas{" "}
               {pendingCount > 0 && (
-                <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">{pendingCount}</span>
+                <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                  {pendingCount}
+                </span>
               )}
             </TabsTrigger>
             <TabsTrigger value="hist">Histórico</TabsTrigger>

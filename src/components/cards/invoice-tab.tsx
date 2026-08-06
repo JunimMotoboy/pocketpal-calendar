@@ -1,5 +1,11 @@
 import { formatBRL } from "@/lib/categories";
-import { installmentIncludesMonth, monthKeyOf, type CardExpense, type CardItem, type Installment } from "./types";
+import {
+  installmentIncludesMonth,
+  monthKeyOf,
+  type CardExpense,
+  type CardItem,
+  type Installment,
+} from "./types";
 
 type Props = {
   card: CardItem;
@@ -47,11 +53,15 @@ export function InvoiceTab({
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
-          <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Parcelas</p>
+          <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+            Parcelas
+          </p>
           <p className="mt-0.5 text-sm font-bold tabular-nums">{formatBRL(instMonth)}</p>
         </div>
         <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
-          <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Compras</p>
+          <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+            Compras
+          </p>
           <p className="mt-0.5 text-sm font-bold tabular-nums">{formatBRL(spentInMonth)}</p>
         </div>
       </div>
@@ -59,7 +69,9 @@ export function InvoiceTab({
       {invoice > 0 && (
         <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Sugestão de pagamento</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
+              Sugestão de pagamento
+            </p>
             {aboveAvg && (
               <span className="rounded-md bg-accent/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-accent">
                 Acima da média
@@ -68,12 +80,18 @@ export function InvoiceTab({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-xl bg-background/70 px-3 py-2">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Mínimo (15%)</p>
+              <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+                Mínimo (15%)
+              </p>
               <p className="mt-0.5 text-sm font-bold tabular-nums">{formatBRL(minPay)}</p>
             </div>
             <div className="rounded-xl bg-primary/15 px-3 py-2 ring-1 ring-primary/30">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-primary">Recomendado</p>
-              <p className="mt-0.5 text-sm font-bold tabular-nums text-primary">{formatBRL(invoice)}</p>
+              <p className="text-[9px] font-bold uppercase tracking-wider text-primary">
+                Recomendado
+              </p>
+              <p className="mt-0.5 text-sm font-bold tabular-nums text-primary">
+                {formatBRL(invoice)}
+              </p>
             </div>
           </div>
           {histAvg > 0 && (

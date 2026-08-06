@@ -12,7 +12,11 @@ export function HistoryTab({ cardInstallments, paidInstallments }: Props) {
     for (const key of Object.keys(paidInstallments)) {
       const [instId, mk] = key.split("|");
       if (instId !== i.id) continue;
-      (byMonth[mk] ||= []).push({ id: i.id, description: i.description, value: Number(i.installment_value) });
+      (byMonth[mk] ||= []).push({
+        id: i.id,
+        description: i.description,
+        value: Number(i.installment_value),
+      });
     }
   }
   const months = Object.keys(byMonth).sort((a, b) => b.localeCompare(a));
@@ -24,7 +28,10 @@ export function HistoryTab({ cardInstallments, paidInstallments }: Props) {
     <div className="space-y-2">
       {months.map((mk) => {
         const [y, m] = mk.split("-").map(Number);
-        const label = new Date(y, m - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+        const label = new Date(y, m - 1, 1).toLocaleDateString("pt-BR", {
+          month: "long",
+          year: "numeric",
+        });
         const list = byMonth[mk];
         const totalPaid = list.reduce((s, x) => s + x.value, 0);
         let pending = 0;
@@ -45,7 +52,10 @@ export function HistoryTab({ cardInstallments, paidInstallments }: Props) {
             </div>
             <ul className="mt-1 space-y-0.5 pl-3">
               {list.map((p) => (
-                <li key={`${mk}-${p.id}`} className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <li
+                  key={`${mk}-${p.id}`}
+                  className="flex items-center justify-between text-[11px] text-muted-foreground"
+                >
                   <span className="truncate">• {p.description}</span>
                   <span className="tabular-nums">{formatBRL(p.value)}</span>
                 </li>
