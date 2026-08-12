@@ -31,6 +31,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { useNavCounts } from "@/hooks/use-nav-counts";
 import { cn } from "@/lib/utils";
+import { logAudit } from "@/lib/audit";
 
 const FAVORITOS = [
   { to: "/", label: "Painel", icon: CalIcon },
