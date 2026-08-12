@@ -52,6 +52,7 @@ const MAIS = [
   { to: "/investimentos", label: "Investimentos", icon: TrendingDown },
   { to: "/orcamentos", label: "Orçamentos", icon: Target },
   { to: "/metas", label: "Metas", icon: Trophy },
+  { to: "/auditoria", label: "Auditoria", icon: ShieldCheck },
 ] as const;
 
 export function AppSidebar() {
