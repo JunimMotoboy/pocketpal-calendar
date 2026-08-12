@@ -39,6 +39,7 @@ import { usePersonalization } from "@/hooks/use-personalization";
 import { useNavCounts } from "@/hooks/use-nav-counts";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { logAudit } from "@/lib/audit";
 
 
 const FAVORITOS = [
