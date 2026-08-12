@@ -142,6 +142,7 @@ export function AppSidebar() {
 
 
   const handleLogout = async () => {
+    await logAudit("logout", "Sessão encerrada pelo usuário", { resource: "auth" });
     await supabase.auth.signOut();
     nav({ to: "/auth" });
   };
