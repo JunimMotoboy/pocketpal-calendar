@@ -206,6 +206,10 @@ function IncomesPage() {
     };
     if (kind === "csv") downloadIncomesCsv(payload);
     else downloadIncomesPdf(payload);
+    void logAudit("data_export", `Exportação de entradas em ${kind.toUpperCase()} (${filteredList.length} registros)`, {
+      resource: "entradas",
+      metadata: { format: kind, count: filteredList.length, total },
+    });
     toast.success(`Exportado ${filteredList.length} registro(s) em ${kind.toUpperCase()}`);
   };
 
