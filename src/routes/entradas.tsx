@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { downloadIncomesCsv, downloadIncomesPdf } from "@/lib/export-incomes";
+import { logAudit } from "@/lib/audit";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -206,6 +207,10 @@ function IncomesPage() {
     };
     if (kind === "csv") downloadIncomesCsv(payload);
     else downloadIncomesPdf(payload);
+    void logAudit("data_export", `Exportação de entradas em ${kind.toUpperCase()} (${filteredList.length} registros)`, {
+      resource: "entradas",
+      metadata: { format: kind, count: filteredList.length, total },
+    });
     toast.success(`Exportado ${filteredList.length} registro(s) em ${kind.toUpperCase()}`);
   };
 

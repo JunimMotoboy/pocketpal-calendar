@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          actor_email: string | null
+          created_at: string
+          description: string
+          event: Database["public"]["Enums"]["audit_event"]
+          id: string
+          ip_address: string | null
+          metadata: Json
+          resource: string | null
+          target_user_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          actor_email?: string | null
+          created_at?: string
+          description: string
+          event: Database["public"]["Enums"]["audit_event"]
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          resource?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          actor_email?: string | null
+          created_at?: string
+          description?: string
+          event?: Database["public"]["Enums"]["audit_event"]
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          resource?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       card_installment_payments: {
         Row: {
           created_at: string
@@ -650,6 +692,16 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      audit_event:
+        | "login"
+        | "login_failed"
+        | "logout"
+        | "password_reset"
+        | "permission_change"
+        | "sensitive_data_access"
+        | "data_export"
+        | "account_suspension"
+        | "profile_update"
       expense_category:
         | "comida"
         | "contas"
@@ -814,6 +866,17 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      audit_event: [
+        "login",
+        "login_failed",
+        "logout",
+        "password_reset",
+        "permission_change",
+        "sensitive_data_access",
+        "data_export",
+        "account_suspension",
+        "profile_update",
+      ],
       expense_category: [
         "comida",
         "contas",

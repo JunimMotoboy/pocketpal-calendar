@@ -19,6 +19,7 @@ import { Route as EntradasRouteImport } from './routes/entradas'
 import { Route as DespesasFixasRouteImport } from './routes/despesas-fixas'
 import { Route as CartoesRouteImport } from './routes/cartoes'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicSendFixedExpenseRemindersRouteImport } from './routes/api/public/send-fixed-expense-reminders'
@@ -74,6 +75,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuditoriaRoute = AuditoriaRouteImport.update({
+  id: '/auditoria',
+  path: '/auditoria',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -100,6 +106,7 @@ const LovableEmailQueueProcessRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/auditoria': typeof AuditoriaRoute
   '/auth': typeof AuthRoute
   '/cartoes': typeof CartoesRoute
   '/despesas-fixas': typeof DespesasFixasRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/auditoria': typeof AuditoriaRoute
   '/auth': typeof AuthRoute
   '/cartoes': typeof CartoesRoute
   '/despesas-fixas': typeof DespesasFixasRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/auditoria': typeof AuditoriaRoute
   '/auth': typeof AuthRoute
   '/cartoes': typeof CartoesRoute
   '/despesas-fixas': typeof DespesasFixasRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/auditoria'
     | '/auth'
     | '/cartoes'
     | '/despesas-fixas'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/auditoria'
     | '/auth'
     | '/cartoes'
     | '/despesas-fixas'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/auditoria'
     | '/auth'
     | '/cartoes'
     | '/despesas-fixas'
@@ -200,6 +212,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AuditoriaRoute: typeof AuditoriaRoute
   AuthRoute: typeof AuthRoute
   CartoesRoute: typeof CartoesRoute
   DespesasFixasRoute: typeof DespesasFixasRoute
@@ -286,6 +299,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auditoria': {
+      id: '/auditoria'
+      path: '/auditoria'
+      fullPath: '/auditoria'
+      preLoaderRoute: typeof AuditoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -320,6 +340,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AuditoriaRoute: AuditoriaRoute,
   AuthRoute: AuthRoute,
   CartoesRoute: CartoesRoute,
   DespesasFixasRoute: DespesasFixasRoute,

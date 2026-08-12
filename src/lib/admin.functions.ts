@@ -23,6 +23,13 @@ export const listAppUsers = createServerFn({ method: "POST" })
       perPage: 200,
     });
     if (error) throw new Error(error.message);
+    await context.supabase.from("audit_logs").insert({
+      user_id: context.userId,
+      actor_email: (context.claims as { email?: string }).email ?? null,
+      event: "sensitive_data_access",
+      description: `Consulta à lista de usuários (${data.users.length} registros)`,
+      resource: "admin/usuarios",
+    });
     return {
       users: data.users.map((u) => ({
         id: u.id,
@@ -48,6 +55,16 @@ export const setUserSuspension = createServerFn({ method: "POST" })
       ban_duration: data.suspend ? "876000h" : "none",
     } as any);
     if (error) throw new Error(error.message);
+    await context.supabase.from("audit_logs").insert({
+      user_id: context.userId,
+      actor_email: (context.claims as { email?: string }).email ?? null,
+      event: "account_suspension",
+      description: data.suspend
+        ? "Conta de usuário suspensa por administrador"
+        : "Conta de usuário reativada por administrador",
+      resource: "admin/usuarios",
+      target_user_id: data.userId,
+    });
     return { ok: true };
   });
 

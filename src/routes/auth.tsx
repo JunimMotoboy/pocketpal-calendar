@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Sparkles, Mail, Lock, User as UserIcon, Eye, EyeOff, Check, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { logAudit } from "@/lib/audit";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -155,6 +156,7 @@ function AuthPage() {
       triggerShake("login");
       toast.error(translateAuthError(error.message));
     } else {
+      void logAudit("login", "Login com e-mail e senha realizado", { resource: "auth" });
       nav({ to: "/" });
     }
   };

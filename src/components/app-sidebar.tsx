@@ -10,6 +10,7 @@ import {
   CreditCard,
   CalendarClock,
   Shield,
+  ShieldCheck,
   Moon,
   Sun,
   Trophy,
@@ -38,6 +39,7 @@ import { usePersonalization } from "@/hooks/use-personalization";
 import { useNavCounts } from "@/hooks/use-nav-counts";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { logAudit } from "@/lib/audit";
 
 
 const FAVORITOS = [
@@ -52,6 +54,7 @@ const MAIS = [
   { to: "/investimentos", label: "Investimentos", icon: TrendingDown },
   { to: "/orcamentos", label: "Orçamentos", icon: Target },
   { to: "/metas", label: "Metas", icon: Trophy },
+  { to: "/auditoria", label: "Auditoria", icon: ShieldCheck },
 ] as const;
 
 export function AppSidebar() {
@@ -140,6 +143,7 @@ export function AppSidebar() {
 
 
   const handleLogout = async () => {
+    await logAudit("logout", "Sessão encerrada pelo usuário", { resource: "auth" });
     await supabase.auth.signOut();
     nav({ to: "/auth" });
   };
