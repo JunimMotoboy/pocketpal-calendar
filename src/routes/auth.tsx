@@ -155,6 +155,7 @@ function AuthPage() {
       triggerShake("login");
       toast.error(translateAuthError(error.message));
     } else {
+      void logAudit("login", "Login com e-mail e senha realizado", { resource: "auth" });
       nav({ to: "/" });
     }
   };
