@@ -10,6 +10,7 @@ import {
   CreditCard,
   CalendarClock,
   Shield,
+  ShieldCheck,
   Moon,
   Sun,
   Trophy,
