@@ -74,7 +74,7 @@ export const listAuditLogs = createServerFn({ method: "POST" })
     let query = context.supabase
       .from("audit_logs")
       .select(
-        "id, user_id, actor_email, event, description, resource, target_user_id, ip_address, user_agent, created_at"
+        "id, user_id, actor_email, event, description, resource, target_user_id, metadata, ip_address, user_agent, created_at"
       )
       .gte("created_at", since)
       .order("created_at", { ascending: false })

@@ -3,7 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import {
   ShieldCheck, LogIn, LogOut, KeyRound, UserCog, Eye, Download, Ban,
-  UserPen, Loader2, Search, RefreshCw, TriangleAlert,
+  UserPen, Loader2, Search, RefreshCw, TriangleAlert, FileText, FileSpreadsheet,
+  Globe, Monitor, Boxes, Copy,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,9 +14,13 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listAuditLogs } from "@/lib/audit.functions";
 import { AUDIT_LABELS, type AuditEvent } from "@/lib/audit";
+import { downloadAuditCsv, downloadAuditPdf } from "@/lib/export-audit";
 import { EmptyState } from "@/components/empty-state";
 import { toast } from "sonner";
 
@@ -41,6 +46,7 @@ type LogRow = {
   description: string;
   resource: string | null;
   target_user_id: string | null;
+  metadata?: Record<string, unknown> | null;
   ip_address: string | null;
   user_agent: string | null;
   created_at: string;
@@ -84,7 +90,9 @@ function AuditPage() {
   const [busy, setBusy] = useState(true);
   const [days, setDays] = useState(30);
   const [eventFilter, setEventFilter] = useState<string>("all");
+  const [userFilter, setUserFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [detail, setDetail] = useState<LogRow | null>(null);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
@@ -115,14 +123,47 @@ function AuditPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return logs;
-    return logs.filter(
-      (l) =>
+    return logs.filter((l) => {
+      if (userFilter !== "all" && l.user_id !== userFilter) return false;
+      if (!q) return true;
+      return (
         l.description.toLowerCase().includes(q) ||
         (l.actor_email ?? "").toLowerCase().includes(q) ||
         (l.resource ?? "").toLowerCase().includes(q)
-    );
-  }, [logs, search]);
+      );
+    });
+  }, [logs, search, userFilter]);
+
+  const userOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const l of logs) map.set(l.user_id, l.actor_email ?? l.user_id.slice(0, 8));
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [logs]);
+
+  const periodLabel = days === 365 ? "Ultimo ano" : `Ultimos ${days} dias`;
+  const eventLabel =
+    eventFilter === "all" ? "Todos os eventos" : AUDIT_LABELS[eventFilter as AuditEvent] ?? eventFilter;
+  const userLabel =
+    userFilter === "all"
+      ? "Todos os usuarios"
+      : userOptions.find(([id]) => id === userFilter)?.[1] ?? userFilter;
+
+  const exportOpts = () => ({
+    items: filtered,
+    periodLabel,
+    eventLabel,
+    userLabel,
+  });
+
+  const handleExport = (kind: "csv" | "pdf") => {
+    if (filtered.length === 0) {
+      toast.error("Nenhum evento para exportar");
+      return;
+    }
+    if (kind === "csv") downloadAuditCsv(exportOpts());
+    else downloadAuditPdf(exportOpts());
+    toast.success(`Trilha exportada em ${kind.toUpperCase()}`);
+  };
 
   const kpis = useMemo(() => {
     const count = (e: string) => filtered.filter((l) => l.event === e).length;
@@ -219,8 +260,27 @@ function AuditPage() {
             <SelectItem value="365">1 ano</SelectItem>
           </SelectContent>
         </Select>
+        {isAdmin && userOptions.length > 1 && (
+          <Select value={userFilter} onValueChange={setUserFilter}>
+            <SelectTrigger className="w-[200px]" aria-label="Filtrar por usuário">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os usuários</SelectItem>
+              {userOptions.map(([id, email]) => (
+                <SelectItem key={id} value={id}>{email}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Button variant="outline" size="icon" onClick={load} aria-label="Atualizar trilha" disabled={busy}>
           <RefreshCw className={busy ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => handleExport("csv")} disabled={busy}>
+          <FileSpreadsheet className="mr-1.5 h-4 w-4" /> CSV
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => handleExport("pdf")} disabled={busy}>
+          <FileText className="mr-1.5 h-4 w-4" /> PDF
         </Button>
       </div>
 
@@ -245,7 +305,16 @@ function AuditPage() {
             {filtered.map((l) => {
               const Icon = EVENT_ICONS[l.event] ?? ShieldCheck;
               return (
-                <Card key={l.id}>
+                <Card
+                  key={l.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setDetail(l)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDetail(l); }
+                  }}
+                  className="cursor-pointer transition-colors hover:border-primary/50 hover:bg-accent/40"
+                >
                   <CardContent className="flex items-start gap-3 py-3">
                     <span className={`mt-0.5 rounded-lg p-2 ${EVENT_TONE[l.event] ?? "bg-muted text-muted-foreground"}`}>
                       <Icon className="h-4 w-4" />
@@ -262,6 +331,7 @@ function AuditPage() {
                         {l.ip_address ? ` · IP ${l.ip_address}` : ""}
                       </p>
                     </div>
+                    <span className="mt-1 shrink-0 text-xs text-muted-foreground">detalhes</span>
                   </CardContent>
                 </Card>
               );
@@ -280,10 +350,15 @@ function AuditPage() {
                 </CardHeader>
                 <CardContent className="space-y-1.5">
                   {info.logs.slice(0, 8).map((l) => (
-                    <p key={l.id} className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <button
+                      key={l.id}
+                      type="button"
+                      onClick={() => setDetail(l)}
+                      className="flex w-full flex-wrap items-center gap-2 rounded-md px-1 py-0.5 text-left text-xs text-muted-foreground hover:bg-accent/50"
+                    >
                       <span className="font-medium text-foreground">{AUDIT_LABELS[l.event as AuditEvent] ?? l.event}</span>
                       {l.description} · {fmt(l.created_at)}
-                    </p>
+                    </button>
                   ))}
                   {info.logs.length > 8 && (
                     <p className="text-xs text-muted-foreground">+ {info.logs.length - 8} evento(s) anteriores</p>
@@ -294,6 +369,85 @@ function AuditPage() {
           </TabsContent>
         </Tabs>
       )}
+
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          {detail && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  {(() => {
+                    const Icon = EVENT_ICONS[detail.event] ?? ShieldCheck;
+                    return (
+                      <span className={`rounded-lg p-2 ${EVENT_TONE[detail.event] ?? "bg-muted text-muted-foreground"}`}>
+                        <Icon className="h-4 w-4" />
+                      </span>
+                    );
+                  })()}
+                  {AUDIT_LABELS[detail.event as AuditEvent] ?? detail.event}
+                </DialogTitle>
+                <DialogDescription>{detail.description}</DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-3 text-sm">
+                <DetailRow icon={ShieldCheck} label="Data e hora" value={fmt(detail.created_at)} />
+                <DetailRow icon={UserPen} label="Usuário" value={detail.actor_email ?? detail.user_id} />
+                <DetailRow icon={Boxes} label="Recurso afetado" value={detail.resource ?? "—"} />
+                <DetailRow
+                  icon={UserCog}
+                  label="Usuário alvo"
+                  value={detail.target_user_id ?? "—"}
+                />
+                <DetailRow icon={Globe} label="Endereço IP" value={detail.ip_address ?? "—"} />
+                <DetailRow icon={Monitor} label="User agent" value={detail.user_agent ?? "—"} />
+
+                <div>
+                  <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    <Copy className="h-3.5 w-3.5" /> Payload do evento
+                  </p>
+                  <pre className="max-h-52 overflow-auto rounded-lg bg-muted p-3 text-xs">
+                    {JSON.stringify(detail.metadata ?? {}, null, 2)}
+                  </pre>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => {
+                      navigator.clipboard
+                        .writeText(JSON.stringify(detail, null, 2))
+                        .then(() => toast.success("Detalhes copiados"))
+                        .catch(() => toast.error("Não foi possível copiar"));
+                    }}
+                  >
+                    <Copy className="mr-1.5 h-4 w-4" /> Copiar evento
+                  </Button>
+                </div>
+
+                <p className="text-xs text-muted-foreground">ID do evento: {detail.id}</p>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </main>
+  );
+}
+
+function DetailRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof LogIn;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3 border-b border-border/60 pb-2">
+      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Icon className="h-3.5 w-3.5" /> {label}
+      </span>
+      <span className="max-w-[60%] break-words text-right text-xs font-medium">{value}</span>
+    </div>
   );
 }
