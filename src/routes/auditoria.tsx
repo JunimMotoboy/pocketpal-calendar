@@ -305,7 +305,16 @@ function AuditPage() {
             {filtered.map((l) => {
               const Icon = EVENT_ICONS[l.event] ?? ShieldCheck;
               return (
-                <Card key={l.id}>
+                <Card
+                  key={l.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setDetail(l)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDetail(l); }
+                  }}
+                  className="cursor-pointer transition-colors hover:border-primary/50 hover:bg-accent/40"
+                >
                   <CardContent className="flex items-start gap-3 py-3">
                     <span className={`mt-0.5 rounded-lg p-2 ${EVENT_TONE[l.event] ?? "bg-muted text-muted-foreground"}`}>
                       <Icon className="h-4 w-4" />
@@ -322,6 +331,7 @@ function AuditPage() {
                         {l.ip_address ? ` · IP ${l.ip_address}` : ""}
                       </p>
                     </div>
+                    <span className="mt-1 shrink-0 text-xs text-muted-foreground">detalhes</span>
                   </CardContent>
                 </Card>
               );
