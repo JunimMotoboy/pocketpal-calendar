@@ -260,8 +260,27 @@ function AuditPage() {
             <SelectItem value="365">1 ano</SelectItem>
           </SelectContent>
         </Select>
+        {isAdmin && userOptions.length > 1 && (
+          <Select value={userFilter} onValueChange={setUserFilter}>
+            <SelectTrigger className="w-[200px]" aria-label="Filtrar por usuário">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os usuários</SelectItem>
+              {userOptions.map(([id, email]) => (
+                <SelectItem key={id} value={id}>{email}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Button variant="outline" size="icon" onClick={load} aria-label="Atualizar trilha" disabled={busy}>
           <RefreshCw className={busy ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => handleExport("csv")} disabled={busy}>
+          <FileSpreadsheet className="mr-1.5 h-4 w-4" /> CSV
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => handleExport("pdf")} disabled={busy}>
+          <FileText className="mr-1.5 h-4 w-4" /> PDF
         </Button>
       </div>
 
