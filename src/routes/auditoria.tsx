@@ -90,7 +90,9 @@ function AuditPage() {
   const [busy, setBusy] = useState(true);
   const [days, setDays] = useState(30);
   const [eventFilter, setEventFilter] = useState<string>("all");
+  const [userFilter, setUserFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [detail, setDetail] = useState<LogRow | null>(null);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
