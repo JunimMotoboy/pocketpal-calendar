@@ -123,14 +123,47 @@ function AuditPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return logs;
-    return logs.filter(
-      (l) =>
+    return logs.filter((l) => {
+      if (userFilter !== "all" && l.user_id !== userFilter) return false;
+      if (!q) return true;
+      return (
         l.description.toLowerCase().includes(q) ||
         (l.actor_email ?? "").toLowerCase().includes(q) ||
         (l.resource ?? "").toLowerCase().includes(q)
-    );
-  }, [logs, search]);
+      );
+    });
+  }, [logs, search, userFilter]);
+
+  const userOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const l of logs) map.set(l.user_id, l.actor_email ?? l.user_id.slice(0, 8));
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [logs]);
+
+  const periodLabel = days === 365 ? "Ultimo ano" : `Ultimos ${days} dias`;
+  const eventLabel =
+    eventFilter === "all" ? "Todos os eventos" : AUDIT_LABELS[eventFilter as AuditEvent] ?? eventFilter;
+  const userLabel =
+    userFilter === "all"
+      ? "Todos os usuarios"
+      : userOptions.find(([id]) => id === userFilter)?.[1] ?? userFilter;
+
+  const exportOpts = () => ({
+    items: filtered,
+    periodLabel,
+    eventLabel,
+    userLabel,
+  });
+
+  const handleExport = (kind: "csv" | "pdf") => {
+    if (filtered.length === 0) {
+      toast.error("Nenhum evento para exportar");
+      return;
+    }
+    if (kind === "csv") downloadAuditCsv(exportOpts());
+    else downloadAuditPdf(exportOpts());
+    toast.success(`Trilha exportada em ${kind.toUpperCase()}`);
+  };
 
   const kpis = useMemo(() => {
     const count = (e: string) => filtered.filter((l) => l.event === e).length;
