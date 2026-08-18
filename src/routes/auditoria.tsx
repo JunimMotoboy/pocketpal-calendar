@@ -46,6 +46,7 @@ type LogRow = {
   description: string;
   resource: string | null;
   target_user_id: string | null;
+  metadata?: Record<string, unknown> | null;
   ip_address: string | null;
   user_agent: string | null;
   created_at: string;
