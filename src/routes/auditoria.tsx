@@ -3,7 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import {
   ShieldCheck, LogIn, LogOut, KeyRound, UserCog, Eye, Download, Ban,
-  UserPen, Loader2, Search, RefreshCw, TriangleAlert,
+  UserPen, Loader2, Search, RefreshCw, TriangleAlert, FileText, FileSpreadsheet,
+  Globe, Monitor, Boxes, Copy,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,9 +14,13 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listAuditLogs } from "@/lib/audit.functions";
 import { AUDIT_LABELS, type AuditEvent } from "@/lib/audit";
+import { downloadAuditCsv, downloadAuditPdf } from "@/lib/export-audit";
 import { EmptyState } from "@/components/empty-state";
 import { toast } from "sonner";
 
