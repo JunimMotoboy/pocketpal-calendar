@@ -19,9 +19,14 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Painel — Nix Wallet" },
-      { name: "description", content: "Veja seus gastos no calendário, organize por categorias e acompanhe seu mês." },
+      { title: "Painel de controle — Nix Wallet" },
+      { name: "description", content: "Acompanhe seus gastos do mês no calendário, organize por categorias, veja lembretes de vencimento e controle o saldo em um só painel." },
+      { property: "og:title", content: "Painel de controle — Nix Wallet" },
+      { property: "og:description", content: "Calendário de gastos, lembretes de vencimento e resumo do mês em um painel financeiro simples." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/" }],
   }),
   component: Dashboard,
 });
