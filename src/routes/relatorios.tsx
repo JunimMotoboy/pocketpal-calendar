@@ -330,6 +330,112 @@ function ReportsPage() {
   const payData = buildPieData(payTotals, payMeta);
   const incData = buildPieData(incTotals, incMeta);
 
+  const periodLabel =
+    mode === "month"
+      ? format(period.from, "MMMM 'de' yyyy", { locale: ptBR })
+      : `${format(period.from, "MMM/yyyy", { locale: ptBR })} até ${format(period.to, "MMM/yyyy", { locale: ptBR })}`;
+
+  const SECTION_LABELS: Record<string, string> = {
+    resumo: "Resumo",
+    categorias: "Gastos por categoria",
+    pagamento: "Gastos por forma de pagamento",
+    entradas: "Entradas por fonte",
+    tendencia: "Tendência (6 meses)",
+    orcamentos: "Orçamentos",
+  };
+
+  const pieTable = (title: string, data: { name: string; value: number }[], total: number): ReportTable => ({
+    title,
+    head: ["Item", "Valor", "% do total"],
+    rows: data.map((d) => [
+      d.name,
+      formatBRL(d.value),
+      total > 0 ? `${((d.value / total) * 100).toFixed(1)}%` : "0%",
+    ]),
+    footer: `Total: ${formatBRL(total)}`,
+  });
+
+  const buildExport = (): ReportExport => {
+    const sectionLabel = SECTION_LABELS[tab] ?? "Relatório";
+    const tables: ReportTable[] = [];
+
+    if (tab === "resumo") {
+      const saldoLocal = totalInc - totalExp;
+      const rate = totalInc > 0 ? (saldoLocal / totalInc) * 100 : 0;
+      const last3 = trend.slice(-3);
+      const avg3 = last3.length ? last3.reduce((s, d) => s + d.gastos, 0) / last3.length : 0;
+      const currMonth = trend.length ? trend[trend.length - 1].gastos : totalExp;
+      tables.push({
+        title: "Indicadores",
+        head: ["Indicador", "Valor"],
+        rows: [
+          ["Entradas", formatBRL(totalInc)],
+          ["Gastos", formatBRL(totalExp)],
+          ["Saldo", formatBRL(saldoLocal)],
+          ["Taxa de poupança", `${rate.toFixed(1)}%`],
+          ["Gastos do mês atual", formatBRL(currMonth)],
+          ["Média de gastos (3 meses)", formatBRL(avg3)],
+        ],
+      });
+      const topCats = Object.entries(catTotals)
+        .filter(([, v]) => v > 0)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+      tables.push({
+        title: "Top 5 categorias",
+        head: ["Categoria", "Valor"],
+        rows: topCats.map(([k, v]) => [catMeta[k]?.label ?? k, formatBRL(v)]),
+      });
+      const exceeded = Object.entries(budgets).filter(([cat, limit]) => limit > 0 && (catTotals[cat] ?? 0) > limit);
+      if (exceeded.length > 0) {
+        tables.push({
+          title: "Orçamentos estourados",
+          head: ["Categoria", "Limite", "Gasto", "Excedente"],
+          rows: exceeded.map(([cat, limit]) => [
+            catMeta[cat]?.label ?? cat,
+            formatBRL(limit),
+            formatBRL(catTotals[cat] ?? 0),
+            formatBRL((catTotals[cat] ?? 0) - limit),
+          ]),
+        });
+      }
+    } else if (tab === "categorias") {
+      tables.push(pieTable("Gastos por categoria", catData, totalExp));
+    } else if (tab === "pagamento") {
+      tables.push(pieTable("Gastos por forma de pagamento", payData, totalExp));
+    } else if (tab === "entradas") {
+      tables.push(pieTable("Entradas por fonte", incData, totalInc));
+    } else if (tab === "tendencia") {
+      tables.push({
+        title: "Tendência dos últimos 6 meses",
+        head: ["Mês", "Entradas", "Gastos", "Saldo"],
+        rows: trend.map((t) => [
+          t.label,
+          formatBRL(t.entradas),
+          formatBRL(t.gastos),
+          formatBRL(t.entradas - t.gastos),
+        ]),
+      });
+    } else if (tab === "orcamentos") {
+      const rows = Object.entries(budgets)
+        .filter(([, limit]) => limit > 0)
+        .sort((a, b) => (catTotals[b[0]] ?? 0) - (catTotals[a[0]] ?? 0))
+        .map(([cat, limit]) => {
+          const used = catTotals[cat] ?? 0;
+          return [
+            catMeta[cat]?.label ?? cat,
+            formatBRL(limit),
+            formatBRL(used),
+            `${limit > 0 ? ((used / limit) * 100).toFixed(0) : 0}%`,
+            used > limit ? "Estourado" : "Dentro do limite",
+          ];
+        });
+      tables.push({ title: "Orçamentos por categoria", head: ["Categoria", "Limite", "Gasto", "Uso", "Status"], rows });
+    }
+
+    return { sectionLabel, periodLabel, tables };
+  };
+
   if (loading || !user) return <div className="flex h-[60vh] items-center justify-center text-muted-foreground">Carregando...</div>;
 
   return (
