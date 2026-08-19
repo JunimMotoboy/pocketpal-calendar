@@ -499,7 +499,15 @@ function ReportsPage() {
             </div>
           )}
         </div>
-        {fetching && <p className="text-xs text-muted-foreground" role="status">Atualizando...</p>}
+        <div className="flex items-center gap-2">
+          {fetching && <p className="text-xs text-muted-foreground" role="status">Atualizando...</p>}
+          <Button variant="outline" size="sm" onClick={() => downloadReportCsv(buildExport())} className="gap-1.5">
+            <FileSpreadsheet className="h-4 w-4" aria-hidden /> CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => downloadReportPdf(buildExport())} className="gap-1.5">
+            <FileText className="h-4 w-4" aria-hidden /> PDF
+          </Button>
+        </div>
       </section>
 
       <section className="mb-6 grid gap-3 sm:grid-cols-3">
