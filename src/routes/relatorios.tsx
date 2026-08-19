@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { startOfMonth, endOfMonth, format, subMonths, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, PieChart as PieIcon, Filter, CreditCard, TrendingUp, Target, AlertTriangle, LineChart as LineIcon, ArrowUpRight, ArrowDownRight, Sparkles, PiggyBank, Trophy } from "lucide-react";
+import { ChevronLeft, ChevronRight, PieChart as PieIcon, Filter, CreditCard, TrendingUp, Target, AlertTriangle, LineChart as LineIcon, ArrowUpRight, ArrowDownRight, Sparkles, PiggyBank, Trophy, FileSpreadsheet, FileText } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatBRL, CATEGORIES, PAYMENT_METHODS, INCOME_SOURCES } from "@/lib/categories";
+import { downloadReportCsv, downloadReportPdf, type ReportExport, type ReportTable } from "@/lib/export-reports";
 
 export const Route = createFileRoute("/relatorios")({
   head: () => ({
