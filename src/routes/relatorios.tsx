@@ -201,6 +201,7 @@ function ReportsPage() {
   const [budgets, setBudgets] = useState<Record<string, number>>({});
   const [fetching, setFetching] = useState(false);
   const [trend, setTrend] = useState<{ key: string; label: string; gastos: number; entradas: number }[]>([]);
+  const [tab, setTab] = useState("resumo");
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [user, loading, nav]);
 
