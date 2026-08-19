@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /auditoria
+Disallow: /api/
+Disallow: /lovable/
+
+Sitemap: https://nixwallet.junimtech.com.br/sitemap.xml
