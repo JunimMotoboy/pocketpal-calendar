@@ -553,7 +553,7 @@ function ReportsPage() {
         })()}
       </section>
 
-      <Tabs defaultValue="resumo">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">
           <TabsTrigger value="resumo">
             <Sparkles className="h-4 w-4 sm:hidden" aria-hidden />
