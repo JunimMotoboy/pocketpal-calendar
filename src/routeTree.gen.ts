@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as PersonalizarRouteImport } from './routes/personalizar'
@@ -25,6 +26,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicSendFixedExpenseRemindersRouteImport } from './routes/api/public/send-fixed-expense-reminders'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/personalizar': typeof PersonalizarRoute
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/personalizar': typeof PersonalizarRoute
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/personalizar': typeof PersonalizarRoute
   '/relatorios': typeof RelatoriosRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/send-fixed-expense-reminders': typeof ApiPublicSendFixedExpenseRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/personalizar'
     | '/relatorios'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/personalizar'
     | '/relatorios'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
   id:
@@ -205,6 +216,7 @@ export interface FileRouteTypes {
     | '/personalizar'
     | '/relatorios'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/api/public/send-fixed-expense-reminders'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
@@ -223,12 +235,20 @@ export interface RootRouteChildren {
   PersonalizarRoute: typeof PersonalizarRoute
   RelatoriosRoute: typeof RelatoriosRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicSendFixedExpenseRemindersRoute: typeof ApiPublicSendFixedExpenseRemindersRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -351,6 +371,7 @@ const rootRouteChildren: RootRouteChildren = {
   PersonalizarRoute: PersonalizarRoute,
   RelatoriosRoute: RelatoriosRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicSendFixedExpenseRemindersRoute:
     ApiPublicSendFixedExpenseRemindersRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,

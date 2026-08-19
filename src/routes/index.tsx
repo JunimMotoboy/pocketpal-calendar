@@ -19,9 +19,14 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Painel — Nix Wallet" },
-      { name: "description", content: "Veja seus gastos no calendário, organize por categorias e acompanhe seu mês." },
+      { title: "Painel de controle — Nix Wallet" },
+      { name: "description", content: "Acompanhe seus gastos do mês no calendário, organize por categorias, veja lembretes de vencimento e controle o saldo em um só painel." },
+      { property: "og:title", content: "Painel de controle — Nix Wallet" },
+      { property: "og:description", content: "Calendário de gastos, lembretes de vencimento e resumo do mês em um painel financeiro simples." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/" }],
   }),
   component: Dashboard,
 });
@@ -437,7 +442,7 @@ function Dashboard() {
         <div className="flex flex-wrap items-end justify-between gap-4 text-primary-foreground">
           <div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}>
+              <Button aria-label="Mês anterior" variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}>
                 <ChevronLeft className="h-5 w-5" />
               </Button>
               <p className="text-sm/6 opacity-80">Total de {format(month, "MMMM 'de' yyyy", { locale: ptBR })}</p>
