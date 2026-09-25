@@ -559,7 +559,7 @@ function Dashboard() {
         {/* Calendar */}
         <Card className="order-2 h-fit lg:order-1">
           <CardHeader className="px-3 sm:px-6">
-            <CardTitle asChild className="text-base"><h2>Calendário do mês</h2></CardTitle>
+            <h2 className="text-base font-semibold leading-none tracking-tight">Calendário do mês</h2>
           </CardHeader>
           <CardContent className="px-2 sm:px-6">
             <Calendar
