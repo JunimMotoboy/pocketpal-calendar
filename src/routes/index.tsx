@@ -446,7 +446,7 @@ function Dashboard() {
                 <ChevronLeft className="h-5 w-5" />
               </Button>
               <p className="text-sm/6 opacity-80">Total de {format(month, "MMMM 'de' yyyy", { locale: ptBR })}</p>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}>
+              <Button aria-label="Próximo mês" variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}>
                 <ChevronRight className="h-5 w-5" />
               </Button>
             </div>
