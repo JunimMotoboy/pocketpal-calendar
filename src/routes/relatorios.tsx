@@ -15,9 +15,15 @@ import { downloadReportCsv, downloadReportPdf, type ReportExport, type ReportTab
 export const Route = createFileRoute("/relatorios")({
   head: () => ({
     meta: [
-      { title: "Relatórios — Nix Wallet" },
-      { name: "description", content: "Veja seus gastos e entradas do mês em gráficos de pizza." },
+      { title: "Relatórios financeiros — Nix Wallet" },
+      { name: "description", content: "Analise gastos e entradas por categoria, forma de pagamento e tendência mensal, e exporte cada relatório em CSV ou PDF." },
+      { property: "og:title", content: "Relatórios financeiros — Nix Wallet" },
+      { property: "og:description", content: "Gráficos de gastos e entradas por categoria, com exportação em CSV e PDF." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/relatorios" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/relatorios" }],
   }),
   component: ReportsPage,
 });

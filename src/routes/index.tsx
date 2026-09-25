@@ -437,6 +437,7 @@ function Dashboard() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
+      <h1 className="sr-only">Painel de controle financeiro</h1>
       {/* Hero summary */}
       <section className="mb-8 overflow-hidden rounded-2xl border border-border/60 p-6 shadow-[var(--shadow-elegant)]" style={{ backgroundImage: "var(--gradient-hero)" }}>
         <div className="flex flex-wrap items-end justify-between gap-4 text-primary-foreground">
@@ -446,7 +447,7 @@ function Dashboard() {
                 <ChevronLeft className="h-5 w-5" />
               </Button>
               <p className="text-sm/6 opacity-80">Total de {format(month, "MMMM 'de' yyyy", { locale: ptBR })}</p>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}>
+              <Button aria-label="Próximo mês" variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}>
                 <ChevronRight className="h-5 w-5" />
               </Button>
             </div>
@@ -459,6 +460,7 @@ function Dashboard() {
 
       {/* KPI strip */}
       <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Resumo do mês">
+        <h2 className="sr-only">Resumo do mês</h2>
         {(() => {
           const balance = monthIncome - totals.total;
           const committedPct = monthIncome > 0 ? Math.round((totals.total / monthIncome) * 100) : 0;
@@ -517,6 +519,7 @@ function Dashboard() {
         const overdue = items.some((i) => differenceInCalendarDays(i.date, today) === 0);
         return (
           <section className="mb-6" aria-label="Lembretes próximos">
+            <h2 className="sr-only">Lembretes próximos</h2>
             <Card className={cn("border-l-4", overdue ? "border-l-destructive bg-destructive/5" : "border-l-warning bg-warning/5")}>
               <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -556,7 +559,7 @@ function Dashboard() {
         {/* Calendar */}
         <Card className="order-2 h-fit lg:order-1">
           <CardHeader className="px-3 sm:px-6">
-            <CardTitle className="text-base">Calendário do mês</CardTitle>
+            <h2 className="text-base font-semibold leading-none tracking-tight">Calendário do mês</h2>
           </CardHeader>
           <CardContent className="px-2 sm:px-6">
             <Calendar

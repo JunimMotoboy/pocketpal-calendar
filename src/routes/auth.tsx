@@ -14,9 +14,15 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Entrar — Nix Wallet" },
-      { name: "description", content: "Acesse sua conta." },
+      { title: "Entrar ou criar conta — Nix Wallet" },
+      { name: "description", content: "Acesse o Nix Wallet para controlar gastos, cartões, metas e entradas, ou crie sua conta gratuita em poucos segundos." },
+      { property: "og:title", content: "Entrar ou criar conta — Nix Wallet" },
+      { property: "og:description", content: "Entre no Nix Wallet e organize gastos, cartões e metas em um só lugar." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/auth" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/auth" }],
   }),
   component: AuthPage,
 });

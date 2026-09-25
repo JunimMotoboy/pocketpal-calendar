@@ -18,7 +18,19 @@ import { cn } from "@/lib/utils";
 import { compressAvatar, formatBytes } from "@/lib/image-compress";
 
 export const Route = createFileRoute("/personalizar")({
-  head: () => ({ meta: [{ title: "Personalizar — Nix Wallet" }] }),
+  head: () => ({
+    meta: [
+      { title: "Personalizar aparência — Nix Wallet" },
+      { name: "description", content: "Escolha tema, cores, tamanho da fonte e foto de perfil para deixar o Nix Wallet com a sua cara em qualquer dispositivo." },
+      { property: "og:title", content: "Personalizar aparência — Nix Wallet" },
+      { property: "og:description", content: "Ajuste tema, cores, fonte e foto de perfil do seu painel financeiro." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/personalizar" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/personalizar" }],
+  }),
   component: PersonalizarPage,
 });
 

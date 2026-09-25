@@ -28,12 +28,15 @@ export const Route = createFileRoute("/auditoria")({
   head: () => ({
     meta: [
       { title: "Auditoria e segurança — Nix Wallet" },
-      { name: "description", content: "Trilha de auditoria com logins, mudanças de permissões e acessos a dados sensíveis por usuário." },
+      { name: "description", content: "Consulte a trilha de auditoria com logins, mudanças de permissões e acessos a dados sensíveis, com filtros e exportação." },
       { property: "og:title", content: "Auditoria e segurança — Nix Wallet" },
       { property: "og:description", content: "Acompanhe logins, permissões e acessos a dados sensíveis da sua conta." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/auditoria" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/auditoria" }],
   }),
   component: AuditPage,
 });

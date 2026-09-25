@@ -47,9 +47,15 @@ type FieldErrors = Partial<Record<"name" | "amount" | "dueDay" | "notifyEmail" |
 export const Route = createFileRoute("/despesas-fixas")({
   head: () => ({
     meta: [
-      { title: "Despesas Fixas — Nix Wallet" },
-      { name: "description", content: "Cadastre suas despesas fixas mensais e receba lembretes por e-mail um dia antes do vencimento." },
+      { title: "Despesas fixas mensais — Nix Wallet" },
+      { name: "description", content: "Cadastre aluguel, assinaturas e contas recorrentes, escolha a forma de pagamento e receba lembretes antes do vencimento." },
+      { property: "og:title", content: "Despesas fixas mensais — Nix Wallet" },
+      { property: "og:description", content: "Organize contas recorrentes e receba lembretes antes de cada vencimento." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/despesas-fixas" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/despesas-fixas" }],
   }),
   component: FixedExpensesPage,
 });
@@ -190,6 +196,7 @@ function FixedExpensesPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
+      <h1 className="sr-only">Despesas fixas mensais</h1>
       <section
         className="mb-8 flex flex-wrap items-end justify-between gap-4 overflow-hidden rounded-2xl border border-border/60 p-6 text-primary-foreground shadow-[var(--shadow-elegant)]"
         style={{ backgroundImage: "linear-gradient(135deg, oklch(0.4 0.15 280) 0%, oklch(0.55 0.18 320) 60%, oklch(0.7 0.15 30) 100%)" }}

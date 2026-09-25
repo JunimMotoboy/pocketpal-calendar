@@ -27,9 +27,15 @@ import { EmptyState } from "@/components/empty-state";
 export const Route = createFileRoute("/investimentos")({
   head: () => ({
     meta: [
-      { title: "Investimentos — Nix Wallet" },
-      { name: "description", content: "Acompanhe seus investimentos: renda fixa, variável, cripto e mais." },
+      { title: "Carteira de investimentos — Nix Wallet" },
+      { name: "description", content: "Acompanhe renda fixa, renda variável, cripto, fundos e tesouro em uma carteira única com totais por tipo de investimento." },
+      { property: "og:title", content: "Carteira de investimentos — Nix Wallet" },
+      { property: "og:description", content: "Acompanhe renda fixa, variável, cripto e fundos em uma carteira única." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/investimentos" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/investimentos" }],
   }),
   component: InvestmentsPage,
 });
@@ -167,6 +173,7 @@ function InvestmentsPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
+      <h1 className="sr-only">Carteira de investimentos</h1>
       <section
         className="mb-8 flex flex-wrap items-end justify-between gap-4 overflow-hidden rounded-2xl border border-border/60 p-6 text-primary-foreground shadow-[var(--shadow-elegant)]"
         style={{ backgroundImage: "linear-gradient(135deg, oklch(0.4 0.15 280) 0%, oklch(0.55 0.18 280) 50%, oklch(0.72 0.16 35) 100%)" }}

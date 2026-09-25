@@ -17,8 +17,14 @@ export const Route = createFileRoute("/orcamentos")({
   head: () => ({
     meta: [
       { title: "Orçamentos por categoria — Nix Wallet" },
-      { name: "description", content: "Defina limites mensais por categoria e acompanhe o quanto já gastou." },
+      { name: "description", content: "Defina limites mensais por categoria de gasto, acompanhe o quanto já usou de cada orçamento e receba alertas de estouro." },
+      { property: "og:title", content: "Orçamentos por categoria — Nix Wallet" },
+      { property: "og:description", content: "Defina limites por categoria e veja quanto já usou de cada orçamento." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/orcamentos" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/orcamentos" }],
   }),
   component: BudgetsPage,
 });
