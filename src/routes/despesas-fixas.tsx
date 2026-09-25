@@ -47,9 +47,15 @@ type FieldErrors = Partial<Record<"name" | "amount" | "dueDay" | "notifyEmail" |
 export const Route = createFileRoute("/despesas-fixas")({
   head: () => ({
     meta: [
-      { title: "Despesas Fixas — Nix Wallet" },
-      { name: "description", content: "Cadastre suas despesas fixas mensais e receba lembretes por e-mail um dia antes do vencimento." },
+      { title: "Despesas fixas mensais — Nix Wallet" },
+      { name: "description", content: "Cadastre aluguel, assinaturas e contas recorrentes, escolha a forma de pagamento e receba lembretes antes do vencimento." },
+      { property: "og:title", content: "Despesas fixas mensais — Nix Wallet" },
+      { property: "og:description", content: "Organize contas recorrentes e receba lembretes antes de cada vencimento." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/despesas-fixas" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/despesas-fixas" }],
   }),
   component: FixedExpensesPage,
 });

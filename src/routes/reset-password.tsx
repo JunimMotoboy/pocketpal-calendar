@@ -13,8 +13,15 @@ export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
       { title: "Redefinir senha — Nix Wallet" },
-      { name: "description", content: "Defina uma nova senha para sua conta." },
+      { name: "description", content: "Defina uma nova senha para a sua conta do Nix Wallet e recupere o acesso ao seu controle financeiro com segurança." },
+      { property: "og:title", content: "Redefinir senha — Nix Wallet" },
+      { property: "og:description", content: "Recupere o acesso à sua conta definindo uma nova senha com segurança." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/reset-password" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/reset-password" }],
   }),
   component: ResetPasswordPage,
 });

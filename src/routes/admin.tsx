@@ -15,7 +15,19 @@ import { listAppUsers, setUserSuspension, checkIsAdmin } from "@/lib/admin.funct
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Administração — Nix Wallet" }] }),
+  head: () => ({
+    meta: [
+      { title: "Administração de usuários — Nix Wallet" },
+      { name: "description", content: "Área administrativa do Nix Wallet para gerenciar usuários, permissões e acessos da sua organização com registro de auditoria." },
+      { property: "og:title", content: "Administração de usuários — Nix Wallet" },
+      { property: "og:description", content: "Gerencie usuários, permissões e acessos com registro completo de auditoria." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/admin" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/admin" }],
+  }),
   component: AdminPage,
 });
 

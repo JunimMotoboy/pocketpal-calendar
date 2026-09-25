@@ -42,12 +42,15 @@ import {
 export const Route = createFileRoute("/cartoes")({
   head: () => ({
     meta: [
-      { title: "Cartões — Nix Wallet" },
-      {
-        name: "description",
-        content: "Cadastre seus cartões de crédito e acompanhe a fatura acumulada.",
-      },
+      { title: "Cartões de crédito e faturas — Nix Wallet" },
+      { name: "description", content: "Cadastre cartões, acompanhe a fatura do mês, parcelas ativas, limite disponível e exporte o extrato em CSV quando quiser." },
+      { property: "og:title", content: "Cartões de crédito e faturas — Nix Wallet" },
+      { property: "og:description", content: "Controle faturas, parcelas e limites dos seus cartões de crédito mês a mês." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/cartoes" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/cartoes" }],
   }),
   component: CardsPage,
 });

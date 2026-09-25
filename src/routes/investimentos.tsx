@@ -27,9 +27,15 @@ import { EmptyState } from "@/components/empty-state";
 export const Route = createFileRoute("/investimentos")({
   head: () => ({
     meta: [
-      { title: "Investimentos — Nix Wallet" },
-      { name: "description", content: "Acompanhe seus investimentos: renda fixa, variável, cripto e mais." },
+      { title: "Carteira de investimentos — Nix Wallet" },
+      { name: "description", content: "Acompanhe renda fixa, renda variável, cripto, fundos e tesouro em uma carteira única com totais por tipo de investimento." },
+      { property: "og:title", content: "Carteira de investimentos — Nix Wallet" },
+      { property: "og:description", content: "Acompanhe renda fixa, variável, cripto e fundos em uma carteira única." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/investimentos" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/investimentos" }],
   }),
   component: InvestmentsPage,
 });

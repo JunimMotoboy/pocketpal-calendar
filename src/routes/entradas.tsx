@@ -34,9 +34,15 @@ import { EmptyState } from "@/components/empty-state";
 export const Route = createFileRoute("/entradas")({
   head: () => ({
     meta: [
-      { title: "Entradas — Nix Wallet" },
-      { name: "description", content: "Registre todo o dinheiro que entra: salário, freelances, vendas e mais." },
+      { title: "Entradas de dinheiro — Nix Wallet" },
+      { name: "description", content: "Registre salário, freelances, vendas e rendimentos, veja a tendência dos últimos meses e exporte suas entradas em CSV ou PDF." },
+      { property: "og:title", content: "Entradas de dinheiro — Nix Wallet" },
+      { property: "og:description", content: "Registre todo o dinheiro que entra e acompanhe a tendência dos seus meses." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/entradas" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/entradas" }],
   }),
   component: IncomesPage,
 });

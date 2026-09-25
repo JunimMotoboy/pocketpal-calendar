@@ -42,9 +42,15 @@ import { EmptyState } from "@/components/empty-state";
 export const Route = createFileRoute("/metas")({
   head: () => ({
     meta: [
-      { title: "Metas — Nix Wallet" },
-      { name: "description", content: "Crie e acompanhe suas metas financeiras." },
+      { title: "Metas financeiras — Nix Wallet" },
+      { name: "description", content: "Crie metas de economia, defina valores e prazos, acompanhe o progresso e veja a previsão de conclusão de cada objetivo." },
+      { property: "og:title", content: "Metas financeiras — Nix Wallet" },
+      { property: "og:description", content: "Crie metas de economia e acompanhe o progresso com previsão de conclusão." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://nixwallet.junimtech.com.br/metas" },
     ],
+    links: [{ rel: "canonical", href: "https://nixwallet.junimtech.com.br/metas" }],
   }),
   component: MetasPage,
 });
