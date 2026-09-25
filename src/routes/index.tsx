@@ -519,6 +519,7 @@ function Dashboard() {
         const overdue = items.some((i) => differenceInCalendarDays(i.date, today) === 0);
         return (
           <section className="mb-6" aria-label="Lembretes próximos">
+            <h2 className="sr-only">Lembretes próximos</h2>
             <Card className={cn("border-l-4", overdue ? "border-l-destructive bg-destructive/5" : "border-l-warning bg-warning/5")}>
               <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
