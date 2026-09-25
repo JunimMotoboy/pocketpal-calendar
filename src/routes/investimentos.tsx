@@ -173,6 +173,7 @@ function InvestmentsPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
+      <h1 className="sr-only">Carteira de investimentos</h1>
       <section
         className="mb-8 flex flex-wrap items-end justify-between gap-4 overflow-hidden rounded-2xl border border-border/60 p-6 text-primary-foreground shadow-[var(--shadow-elegant)]"
         style={{ backgroundImage: "linear-gradient(135deg, oklch(0.4 0.15 280) 0%, oklch(0.55 0.18 280) 50%, oklch(0.72 0.16 35) 100%)" }}

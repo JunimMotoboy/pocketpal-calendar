@@ -227,6 +227,7 @@ function IncomesPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
+      <h1 className="sr-only">Entradas de dinheiro</h1>
       {/* HERO */}
       <section
         className="mb-6 overflow-hidden rounded-2xl border border-border/60 p-6 text-primary-foreground shadow-[var(--shadow-elegant)]"

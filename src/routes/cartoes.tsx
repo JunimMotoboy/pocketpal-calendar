@@ -533,6 +533,7 @@ function CardsPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
+      <h1 className="sr-only">Fatura dos cartões de crédito</h1>
       {/* Sticky condensed header */}
       <div className="sticky top-0 z-30 -mx-4 mb-4 border-b border-border/60 bg-background/85 px-4 py-2 backdrop-blur-md sm:hidden">
         <div className="flex items-center justify-between gap-2">
@@ -583,9 +584,9 @@ function CardsPage() {
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] opacity-80">
               Total da Fatura
             </p>
-            <h1 className="text-4xl font-extrabold tracking-tight tabular-nums">
+            <p className="text-4xl font-extrabold tracking-tight tabular-nums">
               {formatBRL(totalInvoice)}
-            </h1>
+            </p>
             <p className="pt-1 text-xs opacity-80">
               Limite total: <span className="font-semibold">{formatBRL(totalLimit)}</span>
             </p>
