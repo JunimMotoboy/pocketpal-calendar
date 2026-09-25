@@ -460,6 +460,7 @@ function Dashboard() {
 
       {/* KPI strip */}
       <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Resumo do mês">
+        <h2 className="sr-only">Resumo do mês</h2>
         {(() => {
           const balance = monthIncome - totals.total;
           const committedPct = monthIncome > 0 ? Math.round((totals.total / monthIncome) * 100) : 0;
