@@ -437,6 +437,7 @@ function Dashboard() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
+      <h1 className="sr-only">Painel de controle financeiro</h1>
       {/* Hero summary */}
       <section className="mb-8 overflow-hidden rounded-2xl border border-border/60 p-6 shadow-[var(--shadow-elegant)]" style={{ backgroundImage: "var(--gradient-hero)" }}>
         <div className="flex flex-wrap items-end justify-between gap-4 text-primary-foreground">
